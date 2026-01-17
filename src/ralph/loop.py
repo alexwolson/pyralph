@@ -5,12 +5,15 @@ import subprocess
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Callable, Optional
+from typing import Callable, Optional, TYPE_CHECKING
 
 from ralph import git_utils, gutter, parser, state, task, tokens
 from ralph.debug import debug_log
 from ralph.providers import ProviderRotation
 from ralph.ui import RalphLiveDisplay, get_criteria_list, display_question_panel
+
+if TYPE_CHECKING:
+    from rich.console import Console
 
 
 def archive_completed_task(workspace: Path) -> Optional[Path]:
@@ -240,6 +243,7 @@ def run_single_iteration(
     rotate_threshold: int = tokens.ROTATE_THRESHOLD,
     timeout: int = 300,
     on_token_update: Optional[Callable[[tokens.TokenTracker], None]] = None,
+    console: Optional["Console"] = None,
 ) -> str:
     """Run a single iteration. Returns signal (ROTATE, GUTTER, COMPLETE, or empty).
     
@@ -251,6 +255,7 @@ def run_single_iteration(
         rotate_threshold: Token count at which to trigger rotation
         timeout: Timeout in seconds for provider operations (default 300)
         on_token_update: Optional callback for token tracker updates
+        console: Optional Rich Console for output (use Live.console when within Live context)
     """
     
     prompt = build_prompt(workspace, iteration)
@@ -293,6 +298,7 @@ def run_single_iteration(
         for sig in parser.parse_stream(
             workspace, agent_process, token_tracker, gutter_detector, provider,
             on_token_update=on_token_update,
+            console=console,
         ):
             signal = sig
             if signal in ("ROTATE", "GUTTER", "COMPLETE", "QUESTION", "VERIFY_PASS", "VERIFY_FAIL"):
@@ -338,6 +344,7 @@ def run_verification_iteration(
     rotate_threshold: int,
     timeout: int,
     on_token_update: Optional[Callable[[tokens.TokenTracker], None]] = None,
+    console: Optional["Console"] = None,
 ) -> str:
     """Run a verification iteration. Returns signal (VERIFY_PASS, VERIFY_FAIL, or empty).
     
@@ -349,6 +356,7 @@ def run_verification_iteration(
         rotate_threshold: Token count at which to trigger rotation
         timeout: Timeout in seconds for provider operations
         on_token_update: Optional callback for token tracker updates
+        console: Optional Rich Console for output (use Live.console when within Live context)
     """
     prompt = build_verification_prompt(workspace, iteration)
     
@@ -389,6 +397,7 @@ def run_verification_iteration(
         for sig in parser.parse_stream(
             workspace, agent_process, token_tracker, gutter_detector, provider,
             on_token_update=on_token_update,
+            console=console,
         ):
             signal = sig
             if signal in ("VERIFY_PASS", "VERIFY_FAIL", "ROTATE", "GUTTER"):
@@ -597,12 +606,14 @@ def run_ralph_loop(
             
             try:
                 # Run iteration with token update callback
+                # Pass live display's console for proper integration with Live context
                 signal = run_single_iteration(
                     workspace, provider, iteration,
                     warn_threshold=warn_threshold,
                     rotate_threshold=rotate_threshold,
                     timeout=timeout,
                     on_token_update=on_token_update,
+                    console=live_display.console,
                 )
                 
                 # Check task completion
@@ -676,6 +687,7 @@ def run_ralph_loop(
                         rotate_threshold=rotate_threshold,
                         timeout=timeout,
                         on_token_update=on_token_update,
+                        console=live_display.console,
                     )
                     
                     if verify_signal == "VERIFY_PASS":

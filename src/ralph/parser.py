@@ -10,7 +10,8 @@ from rich.console import Console
 from ralph import gutter, state, tokens
 from ralph.providers.base import BaseProvider
 
-console = Console()
+# Default console for standalone usage (not within Live context)
+_default_console = Console()
 
 
 def parse_stream(
@@ -20,6 +21,7 @@ def parse_stream(
     gutter_detector: gutter.GutterDetector,
     provider: BaseProvider,
     on_token_update: Optional[Callable[[tokens.TokenTracker], None]] = None,
+    console: Optional[Console] = None,
 ) -> Iterator[str]:
     """Parse cursor-agent stream-json output and emit signals.
     
@@ -30,9 +32,13 @@ def parse_stream(
         gutter_detector: Gutter (stuck agent) detector
         provider: LLM provider instance
         on_token_update: Optional callback for token tracker updates
+        console: Optional Rich Console for output (use Live.console when within Live context)
     
     Yields: "ROTATE", "WARN", "GUTTER", "COMPLETE", "QUESTION", "VERIFY_PASS", "VERIFY_FAIL"
     """
+    # Use provided console or default
+    output_console = console or _default_console
+    
     # Initialize activity log
     from datetime import datetime
     
@@ -57,7 +63,7 @@ def parse_stream(
         if data is None:
             continue
 
-        signal = process_line(workspace, data, token_tracker, gutter_detector)
+        signal = process_line(workspace, data, token_tracker, gutter_detector, console=output_console)
         if signal:
             yield signal
 
@@ -69,23 +75,23 @@ def parse_stream(
         if token_tracker.should_rotate():
             tokens_count = token_tracker.calculate_tokens()
             state.log_activity(workspace, f"ROTATE: Token threshold reached ({tokens_count} >= {tokens.ROTATE_THRESHOLD})")
-            console.print(f"[yellow]🔄 Token limit reached ({tokens_count} tokens) - rotating...[/yellow]")
+            output_console.print(f"[yellow]🔄 Token limit reached ({tokens_count} tokens) - rotating...[/yellow]")
             yield "ROTATE"
         
         if token_tracker.should_warn():
             tokens_count = token_tracker.calculate_tokens()
             state.log_activity(workspace, f"WARN: Approaching token limit ({tokens_count} >= {tokens.WARN_THRESHOLD})")
-            console.print(f"[yellow]⚠️  Approaching token limit: {tokens_count}/{tokens.ROTATE_THRESHOLD} tokens[/yellow]")
+            output_console.print(f"[yellow]⚠️  Approaching token limit: {tokens_count}/{tokens.ROTATE_THRESHOLD} tokens[/yellow]")
             yield "WARN"
 
         # Log token status every 30 seconds
         now = int(time.time())
         if now - last_token_log >= 30:
-            log_token_status(workspace, token_tracker, console_output=True)
+            log_token_status(workspace, token_tracker, console_output=True, console=output_console)
             last_token_log = now
 
     # Final token status
-    log_token_status(workspace, token_tracker)
+    log_token_status(workspace, token_tracker, console=output_console)
     
     # Log session end
     tokens_used = token_tracker.calculate_tokens()
@@ -97,15 +103,27 @@ def process_line(
     data: dict,
     token_tracker: tokens.TokenTracker,
     gutter_detector: gutter.GutterDetector,
+    console: Optional[Console] = None,
 ) -> Optional[str]:
-    """Process a single JSON line from stream. Returns signal if any."""
+    """Process a single JSON line from stream. Returns signal if any.
+    
+    Args:
+        workspace: Project directory path
+        data: Parsed JSON data from stream line
+        token_tracker: Token usage tracker
+        gutter_detector: Gutter (stuck agent) detector
+        console: Optional Rich Console for output (use Live.console when within Live context)
+    """
+    # Use provided console or default
+    output_console = console or _default_console
+    
     msg_type = data.get("type", "")
     subtype = data.get("subtype", "")
 
     if msg_type == "system" and subtype == "init":
         model = data.get("model", "unknown")
         state.log_activity(workspace, f"SESSION START: model={model}")
-        console.print(f"[dim]🤖 Agent started (model: {model})[/dim]")
+        output_console.print(f"[dim]🤖 Agent started (model: {model})[/dim]")
 
     elif msg_type == "assistant":
         # Track assistant message
@@ -119,31 +137,31 @@ def process_line(
                     # Check for completion sigil
                     if "<ralph>COMPLETE</ralph>" in text:
                         state.log_activity(workspace, "✅ Agent signaled COMPLETE")
-                        console.print("[green]✅ Agent signaled COMPLETE[/green]")
+                        output_console.print("[green]✅ Agent signaled COMPLETE[/green]")
                         return "COMPLETE"
                     
                     # Check for gutter sigil
                     if "<ralph>GUTTER</ralph>" in text:
                         state.log_activity(workspace, "🚨 Agent signaled GUTTER (stuck)")
-                        console.print("[yellow]🚨 Agent signaled GUTTER (stuck)[/yellow]")
+                        output_console.print("[yellow]🚨 Agent signaled GUTTER (stuck)[/yellow]")
                         return "GUTTER"
                     
                     # Check for question sigil
                     if "<ralph>QUESTION</ralph>" in text:
                         state.log_activity(workspace, "❓ Agent has a question for user")
-                        console.print("[cyan]❓ Agent has a question for user[/cyan]")
+                        output_console.print("[cyan]❓ Agent has a question for user[/cyan]")
                         return "QUESTION"
                     
                     # Check for verification pass sigil
                     if "<ralph>VERIFY_PASS</ralph>" in text:
                         state.log_activity(workspace, "✅ Verification PASSED")
-                        console.print("[green]✅ Verification PASSED[/green]")
+                        output_console.print("[green]✅ Verification PASSED[/green]")
                         return "VERIFY_PASS"
                     
                     # Check for verification fail sigil
                     if "<ralph>VERIFY_FAIL</ralph>" in text:
                         state.log_activity(workspace, "❌ Verification FAILED")
-                        console.print("[red]❌ Verification FAILED[/red]")
+                        output_console.print("[red]❌ Verification FAILED[/red]")
                         return "VERIFY_FAIL"
 
     elif msg_type == "tool_call":
@@ -176,7 +194,7 @@ def process_line(
                     emoji = token_tracker.get_health_emoji()
                     state.log_activity(workspace, f"{emoji} READ {path} ({lines} lines, ~{kb:.1f}KB)")
                     # Show progress in console
-                    console.print(f"[dim]📖 {emoji} Reading {path} ({lines} lines)[/dim]")
+                    output_console.print(f"[dim]📖 {emoji} Reading {path} ({lines} lines)[/dim]")
 
             # Write tool
             write_tool = tool_call.get("writeToolCall")
@@ -194,7 +212,7 @@ def process_line(
                     emoji = token_tracker.get_health_emoji()
                     state.log_activity(workspace, f"{emoji} WRITE {path} ({lines} lines, {kb:.1f}KB)")
                     # Show progress in console
-                    console.print(f"[cyan]✏️  {emoji} Writing {path} ({lines} lines)[/cyan]")
+                    output_console.print(f"[cyan]✏️  {emoji} Writing {path} ({lines} lines)[/cyan]")
                     
                     # Track for thrashing detection
                     if gutter_detector.track_write(path):
@@ -218,14 +236,14 @@ def process_line(
                 if exit_code == 0:
                     if output_chars > 1024:
                         state.log_activity(workspace, f"{emoji} SHELL {cmd} → exit 0 ({output_chars} chars output)")
-                        console.print(f"[dim]⚙️  {emoji} Running: {cmd} → exit 0 ({output_chars} chars)[/dim]")
+                        output_console.print(f"[dim]⚙️  {emoji} Running: {cmd} → exit 0 ({output_chars} chars)[/dim]")
                     else:
                         state.log_activity(workspace, f"{emoji} SHELL {cmd} → exit 0")
-                        console.print(f"[dim]⚙️  {emoji} Running: {cmd}[/dim]")
+                        output_console.print(f"[dim]⚙️  {emoji} Running: {cmd}[/dim]")
                 else:
                     state.log_activity(workspace, f"{emoji} SHELL {cmd} → exit {exit_code}")
                     state.log_error(workspace, f"SHELL FAIL: {cmd} → exit {exit_code}")
-                    console.print(f"[yellow]⚠️  {emoji} Command failed: {cmd} → exit {exit_code}[/yellow]")
+                    output_console.print(f"[yellow]⚠️  {emoji} Command failed: {cmd} → exit {exit_code}[/yellow]")
                     
                     # Track for failure detection
                     if gutter_detector.track_failure(cmd, exit_code):
@@ -235,9 +253,24 @@ def process_line(
     return None
 
 
-def log_token_status(workspace: Path, token_tracker: tokens.TokenTracker, console_output: bool = False) -> None:
-    """Log token status to activity.log and optionally console."""
+def log_token_status(
+    workspace: Path,
+    token_tracker: tokens.TokenTracker,
+    console_output: bool = False,
+    console: Optional[Console] = None,
+) -> None:
+    """Log token status to activity.log and optionally console.
+    
+    Args:
+        workspace: Project directory path
+        token_tracker: Token usage tracker
+        console_output: Whether to print to console (default False)
+        console: Optional Rich Console for output (use Live.console when within Live context)
+    """
     import time
+    
+    # Use provided console or default
+    output_console = console or _default_console
     
     tokens_count = token_tracker.calculate_tokens()
     pct = (tokens_count * 100) // tokens.ROTATE_THRESHOLD
@@ -262,4 +295,4 @@ def log_token_status(workspace: Path, token_tracker: tokens.TokenTracker, consol
     state.log_activity(workspace, log_line)
     
     if console_output:
-        console.print(f"[dim]{timestamp} {log_line}[/dim]")
+        output_console.print(f"[dim]{timestamp} {log_line}[/dim]")
