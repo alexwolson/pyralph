@@ -59,11 +59,11 @@ The task is complete when ALL of the following are true:
 - [x] Error handling shows styled error panels with helpful messages
 
 ### Visual Polish
-- [ ] Visual polish with rule separators between sections
-- [ ] Consistent color theme across all commands
+- [x] Visual polish with rule separators between sections
+- [x] Consistent color theme across all commands
 
 ### Tests
-- [ ] All existing tests pass
+- [x] All existing tests pass
 
 ## Constraints
 

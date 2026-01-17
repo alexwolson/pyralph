@@ -464,3 +464,14 @@ EOF
 [21:21:40] 🔴 TOKENS: 65474 / 80000 (81%) - approaching limit [read:251KB write:0KB assist:1KB shell:0KB]
 [21:22:10] 🔴 TOKENS: 65474 / 80000 (81%) - approaching limit [read:251KB write:0KB assist:1KB shell:0KB]
 [21:22:32] 🔴 SHELL make test 2>&1 → exit 0
+[21:22:39] 🔴 SHELL git add -A && git commit -m "$(cat <<'EOF'
+ralph: fix test assertions and add visual polish with consistent theme
+
+- Fix test_tokens.py assertions to match current threshold values (72k/80k)
+- Add rule separators to run command for visual polish
+- Update interview.py to use THEME consistently instead of hardcoded colors
+- All 85 tests pass
+
+EOF
+)" → exit 0
+[21:22:41] 🔴 TOKENS: 65515 / 80000 (81%) - approaching limit [read:251KB write:0KB assist:1KB shell:0KB]
