@@ -68,3 +68,26 @@ EOF
 [20:23:59] 🟢 SHELL cd /Users/alex/repos/pyralph_fork && uv run pytest -v tests/test_cli.py → exit 0
 [20:24:06] 🟢 SHELL cd /Users/alex/repos/pyralph_fork && uv run pytest -v → exit 0
 [20:24:13] 🟢 TOKENS: 46345 / 200000 (23%) [read:175KB write:0KB assist:2KB shell:0KB]
+[20:24:13] 🟢 SHELL cd /Users/alex/repos/pyralph_fork && git add -A && git commit -m "$(cat <<'EOF'
+ralph: add CLI improvements (--version, --verbose, status command)
+
+- Add --version flag that displays package version
+- Add --verbose / -v flag that enables detailed debug output
+- Add 'ralph status <project_dir>' subcommand to show task progress
+- Refactor CLI to use Click groups for subcommands
+- The 'run' subcommand replaces the previous single-command interface
+- Status command shows progress bar, completion %, and provider availability
+- Update tests for new CLI structure (78 tests passing)
+EOF
+)" → exit 0
+[20:24:44] 🟢 TOKENS: 46374 / 200000 (23%) [read:175KB write:0KB assist:2KB shell:0KB]
+[20:24:46] 🟢 READ /Users/alex/repos/pyralph_fork/src/ralph/loop.py (371 lines, ~36.2KB)
+[20:24:52] 🟢 READ /Users/alex/repos/pyralph_fork/src/ralph/loop.py (371 lines, ~36.2KB)
+[20:25:15] 🟢 TOKENS: 64942 / 200000 (32%) [read:248KB write:0KB assist:2KB shell:0KB]
+[20:25:16] 🟢 READ /Users/alex/repos/pyralph_fork/src/ralph/cli.py (305 lines, ~29.8KB)
+[20:25:29] 🟢 READ /Users/alex/repos/pyralph_fork/src/ralph/cli.py (329 lines, ~32.1KB)
+[20:25:40] 🟢 READ /Users/alex/repos/pyralph_fork/tests/test_tokens.py (192 lines, ~18.8KB)
+[20:25:44] 🟢 SHELL cd /Users/alex/repos/pyralph_fork && uv run pytest -v → exit 0
+[20:25:46] 🟢 TOKENS: 85639 / 200000 (42%) [read:329KB write:0KB assist:2KB shell:0KB]
+[20:26:07] 🟢 SHELL cd /Users/alex/repos/pyralph_fork && uv run pytest -v → exit 0
+[20:26:17] 🟢 TOKENS: 85675 / 200000 (42%) [read:329KB write:0KB assist:2KB shell:0KB]

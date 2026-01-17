@@ -43,9 +43,9 @@ The task is complete when ALL of the following are true:
 
 ### Phase 3: CLI Improvements
 
-- [ ] Add `--version` flag that displays package version from pyproject.toml
-- [ ] Add `--verbose` / `-v` flag that enables detailed debug output
-- [ ] Add `ralph status <project_dir>` subcommand that shows task progress without running the loop (displays criteria count, completion percentage, current provider availability)
+- [x] Add `--version` flag that displays package version from pyproject.toml
+- [x] Add `--verbose` / `-v` flag that enables detailed debug output
+- [x] Add `ralph status <project_dir>` subcommand that shows task progress without running the loop (displays criteria count, completion percentage, current provider availability)
 
 ### Phase 4: Configuration & Flexibility
 

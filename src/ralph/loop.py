@@ -100,14 +100,29 @@ Begin by reading the state files.
 def run_single_iteration(
     workspace: Path, 
     provider,
-    iteration: int
+    iteration: int,
+    warn_threshold: int = tokens.WARN_THRESHOLD,
+    rotate_threshold: int = tokens.ROTATE_THRESHOLD,
+    timeout: int = 300,
 ) -> str:
-    """Run a single iteration. Returns signal (ROTATE, GUTTER, COMPLETE, or empty)."""
+    """Run a single iteration. Returns signal (ROTATE, GUTTER, COMPLETE, or empty).
+    
+    Args:
+        workspace: Project directory path
+        provider: LLM provider instance
+        iteration: Current iteration number
+        warn_threshold: Token count at which to warn about context size
+        rotate_threshold: Token count at which to trigger rotation
+        timeout: Timeout in seconds for provider operations (default 300)
+    """
     
     prompt = build_prompt(workspace, iteration)
     
-    # Create token tracker and gutter detector
-    token_tracker = tokens.TokenTracker()
+    # Create token tracker and gutter detector with configurable thresholds
+    token_tracker = tokens.TokenTracker(
+        warn_threshold=warn_threshold,
+        rotate_threshold=rotate_threshold,
+    )
     gutter_detector = gutter.GutterDetector()
     
     # Log session start
@@ -151,8 +166,21 @@ def run_ralph_loop(
     max_iterations: int,
     branch: Optional[str] = None,
     open_pr: bool = False,
+    warn_threshold: int = tokens.WARN_THRESHOLD,
+    rotate_threshold: int = tokens.ROTATE_THRESHOLD,
+    timeout: int = 300,
 ) -> None:
-    """Run the main Ralph loop with provider rotation."""
+    """Run the main Ralph loop with provider rotation.
+    
+    Args:
+        project_dir: Project directory path
+        max_iterations: Maximum number of iterations to run
+        branch: Optional branch name to create and work on
+        open_pr: Whether to open a PR when complete
+        warn_threshold: Token count at which to warn about context size
+        rotate_threshold: Token count at which to trigger rotation
+        timeout: Timeout in seconds for provider operations (default 300)
+    """
     from ralph.providers import get_provider_rotation
     
     workspace = project_dir.resolve()
@@ -198,7 +226,12 @@ def run_ralph_loop(
         
         try:
             # Run iteration
-            signal = run_single_iteration(workspace, provider, iteration)
+            signal = run_single_iteration(
+                workspace, provider, iteration,
+                warn_threshold=warn_threshold,
+                rotate_threshold=rotate_threshold,
+                timeout=timeout,
+            )
             
             # Check task completion
             task_file = workspace / "RALPH_TASK.md"

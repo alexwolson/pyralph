@@ -245,3 +245,34 @@ class TestCliDefaults:
         result = runner.invoke(main, ["run", "--help"])
 
         assert "default: 20" in result.output.lower() or "[default: 20]" in result.output
+
+
+class TestThresholdOptions:
+    """Tests for threshold CLI options."""
+
+    def test_warn_threshold_option_in_help(self) -> None:
+        """Test --warn-threshold option appears in help."""
+        runner = CliRunner()
+
+        result = runner.invoke(main, ["run", "--help"])
+
+        assert "--warn-threshold" in result.output
+        assert "180000" in result.output  # Default value
+
+    def test_rotate_threshold_option_in_help(self) -> None:
+        """Test --rotate-threshold option appears in help."""
+        runner = CliRunner()
+
+        result = runner.invoke(main, ["run", "--help"])
+
+        assert "--rotate-threshold" in result.output
+        assert "200000" in result.output  # Default value
+
+    def test_timeout_option_in_help(self) -> None:
+        """Test --timeout option appears in help."""
+        runner = CliRunner()
+
+        result = runner.invoke(main, ["run", "--help"])
+
+        assert "--timeout" in result.output
+        assert "300" in result.output  # Default value

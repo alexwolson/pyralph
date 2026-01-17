@@ -189,3 +189,47 @@ class TestThresholdConstants:
     def test_warn_is_less_than_rotate(self) -> None:
         """Test WARN_THRESHOLD is less than ROTATE_THRESHOLD."""
         assert WARN_THRESHOLD < ROTATE_THRESHOLD
+
+
+class TestConfigurableThresholds:
+    """Tests for configurable thresholds."""
+
+    def test_custom_warn_threshold(self) -> None:
+        """Test custom warn threshold is used."""
+        tracker = TokenTracker(warn_threshold=100_000, rotate_threshold=200_000)
+        # Add enough to pass 100_000 tokens (400_000 bytes - 3000 prompt = 397_000)
+        tracker.add_read(397_000)
+
+        result = tracker.should_warn()
+
+        assert result is True
+
+    def test_custom_rotate_threshold(self) -> None:
+        """Test custom rotate threshold is used."""
+        tracker = TokenTracker(warn_threshold=100_000, rotate_threshold=150_000)
+        # Add enough to pass 150_000 tokens (600_000 bytes - 3000 prompt = 597_000)
+        tracker.add_read(597_000)
+
+        result = tracker.should_rotate()
+
+        assert result is True
+
+    def test_custom_thresholds_in_health_emoji(self) -> None:
+        """Test custom thresholds affect health emoji calculation."""
+        # Use a small rotate_threshold so we can easily test percentages
+        tracker = TokenTracker(warn_threshold=8_000, rotate_threshold=10_000)
+        # 10_000 tokens = 40_000 bytes
+        # 80% of 10_000 = 8_000 tokens = 32_000 bytes
+        # Subtract prompt (3000), need 29_000 more bytes
+        tracker.add_read(29_000)
+
+        emoji = tracker.get_health_emoji()
+
+        assert emoji == "🔴"
+
+    def test_defaults_match_constants(self) -> None:
+        """Test default thresholds match module constants."""
+        tracker = TokenTracker()
+
+        assert tracker.warn_threshold == WARN_THRESHOLD
+        assert tracker.rotate_threshold == ROTATE_THRESHOLD

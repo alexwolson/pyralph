@@ -91,6 +91,27 @@ def main(ctx: click.Context, verbose: bool) -> None:
     default=None,
     help="Initial instruction for task creation (if RALPH_TASK.md doesn't exist)",
 )
+@click.option(
+    "--warn-threshold",
+    type=int,
+    default=180_000,
+    help="Token count at which to warn about context size",
+    show_default=True,
+)
+@click.option(
+    "--rotate-threshold",
+    type=int,
+    default=200_000,
+    help="Token count at which to trigger context rotation",
+    show_default=True,
+)
+@click.option(
+    "--timeout",
+    type=int,
+    default=300,
+    help="Timeout in seconds for provider operations",
+    show_default=True,
+)
 @click.pass_context
 def run(
     ctx: click.Context,
@@ -100,6 +121,9 @@ def run(
     pr: bool,
     once: bool,
     instruction: Optional[str],
+    warn_threshold: int,
+    rotate_threshold: int,
+    timeout: int,
 ) -> None:
     """Run the Ralph development loop on PROJECT_DIR.
 
@@ -183,7 +207,12 @@ def run(
             sys.exit(1)
         
         provider = provider_rotation.get_current()
-        signal = loop.run_single_iteration(project_dir, provider, 1)
+        signal = loop.run_single_iteration(
+            project_dir, provider, 1,
+            warn_threshold=warn_threshold,
+            rotate_threshold=rotate_threshold,
+            timeout=timeout,
+        )
         completion_status = task.check_completion(task_file)
         if completion_status == "COMPLETE":
             console.print("\n[green]🎉[/green] Task completed in single iteration!")
@@ -196,6 +225,9 @@ def run(
                 max_iterations=iterations,
                 branch=branch,
                 open_pr=pr,
+                warn_threshold=warn_threshold,
+                rotate_threshold=rotate_threshold,
+                timeout=timeout,
             )
         except KeyboardInterrupt:
             console.print("\n[yellow]⚠️[/yellow] Interrupted by user.")

@@ -1,6 +1,6 @@
 """Token tracking for Ralph."""
 
-# Token thresholds
+# Default token thresholds
 WARN_THRESHOLD = 180_000
 ROTATE_THRESHOLD = 200_000
 
@@ -8,13 +8,25 @@ ROTATE_THRESHOLD = 200_000
 class TokenTracker:
     """Track context token usage."""
 
-    def __init__(self):
+    def __init__(
+        self,
+        warn_threshold: int = WARN_THRESHOLD,
+        rotate_threshold: int = ROTATE_THRESHOLD,
+    ):
+        """Initialize token tracker with configurable thresholds.
+        
+        Args:
+            warn_threshold: Token count at which to warn about context size
+            rotate_threshold: Token count at which to trigger rotation
+        """
         self.bytes_read = 0
         self.bytes_written = 0
         self.assistant_chars = 0
         self.shell_output_chars = 0
         self.prompt_chars = 3000  # Initial prompt estimate
         self.warn_sent = False
+        self.warn_threshold = warn_threshold
+        self.rotate_threshold = rotate_threshold
 
     def add_read(self, bytes_count: int) -> None:
         """Add bytes from file read."""
@@ -46,7 +58,7 @@ class TokenTracker:
     def get_health_emoji(self) -> str:
         """Get health emoji based on token percentage."""
         tokens = self.calculate_tokens()
-        pct = (tokens * 100) // ROTATE_THRESHOLD
+        pct = (tokens * 100) // self.rotate_threshold
 
         if pct < 60:
             return "🟢"
@@ -58,11 +70,11 @@ class TokenTracker:
     def should_warn(self) -> bool:
         """Check if warning threshold reached (only once)."""
         tokens = self.calculate_tokens()
-        if tokens >= WARN_THRESHOLD and not self.warn_sent:
+        if tokens >= self.warn_threshold and not self.warn_sent:
             self.warn_sent = True
             return True
         return False
 
     def should_rotate(self) -> bool:
         """Check if rotation threshold reached."""
-        return self.calculate_tokens() >= ROTATE_THRESHOLD
+        return self.calculate_tokens() >= self.rotate_threshold
