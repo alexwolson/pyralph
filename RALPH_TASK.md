@@ -27,14 +27,14 @@ Upon successful task completion (after `archive_completed_task()` runs), archive
 
 The task is complete when ALL of the following are true:
 
-- [ ] Archive `progress.md` to `.ralph/completed/` alongside task archive
-- [ ] Archive `activity.log` to `.ralph/completed/` alongside task archive  
-- [ ] Archive `errors.log` to `.ralph/completed/` alongside task archive
-- [ ] `guardrails.md` is NOT touched (persists across tasks - contains learned lessons)
-- [ ] Archives use matching timestamp with the task archive for easy correlation
-- [ ] Original files are reset to empty/initial state after archiving
-- [ ] Cleanup runs automatically after `archive_completed_task()` completes
-- [ ] All existing tests pass (`uv run pytest -v`)
+- [x] Archive `progress.md` to `.ralph/completed/` alongside task archive
+- [x] Archive `activity.log` to `.ralph/completed/` alongside task archive  
+- [x] Archive `errors.log` to `.ralph/completed/` alongside task archive
+- [x] `guardrails.md` is NOT touched (persists across tasks - contains learned lessons)
+- [x] Archives use matching timestamp with the task archive for easy correlation
+- [x] Original files are reset to empty/initial state after archiving
+- [x] Cleanup runs automatically after `archive_completed_task()` completes
+- [x] All existing tests pass (`uv run pytest -v`)
 
 ## Implementation Notes
 
