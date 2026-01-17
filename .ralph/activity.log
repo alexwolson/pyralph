@@ -388,3 +388,10 @@ EOF
 )" → exit 0
 [15:19:11] ● SHELL uv run pytest -v → exit 0
 [15:19:17] ● TOKENS: 9311 / 80000 (11%) [read:32KB write:0KB assist:0KB shell:0KB]
+[15:19:21] ● SHELL git add -A && git commit -m "$(cat <<'EOF'
+ralph: add CHANGELOG.md with initial entry
+
+Created CHANGELOG.md with [0.1.0] - Unreleased section
+EOF
+)" → exit 0
+[15:19:36] ● SHELL uv run pytest -v → exit 0
