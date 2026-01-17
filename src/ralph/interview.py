@@ -218,7 +218,7 @@ def create_task_file(project_dir: Path, initial_instruction: Optional[str] = Non
     # Detect available providers and create rotation manager
     provider_rotation = get_provider_rotation()
     if not provider_rotation.providers:
-        console.print("[red]❌[/red] No LLM providers available. Please install cursor-agent, claude, gemini, or codex.")
+        console.print("[red]❌[/red] No LLM providers available. Please install agent, claude, gemini, or codex.")
         raise Exception("No LLM providers available for interview")
     
     console.print("\n[bold cyan]🤖 Starting LLM interview to create RALPH_TASK.md...[/bold cyan]")
@@ -247,12 +247,12 @@ def create_task_file(project_dir: Path, initial_instruction: Optional[str] = Non
     
     while attempt < max_attempts:
         provider = provider_rotation.get_current()
-        provider_name = provider_rotation.get_provider_name()
+        provider_display = provider.get_display_name() if hasattr(provider, 'get_display_name') else provider.cli_tool
         
         if attempt == 0:
-            console.print(f"[dim]🔌 Using LLM provider: {provider_name}[/dim]")
+            console.print(f"[dim]🔌 Using LLM provider: {provider_display}[/dim]")
         else:
-            console.print(f"[cyan]🔄 Trying LLM provider: {provider_name}[/cyan]")
+            console.print(f"[cyan]🔄 Trying LLM provider: {provider_display}[/cyan]")
         
         try:
             console.print("[bold green]💬 Interview started! The AI will ask questions...[/bold green]\n")
@@ -314,11 +314,11 @@ def create_task_file(project_dir: Path, initial_instruction: Optional[str] = Non
                     break
             
             # Conversation ended without creating task file
-            console.print(f"[yellow]⚠️[/yellow] Provider {provider_name} did not create task file after {turn} turns. Rotating...")
+            console.print(f"[yellow]⚠️[/yellow] Provider {provider_display} did not create task file after {turn} turns. Rotating...")
             
         except Exception as e:
             # Provider error - rotate to next provider
-            console.print(f"[yellow]⚠️[/yellow] Provider {provider_name} failed: {e}. Rotating...")
+            console.print(f"[yellow]⚠️[/yellow] Provider {provider_display} failed: {e}. Rotating...")
             
             # Clean up conversation file on error
             if conversation_file.exists():

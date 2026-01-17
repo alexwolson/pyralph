@@ -15,6 +15,7 @@ def archive_completed_task(workspace: Path) -> Optional[Path]:
     """Archive completed RALPH_TASK.md to .ralph/completed/ with timestamp.
     
     Returns the path to the archived file, or None if no task file exists.
+    Commits the archive operation to git for state persistence.
     """
     task_file = workspace / "RALPH_TASK.md"
     if not task_file.exists():
@@ -36,6 +37,12 @@ def archive_completed_task(workspace: Path) -> Optional[Path]:
         "loop.py:archive_completed_task",
         "Task archived",
         {"archive_path": str(archive_path)},
+    )
+    
+    # Commit the archive operation to git
+    git_utils.commit_changes(
+        workspace, 
+        f"ralph: archive completed task to {archive_name}"
     )
     
     return archive_path
@@ -158,9 +165,10 @@ def run_single_iteration(
     )
     gutter_detector = gutter.GutterDetector()
     
-    # Log session start
-    provider_name = provider.cli_tool if hasattr(provider, 'cli_tool') else str(type(provider).__name__)
-    state.log_progress(workspace, f"**Session {iteration} started** (provider: {provider_name})")
+    # Log session start - use display name for user-facing output
+    provider_display = provider.get_display_name() if hasattr(provider, 'get_display_name') else provider.cli_tool
+    provider_cli = provider.cli_tool if hasattr(provider, 'cli_tool') else str(type(provider).__name__)
+    state.log_progress(workspace, f"**Session {iteration} started** (provider: {provider_display})")
     
     # Build provider command with workspace directory
     cmd = provider.get_command(prompt, workspace)
@@ -198,7 +206,7 @@ def run_single_iteration(
                 debug_log(
                     "loop.py:run_single_iteration",
                     "Timeout reached - terminating provider",
-                    {"timeout": timeout, "elapsed": elapsed, "provider": provider_name},
+                    {"timeout": timeout, "elapsed": elapsed, "provider": provider_cli},
                 )
                 agent_process.terminate()
                 signal = "ROTATE"
@@ -207,7 +215,7 @@ def run_single_iteration(
         debug_log(
             "loop.py:run_single_iteration",
             "Exception during stream parsing",
-            {"error": str(e), "provider": provider_name},
+            {"error": str(e), "provider": provider_cli},
         )
         agent_process.terminate()
         raise
@@ -257,7 +265,7 @@ def run_ralph_loop(
     # Detect available providers and create rotation manager
     provider_rotation = get_provider_rotation()
     if not provider_rotation.providers:
-        raise Exception("No LLM providers available. Please install cursor-agent, claude, gemini, or codex.")
+        raise Exception("No LLM providers available. Please install agent, claude, gemini, or codex.")
     
     # Main loop
     iteration = 1

@@ -16,8 +16,16 @@ class BaseProvider(ABC):
 
     @abstractmethod
     def get_cli_tool_name(self) -> str:
-        """Return the CLI tool name (e.g., 'cursor-agent', 'claude')."""
+        """Return the CLI tool name (e.g., 'agent', 'claude')."""
         pass
+
+    def get_display_name(self) -> str:
+        """Return user-facing display name for this provider.
+        
+        Override in subclasses if display name differs from CLI tool name.
+        For example, the 'agent' CLI tool displays as 'cursor' to users.
+        """
+        return self.cli_tool
 
     @abstractmethod
     def get_command(self, prompt: str, workspace: Path) -> list[str]:

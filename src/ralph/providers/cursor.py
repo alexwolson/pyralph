@@ -1,4 +1,4 @@
-"""cursor-agent provider."""
+"""Cursor agent provider."""
 
 import json
 from pathlib import Path
@@ -8,16 +8,20 @@ from ralph.providers.base import BaseProvider
 
 
 class CursorProvider(BaseProvider):
-    """Provider for cursor-agent CLI."""
+    """Provider for Cursor agent CLI."""
 
     def get_cli_tool_name(self) -> str:
         """Return CLI tool name."""
-        return "cursor-agent"
+        return "agent"
+
+    def get_display_name(self) -> str:
+        """Return user-facing display name."""
+        return "cursor"
 
     def get_command(self, prompt: str, workspace: Path) -> list[str]:
-        """Return command to run cursor-agent."""
+        """Return command to run agent CLI."""
         return [
-            "cursor-agent",
+            "agent",
             "-p",
             "--force",
             "--output-format",
@@ -27,7 +31,7 @@ class CursorProvider(BaseProvider):
         ]
 
     def parse_stream_line(self, line: str) -> Optional[dict]:
-        """Parse cursor-agent stream-json output (pass-through, already correct format)."""
+        """Parse agent stream-json output (pass-through, already correct format)."""
         if not line.strip():
             return None
         

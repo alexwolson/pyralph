@@ -173,7 +173,7 @@ def run(
     from ralph.providers import detect_available_providers
     
     available_providers = detect_available_providers()
-    provider_names = [p.cli_tool if hasattr(p, 'cli_tool') else str(type(p).__name__) for p in available_providers]
+    provider_names = [p.get_display_name() if hasattr(p, 'get_display_name') else p.cli_tool for p in available_providers]
     
     console.print("\n[bold]🐛 Ralph Wiggum: Autonomous Development Loop[/bold]")
     console.print("")
@@ -203,7 +203,7 @@ def run(
         
         provider_rotation = get_provider_rotation()
         if not provider_rotation.providers:
-            console.print("[red]❌[/red] No LLM providers available. Please install cursor-agent, claude, gemini, or codex.")
+            console.print("[red]❌[/red] No LLM providers available. Please install agent, claude, gemini, or codex.")
             sys.exit(1)
         
         provider = provider_rotation.get_current()
@@ -296,7 +296,7 @@ def status(ctx: click.Context, project_dir: Path) -> None:
     from ralph.providers import detect_available_providers
     
     available_providers = detect_available_providers()
-    provider_names = [p.cli_tool if hasattr(p, 'cli_tool') else str(type(p).__name__) for p in available_providers]
+    provider_names = [p.get_display_name() if hasattr(p, 'get_display_name') else p.cli_tool for p in available_providers]
 
     # Display status
     console.print("\n[bold]📋 Ralph Task Status[/bold]")
@@ -334,7 +334,7 @@ def status(ctx: click.Context, project_dir: Path) -> None:
     console.print(f"[bold]Available providers:[/bold] {', '.join(provider_names) if provider_names else '[red]None[/red]'}")
     
     if not provider_names:
-        console.print("\n[yellow]⚠️[/yellow] No providers available. Install cursor-agent, claude, gemini, or codex.")
+        console.print("\n[yellow]⚠️[/yellow] No providers available. Install agent, claude, gemini, or codex.")
     
     console.print("")
 

@@ -81,3 +81,24 @@ All 7 success criteria are now complete.
 
 ### 2026-01-16 20:55:46
 **Session 1 ended** - ✅ TASK COMPLETE
+
+### 2026-01-16 20:58:35
+**Session 1 started** (provider: cursor)
+
+### 2026-01-16
+**Task archiving and cursor-agent rename completed**
+
+Completed work:
+- Fixed `archive_completed_task()` to commit archived files to git after moving
+- Added `get_display_name()` method to `BaseProvider` (defaults to cli_tool)
+- Updated `CursorProvider` to use "agent" as CLI tool and "cursor" as display name
+- Updated `PROVIDERS` dict key from "cursor-agent" to "agent"
+- Updated `rotation.py` to use `get_display_name()` for user-facing output
+- Updated `loop.py`, `cli.py`, and `interview.py` to use display names for user output
+- Updated error messages to reference "agent" instead of "cursor-agent"
+- Updated README.md Cursor Agent section to reflect "agent" command
+- All 82 relevant tests pass (3 pre-existing failures in test_tokens.py unrelated)
+
+All 9 success criteria are now complete.
+
+**Session 1 ended** - TASK COMPLETE

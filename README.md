@@ -182,13 +182,13 @@ ralph status ./my-project
 
 Ralph supports multiple LLM providers. Install at least one:
 
-### Cursor Agent (cursor-agent)
+### Cursor Agent (agent)
 
 The Cursor IDE agent. Must have Cursor installed with agent mode enabled.
 
 ```bash
 # Verify installation
-which cursor-agent
+which agent
 ```
 
 ### Claude (claude)

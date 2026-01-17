@@ -12,7 +12,7 @@ from ralph.providers.gemini import GeminiProvider
 from ralph.providers.rotation import ProviderRotation
 
 PROVIDERS = {
-    "cursor-agent": CursorProvider,
+    "agent": CursorProvider,
     "claude": ClaudeProvider,
     "gemini": GeminiProvider,
     "codex": CodexProvider,

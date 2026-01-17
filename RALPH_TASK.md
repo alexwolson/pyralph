@@ -49,15 +49,15 @@ The cursor-agent CLI tool has been renamed to just `agent` on the command line. 
 
 The task is complete when ALL of the following are true:
 
-- [ ] Archived task files are committed to git after being moved to .ralph/completed/
-- [ ] CursorProvider uses "agent" as CLI tool (not "cursor-agent")
-- [ ] BaseProvider has get_display_name() method returning user-facing name
-- [ ] CursorProvider.get_display_name() returns "cursor"
-- [ ] All user-facing output uses display name instead of CLI tool name
-- [ ] PROVIDERS dict in __init__.py uses "agent" key for CursorProvider
-- [ ] Error messages reference "agent" not "cursor-agent" for CLI installation
-- [ ] README.md updated to reflect "agent" command (if cursor-agent is mentioned)
-- [ ] All tests pass
+- [x] Archived task files are committed to git after being moved to .ralph/completed/
+- [x] CursorProvider uses "agent" as CLI tool (not "cursor-agent")
+- [x] BaseProvider has get_display_name() method returning user-facing name
+- [x] CursorProvider.get_display_name() returns "cursor"
+- [x] All user-facing output uses display name instead of CLI tool name
+- [x] PROVIDERS dict in __init__.py uses "agent" key for CursorProvider
+- [x] Error messages reference "agent" not "cursor-agent" for CLI installation
+- [x] README.md updated to reflect "agent" command (if cursor-agent is mentioned)
+- [x] All tests pass
 
 ## Constraints
 
