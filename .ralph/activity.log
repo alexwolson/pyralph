@@ -199,3 +199,17 @@ EOF
 [20:47:25] 🟢 SHELL cd /Users/alex/repos/pyralph && uv pip install pytest && uv run python -m pytest -v → exit 0
 [20:47:25] 🟢 TOKENS: 17312 / 80000 (21%) [read:63KB write:0KB assist:0KB shell:0KB]
 [20:47:30] 🟢 READ /Users/alex/repos/pyralph/src/ralph/loop.py (477 lines, ~46.6KB)
+[20:47:51] 🟢 SHELL cd /Users/alex/repos/pyralph && git add -A && git commit -m "$(cat <<'EOF'
+ralph: add commit-based rotation signal and task archival
+
+- Add ROTATE signal instruction in build_prompt() Git Protocol section
+- Create archive_completed_task() function with timestamp format YYYYMMDD_HHMMSS
+- Create .ralph/completed/ directory on demand using Path.mkdir
+- Integrate task archival into both completion branches in run_ralph_loop()
+- Mark all 4 criteria complete in RALPH_TASK.md
+
+EOF
+)" → exit 0
+[20:47:55] 🟢 TOKENS: 29315 / 80000 (36%) [read:110KB write:0KB assist:1KB shell:0KB]
+[20:47:56] 🟢 SHELL cd /Users/alex/repos/pyralph && git push → exit 0
+[20:48:01] ✅ Agent signaled COMPLETE
