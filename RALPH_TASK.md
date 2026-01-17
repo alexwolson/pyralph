@@ -33,13 +33,13 @@ The task is complete when ALL of the following are true:
 
 ### Phase 2: Testing
 
-- [ ] Create `tests/` directory with pytest configuration in `pyproject.toml`
-- [ ] Add unit tests for `task.py` (parsing, checkbox counting, completion check)
-- [ ] Add unit tests for `tokens.py` (threshold calculations, health emoji)
-- [ ] Add unit tests for `gutter.py` (failure tracking, write thrashing detection)
-- [ ] Add unit tests for `git_utils.py` (mocked subprocess calls)
-- [ ] Add integration test for CLI help and version output
-- [ ] All tests pass with `uv run pytest -v`
+- [x] Create `tests/` directory with pytest configuration in `pyproject.toml`
+- [x] Add unit tests for `task.py` (parsing, checkbox counting, completion check)
+- [x] Add unit tests for `tokens.py` (threshold calculations, health emoji)
+- [x] Add unit tests for `gutter.py` (failure tracking, write thrashing detection)
+- [x] Add unit tests for `git_utils.py` (mocked subprocess calls)
+- [x] Add integration test for CLI help and version output
+- [x] All tests pass with `uv run pytest -v`
 
 ### Phase 3: CLI Improvements
 
