@@ -24,6 +24,8 @@ def parse_stream(
     on_token_update: Optional[Callable[[tokens.TokenTracker], None]] = None,
     on_task_file_update: Optional[Callable[[Path], None]] = None,
     console: Optional[Console] = None,
+    timeout: Optional[float] = None,
+    start_time: Optional[float] = None,
 ) -> Iterator[str]:
     """Parse cursor-agent stream-json output and emit signals.
     
@@ -53,6 +55,15 @@ def parse_stream(
     lines_read = 0
     empty_lines = 0
     while True:
+        # Check timeout before blocking on readline
+        if timeout is not None and start_time is not None:
+            elapsed = time.time() - start_time
+            if elapsed > timeout:
+                # #region agent log
+                debug_log("parser.py:parse_stream", "Timeout reached before readline", {"timeout": timeout, "elapsed": elapsed, "hypothesisId": "TIMEOUT"})
+                # #endregion
+                break
+        
         line = agent_process.stdout.readline()
         if not line:
             # #region agent log

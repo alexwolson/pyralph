@@ -476,6 +476,23 @@ def run_verification_iteration(
     # Track start time for timeout
     start_time = time.time()
     
+    # Set up timeout thread to terminate process if timeout is exceeded
+    import threading
+    timeout_timer = None
+    if timeout:
+        def timeout_handler():
+            elapsed = time.time() - start_time
+            if elapsed >= timeout:
+                # #region agent log
+                debug_log("loop.py:run_verification_iteration", "Timeout thread terminating process", {"timeout": timeout, "elapsed": elapsed, "hypothesisId": "TIMEOUT"})
+                # #endregion
+                try:
+                    agent_process.terminate()
+                except Exception:
+                    pass
+        timeout_timer = threading.Timer(timeout, timeout_handler)
+        timeout_timer.start()
+    
     # Parse stream with timeout checking
     signal = ""
     try:
@@ -486,6 +503,8 @@ def run_verification_iteration(
             workspace, agent_process, token_tracker, gutter_detector, provider,
             on_token_update=on_token_update,
             console=console,
+            timeout=timeout,
+            start_time=start_time,
         ):
             signal = sig
             # #region agent log
@@ -515,10 +534,21 @@ def run_verification_iteration(
         )
         agent_process.terminate()
         signal = "VERIFY_FAIL"
+    finally:
+        # Cancel timeout timer if it's still running
+        if timeout_timer:
+            timeout_timer.cancel()
     
     # #region agent log
     debug_log("loop.py:run_verification_iteration", "parse_stream loop completed", {"final_signal": signal, "elapsed": time.time() - start_time, "hypothesisId": "G"})
     # #endregion
+    
+    # Check if timeout was the reason for termination
+    if not signal and timeout and (time.time() - start_time) >= timeout:
+        signal = "VERIFY_FAIL"
+        # #region agent log
+        debug_log("loop.py:run_verification_iteration", "Timeout detected after parse_stream", {"timeout": timeout, "elapsed": time.time() - start_time, "hypothesisId": "TIMEOUT2"})
+        # #endregion
     
     # Check stderr for any errors
     try:

@@ -1,78 +1,59 @@
 ---
-task: Clean up .ralph state files upon task completion to prevent context bloat
+task: Trivial test tasks to verify Ralph loop functionality
 completion_criteria:
-  - Archive progress.md to .ralph/completed/ alongside task archive
-  - Archive activity.log to .ralph/completed/ alongside task archive
-  - Archive errors.log to .ralph/completed/ alongside task archive
-  - Guardrails.md is NOT touched (persists across tasks)
-  - Archives use matching timestamp with the task archive
-  - Original files are reset to empty/initial state after archiving
-  - Cleanup runs automatically after archive_completed_task()
-  - Tests pass
-max_iterations: 15
-test_command: "uv run pytest -v"
+  - Add a comment to main.py noting it's the CLI entry point
+  - Create a .ralph/test_marker.txt file containing "Ralph was here"
+  - Add a docstring to the main() function in main.py if missing
+max_iterations: 10
+test_command: ""
 ---
 
-# Task: Clean Up .ralph State Files on Task Completion
+# Task: Trivial Test Run
 
-## Problem
-
-When `.ralph/` state files (`progress.md`, `activity.log`, `errors.log`) become too large, new agent iterations immediately consume their context window and trigger rotations. This creates a feedback loop where no progress can be made.
-
-## Solution
-
-Upon successful task completion (after `archive_completed_task()` runs), archive the accumulated state files to `.ralph/completed/` and reset them to their initial empty state.
+This is a test run of Ralph with simple tasks to verify the loop is working correctly.
 
 ## Success Criteria
 
 The task is complete when ALL of the following are true:
 
-- [x] Archive `progress.md` to `.ralph/completed/` alongside task archive
-- [x] Archive `activity.log` to `.ralph/completed/` alongside task archive  
-- [x] Archive `errors.log` to `.ralph/completed/` alongside task archive
-- [x] `guardrails.md` is NOT touched (persists across tasks - contains learned lessons)
-- [x] Archives use matching timestamp with the task archive for easy correlation
-- [x] Original files are reset to empty/initial state after archiving
-- [x] Cleanup runs automatically after `archive_completed_task()` completes
-- [x] All existing tests pass (`uv run pytest -v`)
-
-## Implementation Notes
-
-- Look at `archive_completed_task()` in `src/ralph/state.py` for the existing archive pattern
-- The function already archives `RALPH_TASK.md` with a timestamp - reuse that timestamp
-- Consider creating a helper function for archiving state files, or extending the existing archive function
-- Empty/initial state for logs is just empty files; for progress.md check if there's a template
+- [ ] Add a comment to `main.py` at the top (after the docstring) noting this file is the CLI entry point
+- [ ] Create a file `.ralph/test_marker.txt` containing the text "Ralph was here"
+- [ ] Ensure the `main()` function call in `main.py` has a brief inline comment explaining what it does
 
 ## Constraints
 
-- Do not modify or archive `guardrails.md` - it contains valuable cross-task learnings
-- Maintain backward compatibility with existing archive structure
-- Follow existing code patterns and style
+- Keep changes minimal - these are test tasks
+- Each task should take only a few seconds to complete
+- Commit after completing each criterion
 
 ---
 
 ## Ralph Instructions
 
-### Before Starting Work
+You are an autonomous agent working on this task. Follow these rules:
 
-1. Read `.ralph/guardrails.md` for project-specific rules and lessons learned
-2. Read `.ralph/progress.md` to understand what's already been done
-3. Check git log for recent commits and context
+### Before Starting
+1. Read `.ralph/progress.md` to see what's been done
+2. Read `.ralph/guardrails.md` for lessons learned (signs to follow)
+3. Check which criteria are already marked `[x]` complete
 
 ### Working Protocol
-
 1. Work on ONE unchecked criterion at a time
-2. Make small, focused commits with descriptive messages
-3. After completing a criterion, check it off in this file
-4. If you encounter an issue that future agents should avoid, add it to `.ralph/guardrails.md`
+2. After completing a criterion, mark it `[x]` in this file
+3. Commit your changes with a descriptive message
+4. Update `.ralph/progress.md` with what you accomplished
 
 ### Git Protocol
-
 - Commit after each meaningful change
-- Use clear commit messages that explain what and why
-- Never force push or rewrite history
+- Use clear commit messages describing what was done
+- Never amend commits - always create new ones
 
-### When Stuck
+### Signals
+- Output `<ralph>COMPLETE</ralph>` when ALL criteria are checked
+- Output `<ralph>GUTTER</ralph>` if you're stuck and need rotation
+- Output `ROTATE` if context is getting too long
 
-- If you're stuck on a criterion, document what you tried in `.ralph/progress.md`
-- The next agent iteration will pick up from your commits
+### Important
+- Don't skip criteria - work through them in order
+- If a criterion is unclear, make a reasonable interpretation
+- Check your work before marking complete
