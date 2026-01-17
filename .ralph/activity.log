@@ -166,3 +166,17 @@ EOF
 [20:35:54] 🟢 SHELL ~/.local/bin/ralph --help → exit 0
 [20:35:59] 🟢 SHELL make update → exit 0
 [20:36:11] 🟢 TOKENS: 12872 / 200000 (6%) [read:46KB write:0KB assist:1KB shell:0KB]
+[20:36:30] 🟢 SHELL git add -A && git commit -m "$(cat <<'EOF'
+feat: add Makefile for global uv tool installation
+
+- Add Makefile with install/update/uninstall/help targets
+- install uses 'uv tool install . --force' for isolated global CLI
+- update reinstalls from local repo to get latest changes
+- Update README with global installation documentation
+- ralph command installs to ~/.local/bin and works from any directory
+EOF
+)" → exit 0
+[20:36:33] 🟢 SHELL git push → exit 0
+[20:36:38] 🟢 SHELL make install && ls -la ~/.local/bin/ralph && ~/.local/bin/ralph --help → exit 0
+[20:36:41] 🟢 TOKENS: 12930 / 200000 (6%) [read:46KB write:0KB assist:1KB shell:0KB]
+[20:36:44] ✅ Agent signaled COMPLETE
