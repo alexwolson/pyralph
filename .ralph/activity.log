@@ -2,3 +2,24 @@
 
 > Real-time tool call logging from parser.
 
+[14:09:16] ═══════════════════════════════════════════════════════════════
+[14:09:16] Ralph Session Started: 2026-01-17 14:09:16.194842
+[14:09:17] SESSION START: provider=cursor
+[14:09:23] ● READ /Users/alex/repos/pyralph/RALPH_TASK.md (92 lines, ~9.0KB)
+[14:09:23] ● READ /Users/alex/repos/pyralph/.ralph/guardrails.md (26 lines, ~2.5KB)
+[14:09:23] ● READ /Users/alex/repos/pyralph/.ralph/progress.md (12 lines, ~1.2KB)
+[14:09:24] ● READ /Users/alex/repos/pyralph/.ralph/errors.log (5 lines, ~0.5KB)
+[14:09:29] ● READ /Users/alex/repos/pyralph/src/ralph/ui.py (317 lines, ~31.0KB)
+[14:09:30] ● READ /Users/alex/repos/pyralph/src/ralph/cli.py (724 lines, ~70.7KB)
+[14:09:30] ● READ /Users/alex/repos/pyralph/src/ralph/interview.py (352 lines, ~34.4KB)
+[14:09:30] ● READ /Users/alex/repos/pyralph/src/ralph/interview_turns.py (195 lines, ~19.0KB)
+[14:09:31] ● READ /Users/alex/repos/pyralph/src/ralph/__init__.py (4 lines, ~0.4KB)
+[14:09:33] ● READ /Users/alex/repos/pyralph/tests/test_cli.py (280 lines, ~27.3KB)
+[14:09:41] ● READ /Users/alex/repos/pyralph/README.md (352 lines, ~34.4KB)
+[14:09:41] ● READ /Users/alex/repos/pyralph/pyproject.toml (31 lines, ~3.0KB)
+[14:09:46] ● TOKENS: 60582 / 80000 (75%) - approaching limit [read:233KB write:0KB assist:0KB shell:0KB]
+[14:10:15] ● SHELL cd /Users/alex/repos/pyralph && python -m pytest tests/ -v → exit 0
+[14:10:17] ● TOKENS: 60673 / 80000 (75%) - approaching limit [read:233KB write:0KB assist:0KB shell:0KB]
+[14:10:20] ● SHELL cd /Users/alex/repos/pyralph && uv run pytest tests/ -v → exit 0
+[14:10:30] ● SHELL cd /Users/alex/repos/pyralph && uv pip install pytest && uv run pytest tests/ -v → exit 0
+[14:10:52] ● TOKENS: 60808 / 80000 (76%) - approaching limit [read:233KB write:0KB assist:1KB shell:0KB]

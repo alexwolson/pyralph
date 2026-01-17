@@ -34,7 +34,7 @@ class TestCliHelp:
         result = runner.invoke(main, ["--help"])
 
         assert result.exit_code == 0
-        assert "Ralph Wiggum" in result.output
+        assert "Ralph" in result.output
         assert "Autonomous development loop" in result.output
 
     def test_shows_available_commands(self) -> None:

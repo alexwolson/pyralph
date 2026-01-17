@@ -61,7 +61,7 @@ def print_version(ctx: click.Context, param: click.Parameter, value: bool) -> No
 )
 @click.pass_context
 def main(ctx: click.Context, verbose: bool) -> None:
-    """Ralph Wiggum - Autonomous development loop.
+    """Ralph - Autonomous development loop.
 
     Runs LLM providers in a loop to complete coding tasks autonomously.
     """
@@ -206,7 +206,7 @@ def run(
     provider_names = [p.get_display_name() if hasattr(p, 'get_display_name') else p.cli_tool for p in available_providers]
     
     console.print()
-    console.print(Rule(f"[bold {THEME['primary']}]Ralph Wiggum[/]", style=THEME["primary"]))
+    console.print(Rule(f"[bold {THEME['primary']}]Ralph[/]", style=THEME["primary"]))
     console.print()
     console.print(f"[{THEME['muted']}]Workspace:[/] {project_dir}")
     console.print(f"[{THEME['muted']}]Providers:[/] {', '.join(provider_names) if provider_names else 'None'}")

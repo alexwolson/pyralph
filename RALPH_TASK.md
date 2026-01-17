@@ -20,10 +20,10 @@ Rebrand the pyralph project to use:
 
 The task is complete when ALL of the following are true:
 
-- [ ] THEME primary color changed from cyan to yellow in ui.py
-- [ ] All "Ralph Wiggum" references replaced with "Ralph" throughout codebase
-- [ ] "AI Assistant" replaced with "Ralph" in interview_turns.py
-- [ ] Tests pass after branding changes
+- [x] THEME primary color changed from cyan to yellow in ui.py
+- [x] All "Ralph Wiggum" references replaced with "Ralph" throughout codebase
+- [x] "AI Assistant" replaced with "Ralph" in interview_turns.py
+- [x] Tests pass after branding changes
 
 ## Files to Update
 

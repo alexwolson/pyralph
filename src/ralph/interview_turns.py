@@ -82,7 +82,7 @@ def run_single_turn(
                             console.print()
                             console.print(Panel(
                                 Markdown(text),
-                                title="[bold cyan]AI Assistant[/]",
+                                title="[bold yellow]Ralph[/]",
                                 border_style=THEME["primary"],
                                 padding=(1, 2),
                             ))

@@ -1,4 +1,4 @@
-# Ralph Wiggum
+# Ralph
 
 **Python implementation of the Ralph autonomous development loop.**
 
@@ -348,4 +348,4 @@ MIT License - see LICENSE file for details.
 
 ## Acknowledgments
 
-Based on the Ralph Wiggum technique for autonomous development loops.
+Based on the Ralph technique for autonomous development loops.

@@ -23,7 +23,7 @@ from ralph import tokens
 
 # Consistent color theme
 THEME = {
-    "primary": "cyan",
+    "primary": "yellow",
     "success": "green",
     "warning": "yellow",
     "error": "red",
@@ -262,7 +262,7 @@ def get_criteria_list(task_file: Path) -> List[Tuple[str, bool]]:
     return criteria
 
 
-def print_header(console: Console, title: str = "Ralph Wiggum") -> None:
+def print_header(console: Console, title: str = "Ralph") -> None:
     """Print a styled header."""
     from rich.rule import Rule
     console.print()

@@ -48,9 +48,9 @@ def build_interview_prompt(project_dir: Path) -> str:
     """Build the interview prompt for cursor-agent."""
     context = analyze_project_context(project_dir)
     
-    prompt = f"""You are helping create a RALPH_TASK.md file for autonomous development using the Ralph Wiggum technique.
+    prompt = f"""You are helping create a RALPH_TASK.md file for autonomous development using the Ralph technique.
 
-## What is Ralph Wiggum?
+## What is Ralph?
 
 Ralph is an autonomous development technique. In its purest form, Ralph is a Bash loop that continuously feeds prompts to an LLM agent:
 
