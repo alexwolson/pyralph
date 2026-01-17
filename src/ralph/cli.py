@@ -404,6 +404,100 @@ def status(ctx: click.Context, project_dir: Path) -> None:
 
 
 @main.command()
+@click.pass_context
+def providers(ctx: click.Context) -> None:
+    """Show available LLM providers and their status.
+
+    Displays a table of detected providers with availability status
+    and indicates the current/next provider in the rotation order.
+    """
+    from rich.rule import Rule
+    from rich.table import Table
+    
+    from ralph.providers import detect_available_providers, get_provider_rotation, PROVIDERS
+    from ralph.ui import THEME
+    
+    console.print()
+    console.print(Rule(f"[bold {THEME['primary']}]LLM Providers[/]", style=THEME["primary"]))
+    console.print()
+    
+    # Get all known providers and which are available
+    available = detect_available_providers()
+    available_names = {p.get_display_name() if hasattr(p, 'get_display_name') else p.cli_tool for p in available}
+    
+    # Get rotation to show current/next
+    rotation = None
+    current_name = None
+    if available:
+        rotation = get_provider_rotation()
+        if rotation.providers:
+            current = rotation.get_current()
+            current_name = current.get_display_name() if hasattr(current, 'get_display_name') else current.cli_tool
+    
+    # Build table
+    table = Table(show_header=True, box=None, padding=(0, 2))
+    table.add_column("", width=3)  # Indicator column
+    table.add_column("Provider", style="bold")
+    table.add_column("CLI Tool")
+    table.add_column("Status")
+    table.add_column("Rotation")
+    
+    # Show all known providers
+    all_providers = list(PROVIDERS.items())
+    
+    for cli_name, provider_class in all_providers:
+        provider = provider_class()
+        display_name = provider.get_display_name() if hasattr(provider, 'get_display_name') else cli_name
+        
+        is_available = display_name in available_names
+        is_current = display_name == current_name
+        
+        # Indicator
+        if is_current:
+            indicator = f"[{THEME['accent']}]►[/]"
+        elif is_available:
+            indicator = f"[{THEME['success']}]●[/]"
+        else:
+            indicator = f"[{THEME['muted']}]○[/]"
+        
+        # Status
+        if is_available:
+            status = f"[{THEME['success']}]available[/]"
+        else:
+            status = f"[{THEME['muted']}]not found[/]"
+        
+        # Rotation position
+        if is_available and rotation:
+            try:
+                idx = [p.get_display_name() if hasattr(p, 'get_display_name') else p.cli_tool 
+                       for p in rotation.providers].index(display_name)
+                if is_current:
+                    rotation_text = f"[{THEME['accent']}]current[/]"
+                elif idx == 1:
+                    rotation_text = f"[{THEME['info']}]next[/]"
+                else:
+                    rotation_text = f"[{THEME['muted']}]#{idx + 1}[/]"
+            except ValueError:
+                rotation_text = f"[{THEME['muted']}]-[/]"
+        else:
+            rotation_text = f"[{THEME['muted']}]-[/]"
+        
+        table.add_row(indicator, display_name, cli_name, status, rotation_text)
+    
+    console.print(table)
+    console.print()
+    
+    # Summary
+    if available:
+        console.print(f"[{THEME['success']}]✓[/] {len(available)} provider(s) available for rotation")
+    else:
+        console.print(f"[{THEME['warning']}]⚠[/] No providers available")
+        console.print(f"[{THEME['muted']}]Install one of: agent, claude, gemini, codex[/]")
+    
+    console.print()
+
+
+@main.command()
 @click.argument(
     "project_dir",
     type=click.Path(exists=True, file_okay=False, dir_okay=True, path_type=Path),

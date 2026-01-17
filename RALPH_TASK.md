@@ -51,8 +51,8 @@ The task is complete when ALL of the following are true:
 - [x] Log viewing has paginated output for long logs
 
 ### Provider Display
-- [ ] Provider display shows table of available providers and status
-- [ ] Provider display shows visual indicator for current/next provider in rotation
+- [x] Provider display shows table of available providers and status
+- [x] Provider display shows visual indicator for current/next provider in rotation
 
 ### Error Handling
 - [ ] Error handling uses Rich tracebacks

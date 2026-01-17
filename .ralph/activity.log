@@ -397,3 +397,20 @@ EOF
 [21:16:52] 🟡 SHELL cd /Users/alex/repos/pyralph && uv run ralph logs . --no-pager --lines 30 2>&1 → exit 0
 [21:16:57] 🟡 SHELL cd /Users/alex/repos/pyralph && uv run ralph logs . --errors --no-pager 2>&1 → exit 0
 [21:17:08] 🟡 SHELL uv run pytest -v 2>&1 | tail -30 → exit 0
+[21:17:19] 🟡 SHELL git add -A && git commit -m "$(cat <<'EOF'
+ralph: add logs command with colored levels and pagination
+
+- Add 'ralph logs <project_dir>' command to view activity.log
+- Support --errors flag to view errors.log instead
+- Support --lines/-n to show only last N lines
+- Support --no-pager to disable pagination for short output
+- Color log levels: green for 🟢, yellow for 🟡, red for 🔴
+- Style session markers and timestamps distinctly
+- Handle multi-line code blocks in commit messages
+- Use rich.console.pager() for long output
+EOF
+)" → exit 0
+[21:17:22] 🟡 TOKENS: 48715 / 80000 (60%) [read:185KB write:0KB assist:2KB shell:0KB]
+[21:17:44] 🟡 SHELL uv run ralph providers 2>&1 → exit 0
+[21:17:55] 🟡 SHELL uv run pytest -v 2>&1 | tail -10 → exit 0
+[21:17:55] 🟡 TOKENS: 48762 / 80000 (60%) [read:185KB write:0KB assist:2KB shell:0KB]
