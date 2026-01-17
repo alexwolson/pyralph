@@ -3,6 +3,8 @@
 from pathlib import Path
 from typing import Optional
 
+from ralph.parser import parse_frontmatter
+
 
 def build_verification_prompt(workspace: Path, iteration: int) -> str:
     """Build a verification prompt for an independent agent to verify task completion.
@@ -20,17 +22,8 @@ def build_verification_prompt(workspace: Path, iteration: int) -> str:
     task_content = task_file.read_text(encoding="utf-8") if task_file.exists() else ""
     
     # Parse frontmatter to get test_command
-    test_command = "make test"  # default
-    if task_content.startswith("---"):
-        import yaml
-        import re
-        frontmatter_match = re.match(r"^---\n(.*?)\n---\n", task_content, re.DOTALL)
-        if frontmatter_match:
-            try:
-                frontmatter = yaml.safe_load(frontmatter_match.group(1)) or {}
-                test_command = frontmatter.get("test_command", "make test")
-            except yaml.YAMLError:
-                pass
+    frontmatter, _ = parse_frontmatter(task_content)
+    test_command = frontmatter.get("test_command", "make test")
     
     prompt = f"""# Ralph Verification Phase - Iteration {iteration}
 

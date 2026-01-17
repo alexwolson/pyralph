@@ -1,15 +1,49 @@
 """Stream parser for LLM provider output."""
 
+import re
 import subprocess
 import time
 from pathlib import Path
-from typing import Callable, Iterator, Optional
+from typing import Any, Callable, Dict, Iterator, Optional, Tuple
 
+import yaml
 from rich.console import Console
 
 from ralph import gutter, state, tokens
 from ralph.providers.base import BaseProvider
 from ralph.signals import Signal, TAG_COMPLETE, TAG_GUTTER, TAG_QUESTION, TAG_VERIFY_PASS, TAG_VERIFY_FAIL
+
+
+def parse_frontmatter(content: str) -> Tuple[Dict[str, Any], str]:
+    """Parse YAML frontmatter from markdown content.
+    
+    Extracts YAML frontmatter delimited by --- markers at the start of the content.
+    
+    Args:
+        content: The full markdown content to parse
+    
+    Returns:
+        A tuple of (frontmatter_dict, body_str) where:
+        - frontmatter_dict: Parsed YAML as a dict (empty if no frontmatter)
+        - body_str: The content after the frontmatter
+    
+    Example:
+        >>> content = "---\\ntask: Build feature\\nmax_iterations: 10\\n---\\n# Body"
+        >>> fm, body = parse_frontmatter(content)
+        >>> fm['task']
+        'Build feature'
+        >>> body
+        '# Body'
+    """
+    frontmatter_match = re.match(r"^---\n(.*?)\n---\n", content, re.DOTALL)
+    if frontmatter_match:
+        try:
+            frontmatter = yaml.safe_load(frontmatter_match.group(1)) or {}
+        except yaml.YAMLError:
+            frontmatter = {}
+        body = content[frontmatter_match.end():]
+        return frontmatter, body
+    return {}, content
 
 # Default console for standalone usage (not within Live context)
 _default_console = Console()

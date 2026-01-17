@@ -4,22 +4,13 @@ import re
 from pathlib import Path
 from typing import Dict, List, Tuple
 
-import yaml
+from ralph.parser import parse_frontmatter
 
 
 def parse_task_file(task_file: Path) -> Dict:
     """Parse RALPH_TASK.md file (frontmatter + markdown)."""
     content = task_file.read_text(encoding="utf-8")
-    
-    # Parse frontmatter
-    frontmatter_match = re.match(r"^---\n(.*?)\n---\n", content, re.DOTALL)
-    if frontmatter_match:
-        frontmatter_str = frontmatter_match.group(1)
-        frontmatter = yaml.safe_load(frontmatter_str) or {}
-        body = content[frontmatter_match.end() :]
-    else:
-        frontmatter = {}
-        body = content
+    frontmatter, body = parse_frontmatter(content)
     
     return {
         "frontmatter": frontmatter,

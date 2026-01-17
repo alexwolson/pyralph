@@ -227,3 +227,16 @@ EOF
 [15:05:13] ● TOKENS: 38282 / 80000 (47%) [read:145KB write:0KB assist:0KB shell:0KB]
 [15:05:34] ● SHELL uv run pytest -v → exit 0
 [15:05:43] ● TOKENS: 38390 / 80000 (47%) [read:145KB write:0KB assist:1KB shell:0KB]
+[15:05:49] ● SHELL git add -A && git commit -m "$(cat <<'EOF'
+ralph: remove hasattr checks for get_display_name()
+
+BaseProvider already has get_display_name() with default implementation.
+Removed all hasattr guards in cli.py, interview.py, and rotation.py.
+EOF
+)" → exit 0
+[15:05:54] ● READ /Users/alex/repos/pyralph/src/ralph/parser.py (318 lines, ~31.1KB)
+[15:05:54] ● READ /Users/alex/repos/pyralph/src/ralph/task.py (63 lines, ~6.2KB)
+[15:06:02] ● READ /Users/alex/repos/pyralph/src/ralph/prompts.py (195 lines, ~19.0KB)
+[15:06:14] ● TOKENS: 52878 / 80000 (66%) [read:202KB write:0KB assist:1KB shell:0KB]
+[15:06:38] ● SHELL uv run pytest -v → exit 0
+[15:06:45] ● TOKENS: 52928 / 80000 (66%) [read:202KB write:0KB assist:1KB shell:0KB]
