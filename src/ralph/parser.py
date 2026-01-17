@@ -31,7 +31,7 @@ def parse_stream(
         provider: LLM provider instance
         on_token_update: Optional callback for token tracker updates
     
-    Yields: "ROTATE", "WARN", "GUTTER", "COMPLETE", "QUESTION"
+    Yields: "ROTATE", "WARN", "GUTTER", "COMPLETE", "QUESTION", "VERIFY_PASS", "VERIFY_FAIL"
     """
     # Initialize activity log
     from datetime import datetime
@@ -133,6 +133,18 @@ def process_line(
                         state.log_activity(workspace, "❓ Agent has a question for user")
                         console.print("[cyan]❓ Agent has a question for user[/cyan]")
                         return "QUESTION"
+                    
+                    # Check for verification pass sigil
+                    if "<ralph>VERIFY_PASS</ralph>" in text:
+                        state.log_activity(workspace, "✅ Verification PASSED")
+                        console.print("[green]✅ Verification PASSED[/green]")
+                        return "VERIFY_PASS"
+                    
+                    # Check for verification fail sigil
+                    if "<ralph>VERIFY_FAIL</ralph>" in text:
+                        state.log_activity(workspace, "❌ Verification FAILED")
+                        console.print("[red]❌ Verification FAILED[/red]")
+                        return "VERIFY_FAIL"
 
     elif msg_type == "tool_call":
         if subtype == "started":

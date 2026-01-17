@@ -50,6 +50,87 @@ def archive_completed_task(workspace: Path) -> Optional[Path]:
     return archive_path
 
 
+def build_verification_prompt(workspace: Path, iteration: int) -> str:
+    """Build a verification prompt for an independent agent to verify task completion.
+    
+    Args:
+        workspace: Project directory path
+        iteration: Current iteration number
+    
+    Returns:
+        Verification prompt string
+    """
+    task_file = workspace / "RALPH_TASK.md"
+    
+    # Read task file to get requirements and test_command
+    task_content = task_file.read_text(encoding="utf-8") if task_file.exists() else ""
+    
+    # Parse frontmatter to get test_command
+    test_command = "make test"  # default
+    if task_content.startswith("---"):
+        import yaml
+        import re
+        frontmatter_match = re.match(r"^---\n(.*?)\n---\n", task_content, re.DOTALL)
+        if frontmatter_match:
+            try:
+                frontmatter = yaml.safe_load(frontmatter_match.group(1)) or {}
+                test_command = frontmatter.get("test_command", "make test")
+            except yaml.YAMLError:
+                pass
+    
+    prompt = f"""# Ralph Verification Phase - Iteration {iteration}
+
+You are an independent verification agent. A previous agent claimed to have completed the task. Your job is to verify whether the task is truly complete.
+
+## Your Role
+
+You are NOT the agent who completed the work. You are an independent reviewer who will:
+1. Run the test suite to verify all tests pass
+2. Review the code changes for quality and completeness
+3. Check that ALL requirements in RALPH_TASK.md are actually met
+4. Make a final judgment: PASS or FAIL
+
+## Task Being Verified
+
+Read RALPH_TASK.md to see the original task requirements and success criteria.
+
+## Verification Steps
+
+1. **Run Tests**: Execute `{test_command}` to verify all tests pass
+2. **Review Code**: Read the modified files to ensure:
+   - Code quality is acceptable
+   - No obvious bugs or issues
+   - Changes match what was required
+3. **Check Requirements**: Go through EACH success criterion in RALPH_TASK.md:
+   - Is it actually implemented?
+   - Does it work correctly?
+   - Are there edge cases missed?
+
+## Your Verdict
+
+After verification, output ONE of these signals:
+
+### If ALL requirements are met and tests pass:
+Output: `<ralph>VERIFY_PASS</ralph>`
+
+### If ANY requirement is NOT met, tests fail, or quality issues exist:
+1. Edit RALPH_TASK.md to uncheck the incomplete criteria (change `[x]` back to `[ ]`)
+2. Optionally add new criteria if you discovered missing requirements
+3. Write a brief explanation in `.ralph/progress.md` about what failed verification
+4. Output: `<ralph>VERIFY_FAIL</ralph>`
+
+## Important
+
+- Be thorough but fair - don't fail for minor style issues
+- Focus on functional correctness first
+- If tests pass and all criteria are genuinely met, approve it
+- If anything is incomplete or broken, fail it and be specific about why
+
+Begin verification by reading RALPH_TASK.md and running the test command.
+"""
+    return prompt
+
+
 def build_prompt(workspace: Path, iteration: int) -> str:
     """Build the Ralph prompt for an iteration."""
     task_file = workspace / "RALPH_TASK.md"
@@ -214,7 +295,7 @@ def run_single_iteration(
             on_token_update=on_token_update,
         ):
             signal = sig
-            if signal in ("ROTATE", "GUTTER", "COMPLETE", "QUESTION"):
+            if signal in ("ROTATE", "GUTTER", "COMPLETE", "QUESTION", "VERIFY_PASS", "VERIFY_FAIL"):
                 # Stop early if critical signal
                 agent_process.terminate()
                 break
@@ -249,6 +330,102 @@ def run_single_iteration(
     return signal
 
 
+def run_verification_iteration(
+    workspace: Path,
+    provider,
+    iteration: int,
+    warn_threshold: int,
+    rotate_threshold: int,
+    timeout: int,
+    on_token_update: Optional[Callable[[tokens.TokenTracker], None]] = None,
+) -> str:
+    """Run a verification iteration. Returns signal (VERIFY_PASS, VERIFY_FAIL, or empty).
+    
+    Args:
+        workspace: Project directory path
+        provider: LLM provider instance
+        iteration: Current iteration number
+        warn_threshold: Token count at which to warn about context size
+        rotate_threshold: Token count at which to trigger rotation
+        timeout: Timeout in seconds for provider operations
+        on_token_update: Optional callback for token tracker updates
+    """
+    prompt = build_verification_prompt(workspace, iteration)
+    
+    # Create token tracker and gutter detector with configurable thresholds
+    token_tracker = tokens.TokenTracker(
+        warn_threshold=warn_threshold,
+        rotate_threshold=rotate_threshold,
+    )
+    gutter_detector = gutter.GutterDetector()
+    
+    # Log verification start
+    provider_display = provider.get_display_name() if hasattr(provider, 'get_display_name') else provider.cli_tool
+    state.log_progress(workspace, f"**Verification started** (provider: {provider_display})")
+    
+    # Build provider command with workspace directory
+    cmd = provider.get_command(prompt, workspace)
+    
+    # Start agent process
+    agent_process = subprocess.Popen(
+        cmd,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        cwd=str(workspace),
+        text=False,
+    )
+    
+    # Send prompt
+    agent_process.stdin.write(prompt.encode("utf-8"))
+    agent_process.stdin.close()
+    
+    # Track start time for timeout
+    start_time = time.time()
+    
+    # Parse stream with timeout checking
+    signal = ""
+    try:
+        for sig in parser.parse_stream(
+            workspace, agent_process, token_tracker, gutter_detector, provider,
+            on_token_update=on_token_update,
+        ):
+            signal = sig
+            if signal in ("VERIFY_PASS", "VERIFY_FAIL", "ROTATE", "GUTTER"):
+                # Stop early if critical signal
+                agent_process.terminate()
+                break
+            
+            # Check timeout
+            elapsed = time.time() - start_time
+            if elapsed > timeout:
+                debug_log(
+                    "loop.py:run_verification_iteration",
+                    "Timeout reached - treating as verification fail",
+                    {"timeout": timeout, "elapsed": elapsed},
+                )
+                agent_process.terminate()
+                signal = "VERIFY_FAIL"
+                break
+    except Exception as e:
+        debug_log(
+            "loop.py:run_verification_iteration",
+            "Exception during verification",
+            {"error": str(e)},
+        )
+        agent_process.terminate()
+        signal = "VERIFY_FAIL"
+    
+    # Wait for process to finish with timeout
+    try:
+        agent_process.wait(timeout=10)
+    except subprocess.TimeoutExpired:
+        agent_process.kill()
+        agent_process.wait()
+    
+    return signal
+
+
 def run_ralph_loop(
     project_dir: Path,
     max_iterations: int,
@@ -257,6 +434,7 @@ def run_ralph_loop(
     warn_threshold: int = tokens.WARN_THRESHOLD,
     rotate_threshold: int = tokens.ROTATE_THRESHOLD,
     timeout: int = 300,
+    max_verification_failures: int = 3,
 ) -> None:
     """Run the main Ralph loop with provider rotation.
     
@@ -268,6 +446,7 @@ def run_ralph_loop(
         warn_threshold: Token count at which to warn about context size
         rotate_threshold: Token count at which to trigger rotation
         timeout: Timeout in seconds for provider operations (default 300)
+        max_verification_failures: Maximum consecutive verification failures before giving up (default 3)
     """
     # #region agent log
     debug_log_path = Path("/Users/alex/repos/pyralph/.cursor/debug.log")
@@ -326,6 +505,7 @@ def run_ralph_loop(
     
     # Main loop
     iteration = 1
+    verification_failures = 0
     
     from rich.console import Console
     console = Console()
@@ -432,32 +612,31 @@ def run_ralph_loop(
                 criteria = get_criteria_list(task_file)
                 live_display.update(criteria=criteria)
                 
-                if completion_status == "COMPLETE":
-                    state.log_progress(workspace, f"**Session {iteration} ended** - ✅ TASK COMPLETE")
-                    live_display.stop()
-                    console.print(f"\n[bold green]🎉 RALPH COMPLETE![/] All criteria satisfied.")
-                    console.print(f"Completed in {iteration} iteration(s).")
-                    
-                    # Archive completed task
-                    archive_path = archive_completed_task(workspace)
-                    if archive_path:
-                        console.print(f"[dim]📁 Task archived to: {archive_path.relative_to(workspace)}[/]")
-                        state.log_progress(workspace, f"**Task archived** to {archive_path.name}")
-                    
-                    # Open PR if requested
-                    if open_pr and branch:
-                        git_utils.push_branch(workspace, branch)
-                        git_utils.open_pr(workspace, branch)
-                    
-                    return
+                # Handle completion - either all checkboxes checked or agent signaled COMPLETE
+                should_verify = False
                 
-                # Handle signals
-                if signal == "COMPLETE":
-                    # Verify with checkbox check
-                    if completion_status == "COMPLETE":
-                        state.log_progress(workspace, f"**Session {iteration} ended** - ✅ TASK COMPLETE (agent signaled)")
+                if completion_status == "COMPLETE":
+                    # All checkboxes checked - trigger verification
+                    should_verify = True
+                    state.log_progress(workspace, f"**Session {iteration} ended** - All criteria checked, starting verification")
+                
+                if signal == "COMPLETE" and completion_status == "COMPLETE":
+                    # Agent signaled COMPLETE and all checkboxes checked
+                    should_verify = True
+                    state.log_progress(workspace, f"**Session {iteration} ended** - Agent signaled COMPLETE, starting verification")
+                elif signal == "COMPLETE" and completion_status != "COMPLETE":
+                    # Agent said complete but checkboxes say otherwise
+                    state.log_progress(workspace, f"**Session {iteration} ended** - Agent signaled complete but criteria remain")
+                    iteration += 1
+                    continue
+                
+                if should_verify:
+                    # Check if we've exceeded max verification failures
+                    if verification_failures >= max_verification_failures:
+                        state.log_progress(workspace, f"**Verification skipped** - Max failures ({max_verification_failures}) reached, completing anyway")
                         live_display.stop()
-                        console.print(f"\n[bold green]🎉 RALPH COMPLETE![/] Agent signaled completion and all criteria verified.")
+                        console.print(f"\n[yellow]⚠️  Max verification failures ({max_verification_failures}) reached.[/]")
+                        console.print(f"[bold green]🎉 RALPH COMPLETE![/] Completing without final verification.")
                         console.print(f"Completed in {iteration} iteration(s).")
                         
                         # Archive completed task
@@ -471,10 +650,73 @@ def run_ralph_loop(
                             git_utils.open_pr(workspace, branch)
                         
                         return
-                    else:
-                        # Agent said complete but checkboxes say otherwise
-                        state.log_progress(workspace, f"**Session {iteration} ended** - Agent signaled complete but criteria remain")
+                    
+                    # Rotate to a different provider for verification
+                    completing_provider_name = provider_rotation.get_provider_name()
+                    provider_rotation.rotate()
+                    verification_provider = provider_rotation.get_current()
+                    verification_provider_name = provider_rotation.get_provider_name()
+                    
+                    state.log_progress(workspace, f"**Verification phase** - Provider: {completing_provider_name} → {verification_provider_name}")
+                    console.print(f"\n[cyan]🔍 Starting verification phase with {verification_provider_name}...[/]")
+                    
+                    # Update live display for verification
+                    live_display.update(
+                        iteration=iteration,
+                        provider=f"verify:{verification_provider_name}",
+                        criteria=criteria,
+                    )
+                    
+                    # Run verification iteration
+                    verify_signal = run_verification_iteration(
+                        workspace,
+                        verification_provider,
+                        iteration,
+                        warn_threshold=warn_threshold,
+                        rotate_threshold=rotate_threshold,
+                        timeout=timeout,
+                        on_token_update=on_token_update,
+                    )
+                    
+                    if verify_signal == "VERIFY_PASS":
+                        # Verification passed - archive and exit
+                        state.log_progress(workspace, f"**Verification PASSED** - Task complete")
+                        live_display.stop()
+                        console.print(f"\n[bold green]🎉 RALPH COMPLETE![/] Task verified by independent agent.")
+                        console.print(f"Completed in {iteration} iteration(s).")
+                        
+                        # Archive completed task
+                        archive_path = archive_completed_task(workspace)
+                        if archive_path:
+                            console.print(f"[dim]📁 Task archived to: {archive_path.relative_to(workspace)}[/]")
+                            state.log_progress(workspace, f"**Task archived** to {archive_path.name}")
+                        
+                        if open_pr and branch:
+                            git_utils.push_branch(workspace, branch)
+                            git_utils.open_pr(workspace, branch)
+                        
+                        return
+                    
+                    elif verify_signal == "VERIFY_FAIL":
+                        # Verification failed - continue loop
+                        verification_failures += 1
+                        state.log_progress(workspace, f"**Verification FAILED** ({verification_failures}/{max_verification_failures}) - Continuing loop")
+                        console.print(f"[yellow]❌ Verification failed ({verification_failures}/{max_verification_failures}). Continuing...[/]")
+                        
+                        # Re-read criteria after verification agent may have unchecked some
+                        criteria = get_criteria_list(task_file)
+                        live_display.update(criteria=criteria)
+                        
                         iteration += 1
+                        continue
+                    
+                    else:
+                        # Unexpected signal or timeout - treat as verification failure
+                        verification_failures += 1
+                        state.log_progress(workspace, f"**Verification inconclusive** ({verification_failures}/{max_verification_failures}) - Signal: {verify_signal}")
+                        console.print(f"[yellow]⚠️  Verification inconclusive (signal: {verify_signal}). Treating as failure.[/]")
+                        iteration += 1
+                        continue
                         
                 elif signal == "ROTATE":
                     debug_log(

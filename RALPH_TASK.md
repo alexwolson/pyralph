@@ -34,23 +34,23 @@ The goal is to add a "trust but verify" step where a *different* provider review
 
 The task is complete when ALL of the following are true:
 
-- [ ] Add VERIFY_PASS and VERIFY_FAIL signals to parser.py (detect `<ralph>VERIFY_PASS</ralph>` and `<ralph>VERIFY_FAIL</ralph>`)
-- [ ] Create `build_verification_prompt()` function in loop.py that instructs the verification agent to:
+- [x] Add VERIFY_PASS and VERIFY_FAIL signals to parser.py (detect `<ralph>VERIFY_PASS</ralph>` and `<ralph>VERIFY_FAIL</ralph>`)
+- [x] Create `build_verification_prompt()` function in loop.py that instructs the verification agent to:
   - Run the test_command from RALPH_TASK.md frontmatter
   - Review code quality and completeness
   - Check that all requirements in the original task are actually met
   - Output `<ralph>VERIFY_PASS</ralph>` if satisfied, or `<ralph>VERIFY_FAIL</ralph>` if not
-- [ ] Add verification phase in `run_ralph_loop()` after COMPLETE is detected (before archiving)
-- [ ] Verification agent uses a **different** provider than the one that completed (call `provider_rotation.rotate()` before verification)
-- [ ] Verification agent runs test_command and checks results
-- [ ] Verification agent reviews code quality and completeness against original requirements
-- [ ] On VERIFY_FAIL: agent can uncheck criteria in RALPH_TASK.md (change `[x]` back to `[ ]`) or add new criteria if issues are found
-- [ ] On VERIFY_FAIL: loop continues with fresh agent iteration (increment iteration, continue loop)
-- [ ] On VERIFY_PASS: task is archived and loop exits normally (existing archive_completed_task flow)
-- [ ] Add `max_verification_failures` config (default 3) - if verification fails 3 times consecutively, give up and warn user
-- [ ] Add tests for VERIFY_PASS and VERIFY_FAIL signal detection in parser
-- [ ] Add tests for verification phase flow in loop
-- [ ] All existing tests pass (`make test`)
+- [x] Add verification phase in `run_ralph_loop()` after COMPLETE is detected (before archiving)
+- [x] Verification agent uses a **different** provider than the one that completed (call `provider_rotation.rotate()` before verification)
+- [x] Verification agent runs test_command and checks results
+- [x] Verification agent reviews code quality and completeness against original requirements
+- [x] On VERIFY_FAIL: agent can uncheck criteria in RALPH_TASK.md (change `[x]` back to `[ ]`) or add new criteria if issues are found
+- [x] On VERIFY_FAIL: loop continues with fresh agent iteration (increment iteration, continue loop)
+- [x] On VERIFY_PASS: task is archived and loop exits normally (existing archive_completed_task flow)
+- [x] Add `max_verification_failures` config (default 3) - if verification fails 3 times consecutively, give up and warn user
+- [x] Add tests for VERIFY_PASS and VERIFY_FAIL signal detection in parser
+- [x] Add tests for verification phase flow in loop
+- [x] All existing tests pass (`make test`)
 
 ## Implementation Notes
 
