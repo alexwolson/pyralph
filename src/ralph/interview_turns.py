@@ -1,10 +1,7 @@
 """Helper functions for turn-based interview using conversation file."""
 
-import json
-import os
 import readline  # Enables up-arrow history in input
 import subprocess
-import time
 from pathlib import Path
 from typing import Optional
 
@@ -17,10 +14,6 @@ from ralph.ui import THEME
 
 console = Console()
 
-# #region agent log
-_DEBUG_LOG_PATH = Path("/Users/alex/repos/pyralph/.cursor/debug.log")
-# #endregion
-
 
 def run_single_turn(
     provider,
@@ -31,80 +24,11 @@ def run_single_turn(
     
     Returns: (task_file_created, last_ai_message)
     """
-    # #region agent log
-    provider_name = provider.get_display_name() if hasattr(provider, 'get_display_name') else provider.cli_tool
-    log_entry = {
-        "id": f"log_{int(time.time() * 1000)}",
-        "timestamp": int(time.time() * 1000),
-        "location": "interview_turns.py:28",
-        "message": "run_single_turn entry",
-        "data": {
-            "provider": provider_name,
-            "conversation_file": str(conversation_file),
-            "conversation_file_exists": conversation_file.exists(),
-            "conversation_file_size": conversation_file.stat().st_size if conversation_file.exists() else 0,
-            "project_dir": str(project_dir)
-        },
-        "sessionId": "debug-session",
-        "runId": "interview",
-        "hypothesisId": "A"
-    }
-    try:
-        with open(_DEBUG_LOG_PATH, "a") as f:
-            f.write(json.dumps(log_entry) + "\n")
-    except Exception:
-        pass
-    # #endregion
-    
     # Read current conversation
     conversation_text = conversation_file.read_text(encoding="utf-8")
     
-    # #region agent log
-    log_entry = {
-        "id": f"log_{int(time.time() * 1000)}",
-        "timestamp": int(time.time() * 1000),
-        "location": "interview_turns.py:35",
-        "message": "conversation read",
-        "data": {
-            "provider": provider_name,
-            "conversation_length": len(conversation_text),
-            "conversation_preview": conversation_text[:200]
-        },
-        "sessionId": "debug-session",
-        "runId": "interview",
-        "hypothesisId": "A"
-    }
-    try:
-        with open(_DEBUG_LOG_PATH, "a") as f:
-            f.write(json.dumps(log_entry) + "\n")
-    except Exception:
-        pass
-    # #endregion
-    
     # Build provider command (use conversation as prompt)
     cmd = provider.get_command(conversation_text, project_dir)
-    
-    # #region agent log
-    log_entry = {
-        "id": f"log_{int(time.time() * 1000)}",
-        "timestamp": int(time.time() * 1000),
-        "location": "interview_turns.py:40",
-        "message": "command built",
-        "data": {
-            "provider": provider_name,
-            "cmd": cmd,
-            "cmd_string": " ".join(cmd)
-        },
-        "sessionId": "debug-session",
-        "runId": "interview",
-        "hypothesisId": "B"
-    }
-    try:
-        with open(_DEBUG_LOG_PATH, "a") as f:
-            f.write(json.dumps(log_entry) + "\n")
-    except Exception:
-        pass
-    # #endregion
     
     # Run provider with conversation file as stdin
     agent_process = subprocess.Popen(
@@ -124,9 +48,6 @@ def run_single_turn(
     last_ai_message = None
     task_file_created = False
     ai_response_parts = []
-    raw_line_count = 0
-    parsed_line_count = 0
-    stdout_lines = []
     
     while True:
         line = agent_process.stdout.readline()
@@ -135,9 +56,7 @@ def run_single_turn(
                 break
             continue
         
-        raw_line_count += 1
         line_text = line.decode("utf-8", errors="ignore").strip()
-        stdout_lines.append(line_text[:200] if len(line_text) > 200 else line_text)
         if not line_text:
             continue
         
@@ -145,8 +64,6 @@ def run_single_turn(
         data = provider.parse_stream_line(line_text)
         if data is None:
             continue
-        
-        parsed_line_count += 1
         
         msg_type = data.get("type", "")
         subtype = data.get("subtype", "")
@@ -198,36 +115,7 @@ def run_single_turn(
                             console.print(f"[green]✅[/green] RALPH_TASK.md created at {written_file}\n")
     
     # Wait for process
-    exit_code = agent_process.wait()
-    stderr_output = agent_process.stderr.read().decode("utf-8", errors="ignore")[:500] if agent_process.stderr else ""
-    
-    # #region agent log
-    log_entry = {
-        "id": f"log_{int(time.time() * 1000)}",
-        "timestamp": int(time.time() * 1000),
-        "location": "interview_turns.py:200",
-        "message": "process completed",
-        "data": {
-            "provider": provider_name,
-            "exit_code": exit_code,
-            "raw_line_count": raw_line_count,
-            "parsed_line_count": parsed_line_count,
-            "ai_response_parts_count": len(ai_response_parts),
-            "task_file_created": task_file_created,
-            "has_last_message": last_ai_message is not None,
-            "stderr_preview": stderr_output,
-            "stdout_sample": stdout_lines[:5] if stdout_lines else []
-        },
-        "sessionId": "debug-session",
-        "runId": "interview",
-        "hypothesisId": "C"
-    }
-    try:
-        with open(_DEBUG_LOG_PATH, "a") as f:
-            f.write(json.dumps(log_entry) + "\n")
-    except Exception:
-        pass
-    # #endregion
+    agent_process.wait()
     
     # Append AI response to conversation file if we got one
     if ai_response_parts:

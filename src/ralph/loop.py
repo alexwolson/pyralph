@@ -456,6 +456,8 @@ def run_ralph_loop(
                         iteration += 1
                         
             except Exception as e:
+                import traceback
+                error_traceback = traceback.format_exc()
                 debug_log(
                     "loop.py:run_ralph_loop",
                     "Exception caught - rotating provider",
@@ -463,7 +465,9 @@ def run_ralph_loop(
                         "iteration": iteration,
                         "current_provider": provider_name,
                         "current_index_before": provider_rotation.current_index,
-                        "error": str(e)
+                        "error": str(e),
+                        "error_type": type(e).__name__,
+                        "traceback": error_traceback
                     },
                     "C"
                 )
