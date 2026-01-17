@@ -16,9 +16,9 @@ This is a test run to verify Ralph is working correctly. Complete these simple f
 
 The task is complete when ALL of the following are true:
 
-- [ ] Add a `PROJECT_URL` constant to `src/ralph/__init__.py` with value `"https://github.com/pyralph/pyralph"`
-- [ ] Add a module-level docstring to `src/ralph/tokens.py` describing what the module does (if one doesn't already exist)
-- [ ] Add a `RALPH_EMOJI` constant to `src/ralph/__init__.py` with value `"🤖"`
+- [x] Add a `PROJECT_URL` constant to `src/ralph/__init__.py` with value `"https://github.com/pyralph/pyralph"`
+- [x] Add a module-level docstring to `src/ralph/tokens.py` describing what the module does (if one doesn't already exist)
+- [x] Add a `RALPH_EMOJI` constant to `src/ralph/__init__.py` with value `"🤖"`
 
 ## Constraints
 

@@ -241,3 +241,16 @@ All four criteria complete.
 
 ### 2026-01-17 15:25:05
 **Verification started** (provider: claude)
+
+### 2026-01-17 15:26:36
+**Session 1 started** (provider: cursor)
+
+### Trivial Test Tasks - Complete
+
+**Changes made:**
+
+1. **src/ralph/__init__.py**: Added `PROJECT_URL = "https://github.com/pyralph/pyralph"` constant
+2. **src/ralph/__init__.py**: Added `RALPH_EMOJI = "🤖"` constant
+3. **src/ralph/tokens.py**: Already had module-level docstring ("Token tracking for Ralph.")
+
+**Test results:** Test command passes - imports and prints both constants correctly
