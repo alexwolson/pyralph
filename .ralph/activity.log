@@ -334,3 +334,19 @@ EOF
 [21:11:49] 🔴 SHELL cd /Users/alex/repos/pyralph && uv run pytest tests/ -v 2>&1 → exit 0
 [21:12:00] 🔴 SHELL cd /Users/alex/repos/pyralph && uv pip install -e ".[dev]" && uv run python -m pytest tests/ -v 2>&1 → exit 0
 [21:12:07] 🔴 SHELL cd /Users/alex/repos/pyralph && uv run python -c "from ralph import ui, loop, parser; print('All imports successful')" 2>&1 → exit 0
+[21:12:16] 🔴 SHELL cd /Users/alex/repos/pyralph && git add -A && git commit -m "$(cat <<'EOF'
+ralph: add live progress display for ralph run command
+
+- Create ui.py module with RalphLiveDisplay class using rich.live.Live
+- Display shows spinner, iteration count, provider, token usage, elapsed time
+- Add live-updating criteria checklist during ralph run
+- Integrate token update callback to refresh display during iterations
+- Update loop.py and parser.py to use the live display system
+EOF
+)" → exit 0
+[21:12:19] 🔴 TOKENS: 64657 / 80000 (80%) - approaching limit [read:248KB write:0KB assist:1KB shell:0KB]
+[21:13:09] 🔴 TOKENS: 64682 / 80000 (80%) - approaching limit [read:248KB write:0KB assist:1KB shell:0KB]
+[21:13:19] 🔴 SHELL cd /Users/alex/repos/pyralph && uv run python -m pytest tests/test_cli.py -v 2>&1 → exit 0
+[21:13:35] 🔴 READ /Users/alex/repos/pyralph/tests/test_cli.py (279 lines, ~27.2KB)
+[21:13:40] 🔴 TOKENS: 71681 / 80000 (89%) - approaching limit [read:275KB write:0KB assist:1KB shell:0KB]
+[21:13:44] 🔴 SHELL cd /Users/alex/repos/pyralph && uv run python -m pytest tests/test_cli.py -v 2>&1 → exit 0

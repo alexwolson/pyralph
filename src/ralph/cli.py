@@ -255,10 +255,17 @@ def status(ctx: click.Context, project_dir: Path) -> None:
 
     Displays criteria count, completion percentage, and current provider availability.
     """
+    from rich.panel import Panel
+    from rich.progress import BarColumn, Progress, TextColumn
+    from rich.rule import Rule
+    from rich.table import Table
+    
+    from ralph.ui import THEME, get_criteria_list
+    
     # Validate it's a git repo
     if not git_utils.is_git_repo(project_dir):
         console.print(
-            f"[red]❌[/red] {project_dir} is not a git repository."
+            f"[{THEME['error']}]✗[/] {project_dir} is not a git repository."
         )
         sys.exit(1)
 
@@ -266,21 +273,22 @@ def status(ctx: click.Context, project_dir: Path) -> None:
 
     # Check if task file exists
     if not task_file.exists():
-        console.print(f"[yellow]⚠️[/yellow] No RALPH_TASK.md found in {project_dir}")
-        console.print("Run [bold]ralph run {project_dir}[/bold] to create a task.")
+        console.print(f"[{THEME['warning']}]⚠[/] No RALPH_TASK.md found in {project_dir}")
+        console.print(f"Run [bold]ralph run {project_dir}[/bold] to create a task.")
         sys.exit(1)
 
     # Parse task file
     try:
         task_data = task.parse_task_file(task_file)
     except Exception as e:
-        console.print(f"[red]❌[/red] Error parsing {task_file}: {e}")
+        console.print(f"[{THEME['error']}]✗[/] Error parsing {task_file}: {e}")
         sys.exit(1)
 
     # Get task info from frontmatter
     frontmatter = task_data.get("frontmatter", {})
     task_name = frontmatter.get("task", "Unnamed task")
     max_iterations = frontmatter.get("max_iterations", 20)
+    test_command = frontmatter.get("test_command", "")
 
     # Count criteria
     done, total = task.count_criteria(task_file)
@@ -298,45 +306,101 @@ def status(ctx: click.Context, project_dir: Path) -> None:
     available_providers = detect_available_providers()
     provider_names = [p.get_display_name() if hasattr(p, 'get_display_name') else p.cli_tool for p in available_providers]
 
-    # Display status
-    console.print("\n[bold]📋 Ralph Task Status[/bold]")
-    console.print("")
-    console.print(f"[bold]Task:[/bold] {task_name}")
-    console.print(f"[bold]Path:[/bold] {project_dir}")
-    console.print("")
+    # Print header
+    console.print()
+    console.print(Rule(f"[bold {THEME['primary']}]Ralph Task Status[/]", style=THEME["primary"]))
+    console.print()
     
-    # Progress bar
-    if total > 0:
-        bar_width = 30
-        filled = (done * bar_width) // total
-        empty = bar_width - filled
-        bar = "█" * filled + "░" * empty
-        
-        # Color based on completion
-        if completion_status == "COMPLETE":
-            bar_color = "green"
-            status_icon = "✅"
-        elif percentage >= 50:
-            bar_color = "yellow"
-            status_icon = "🔄"
-        else:
-            bar_color = "cyan"
-            status_icon = "🔄"
-        
-        console.print(f"[bold]Progress:[/bold] [{bar_color}]{bar}[/{bar_color}] {done}/{total} ({percentage}%) {status_icon}")
+    # Task summary panel
+    summary_text = f"[bold]{task_name}[/bold]\n"
+    summary_text += f"[{THEME['muted']}]Path: {project_dir}[/]\n"
+    summary_text += f"[{THEME['muted']}]Max iterations: {max_iterations}[/]"
+    if test_command:
+        summary_text += f"\n[{THEME['muted']}]Test command: {test_command}[/]"
+    
+    # Add completion status to panel
+    if completion_status == "COMPLETE":
+        status_text = f"[{THEME['success']}]✓ COMPLETE[/]"
+    elif total > 0:
+        remaining = total - done
+        status_text = f"[{THEME['warning']}]{remaining} criteria remaining[/]"
     else:
-        console.print("[bold]Progress:[/bold] No criteria defined")
+        status_text = f"[{THEME['muted']}]No criteria defined[/]"
     
-    console.print("")
-    console.print(f"[bold]Completion:[/bold] {completion_status}")
-    console.print(f"[bold]Max iterations:[/bold] {max_iterations}")
-    console.print("")
-    console.print(f"[bold]Available providers:[/bold] {', '.join(provider_names) if provider_names else '[red]None[/red]'}")
+    summary_text += f"\n\n{status_text}"
     
-    if not provider_names:
-        console.print("\n[yellow]⚠️[/yellow] No providers available. Install agent, claude, gemini, or codex.")
+    console.print(Panel(
+        summary_text,
+        title="[bold]Task Summary[/bold]",
+        border_style=THEME["primary"],
+        padding=(1, 2),
+    ))
+    console.print()
     
-    console.print("")
+    # Progress bar with percentage
+    if total > 0:
+        # Determine color based on completion
+        if completion_status == "COMPLETE":
+            bar_color = THEME["success"]
+        elif percentage >= 50:
+            bar_color = THEME["warning"]
+        else:
+            bar_color = THEME["primary"]
+        
+        # Create a simple progress bar display
+        progress = Progress(
+            TextColumn("[bold]Progress[/bold]"),
+            BarColumn(bar_width=40, complete_style=bar_color, finished_style=THEME["success"]),
+            TextColumn(f"[{bar_color}]{done}/{total}[/] ({percentage}%)"),
+            console=console,
+            transient=False,
+        )
+        
+        with progress:
+            task_id = progress.add_task("progress", total=total, completed=done)
+        
+        console.print()
+    
+    # Criteria checklist table
+    criteria = get_criteria_list(task_file)
+    if criteria:
+        console.print(Rule("[bold]Completion Criteria[/bold]", style=THEME["muted"]))
+        console.print()
+        
+        criteria_table = Table(show_header=False, box=None, padding=(0, 1))
+        criteria_table.add_column("Status", width=3)
+        criteria_table.add_column("Criterion", overflow="fold")
+        
+        for text, is_checked in criteria:
+            if is_checked:
+                status_mark = f"[{THEME['success']}]✓[/]"
+                style = THEME["muted"]
+            else:
+                status_mark = f"[{THEME['muted']}]○[/]"
+                style = ""
+            criteria_table.add_row(status_mark, f"[{style}]{text}[/]" if style else text)
+        
+        console.print(criteria_table)
+        console.print()
+    
+    # Provider availability section
+    console.print(Rule("[bold]Providers[/bold]", style=THEME["muted"]))
+    console.print()
+    
+    if provider_names:
+        provider_table = Table(show_header=True, box=None, padding=(0, 2))
+        provider_table.add_column("Provider", style="bold")
+        provider_table.add_column("Status")
+        
+        for name in provider_names:
+            provider_table.add_row(name, f"[{THEME['success']}]available[/]")
+        
+        console.print(provider_table)
+    else:
+        console.print(f"[{THEME['warning']}]⚠[/] No providers available.")
+        console.print(f"[{THEME['muted']}]Install agent, claude, gemini, or codex.[/]")
+    
+    console.print()
 
 
 if __name__ == "__main__":

@@ -211,7 +211,8 @@ max_iterations: 10
         assert result.exit_code == 0
         assert "Test task" in result.output
         assert "1/3" in result.output or "33%" in result.output
-        assert "INCOMPLETE" in result.output
+        # New UI shows "criteria remaining" instead of "INCOMPLETE"
+        assert "remaining" in result.output or "INCOMPLETE" in result.output
 
 
 class TestVerboseFlag:

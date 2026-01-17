@@ -32,8 +32,8 @@ Transform the pyralph CLI from functional to polished using Rich library feature
 The task is complete when ALL of the following are true:
 
 ### Live Progress Display (`ralph run`)
-- [ ] Live progress display for ralph run command with spinner, iteration count, provider, token usage, elapsed time
-- [ ] Live-updating criteria checklist during ralph run
+- [x] Live progress display for ralph run command with spinner, iteration count, provider, token usage, elapsed time
+- [x] Live-updating criteria checklist during ralph run
 
 ### Status Command Upgrade
 - [ ] Status command shows Rich table for completion criteria with checkmarks/crosses
