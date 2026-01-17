@@ -1,74 +1,71 @@
 ---
-task: Add commit-based rotation and completed task archival
+task: Pass workspace directory to CLI providers to eliminate cd prefix commands
 completion_criteria:
-  - Add ROTATE signal instruction after git commits in build_prompt()
-  - Archive completed RALPH_TASK.md to .ralph/completed/ with timestamp
-  - Ensure .ralph/completed/ directory is created if it doesn't exist
-  - Update tests if existing tests cover affected functionality
-max_iterations: 20
-test_command: "pytest"
+  - BaseProvider.get_command() accepts workspace parameter
+  - All providers pass directory flag to their CLI tool
+  - loop.py passes workspace to get_command()
+  - Tests pass
+max_iterations: 10
+test_command: "pytest tests/ -v"
 ---
 
-# Task: Add Commit-Based Rotation and Completed Task Archival
+# Task: Pass Workspace Directory to CLI Providers
 
-Implement two enhancements to the Ralph loop:
-
-1. **Rotation after commits**: Instruct agents via the prompt to signal ROTATE after successfully committing changes. This ensures fresh context after each meaningful checkpoint.
-
-2. **Archive completed tasks**: When a task completes successfully, rename `RALPH_TASK.md` to `.ralph/completed/RALPH_TASK_<timestamp>.md` so a new task file can be provided.
+The agent currently has to prefix every shell command with `cd /path/to/project &&` because the CLI tools don't know which directory they're working in. Fix this by passing the workspace path to each provider so they can use their directory flag.
 
 ## Success Criteria
 
 The task is complete when ALL of the following are true:
 
-- [x] Add instruction in `build_prompt()` (src/ralph/loop.py) telling agents to output `<ralph>ROTATE</ralph>` after making a git commit
-- [x] Modify completion handling in `run_ralph_loop()` to rename RALPH_TASK.md to `.ralph/completed/RALPH_TASK_<timestamp>.md` (format: `RALPH_TASK_20260116_143052.md`)
-- [x] Create `.ralph/completed/` directory if it doesn't exist before archiving
-- [x] Update any existing tests that may be affected by these changes (check tests/ directory)
-
-## Implementation Details
-
-### Criterion 1: Prompt update in build_prompt()
-Location: `src/ralph/loop.py`, function `build_prompt()`, around line 58
-
-Add to the "Git Protocol" section:
-```
-5. After committing, signal for fresh context: output `<ralph>ROTATE</ralph>`
-   This ensures each commit checkpoint gets a fresh agent context.
-```
-
-### Criterion 2 & 3: Archive completed tasks
-Location: `src/ralph/loop.py`, function `run_ralph_loop()`, around lines 268-292 (completion handling)
-
-When task is complete:
-1. Create `.ralph/completed/` directory if needed
-2. Generate timestamp string (format: `YYYYMMDD_HHMMSS`)
-3. Rename `RALPH_TASK.md` to `.ralph/completed/RALPH_TASK_<timestamp>.md`
-4. Log the archival action
+- [ ] `BaseProvider.get_command()` signature updated to accept `workspace: Path` parameter
+- [ ] `ClaudeProvider.get_command()` adds `--directory` flag with workspace path
+- [ ] `CursorProvider.get_command()` adds appropriate directory flag (check cursor-agent docs)
+- [ ] `CodexProvider.get_command()` adds `--cwd` flag with workspace path
+- [ ] `GeminiProvider.get_command()` adds appropriate directory flag (check gemini CLI docs)
+- [ ] `loop.py` updated to pass `workspace` when calling `provider.get_command()`
+- [ ] All existing tests pass
 
 ## Constraints
 
-- Use Python's `datetime` module for timestamp generation
-- Use `Path.mkdir(parents=True, exist_ok=True)` for directory creation
-- Use `Path.rename()` for file moving
-- Keep existing completion logic (PR opening, etc.) working
+- Keep changes minimal - this is a simple plumbing change
+- Don't over-engineer - just add the directory flag to each provider
+- If a CLI tool doesn't support a directory flag, document it and skip that provider
+
+## Files to Modify
+
+- `src/ralph/providers/base.py` - Update abstract method signature
+- `src/ralph/providers/claude.py` - Add --directory flag
+- `src/ralph/providers/cursor.py` - Add directory flag
+- `src/ralph/providers/codex.py` - Add --cwd flag
+- `src/ralph/providers/gemini.py` - Add directory flag
+- `src/ralph/loop.py` - Pass workspace to get_command()
 
 ---
 ## Ralph Instructions
 
-Read these state files before starting:
-- `RALPH_TASK.md` - this file, your task definition
-- `.ralph/guardrails.md` - lessons from past failures
-- `.ralph/progress.md` - what's been accomplished
+You are an autonomous development agent using the Ralph methodology.
 
-**Git Protocol:**
-1. Commit after completing each criterion
-2. Use descriptive commit messages: `ralph: <what you did>`
-3. Push after every 2-3 commits
-4. After committing, output `<ralph>ROTATE</ralph>` for fresh context
+### FIRST: Read State Files
 
-**Progress tracking:**
-- Mark criteria complete by changing `[ ]` to `[x]` in this file
-- Update `.ralph/progress.md` with accomplishments
-- When ALL criteria show `[x]`: output `<ralph>COMPLETE</ralph>`
-- If stuck 3+ times on same issue: output `<ralph>GUTTER</ralph>`
+Before doing anything:
+1. Read `RALPH_TASK.md` - your task and completion criteria
+2. Read `.ralph/guardrails.md` - lessons from past failures (FOLLOW THESE)
+3. Read `.ralph/progress.md` - what's been accomplished
+
+### Git Protocol (Critical)
+
+Ralph's strength is state-in-git, not LLM memory. Commit early and often:
+
+1. After completing each criterion, commit your changes
+2. After any significant code change: commit with descriptive message
+3. Push after every 2-3 commits: `git push`
+4. After committing, signal for fresh context: output `<ralph>ROTATE</ralph>`
+
+### Task Execution
+
+1. Work on the next unchecked criterion (look for `[ ]`)
+2. Run tests after changes: `pytest tests/ -v`
+3. **Mark completed criteria**: Edit RALPH_TASK.md and change `[ ]` to `[x]`
+4. Update `.ralph/progress.md` with what you accomplished
+5. When ALL criteria show `[x]`: output `<ralph>COMPLETE</ralph>`
+6. If stuck 3+ times on same issue: output `<ralph>GUTTER</ralph>`
