@@ -1,91 +1,78 @@
 ---
-task: Update branding and color scheme to yellow-forward "Ralph"
+task: Clean up .ralph state files upon task completion to prevent context bloat
 completion_criteria:
-  - "THEME primary color changed from cyan to yellow in ui.py"
-  - "All \"Ralph Wiggum\" references replaced with \"Ralph\" throughout codebase"
-  - "\"AI Assistant\" replaced with \"Ralph\" in interview_turns.py"
-  - "Tests pass after branding changes"
-max_iterations: 10
-test_command: "python -m pytest tests/ -v"
+  - Archive progress.md to .ralph/completed/ alongside task archive
+  - Archive activity.log to .ralph/completed/ alongside task archive
+  - Archive errors.log to .ralph/completed/ alongside task archive
+  - Guardrails.md is NOT touched (persists across tasks)
+  - Archives use matching timestamp with the task archive
+  - Original files are reset to empty/initial state after archiving
+  - Cleanup runs automatically after archive_completed_task()
+  - Tests pass
+max_iterations: 15
+test_command: "uv run pytest -v"
 ---
 
-# Task: Update Branding and Color Scheme
+# Task: Clean Up .ralph State Files on Task Completion
 
-Rebrand the pyralph project to use:
-1. **Yellow-forward color scheme** instead of cyan
-2. **"Ralph"** branding instead of "Ralph Wiggum"
-3. **"Ralph"** instead of "AI Assistant" in UI panels
+## Problem
+
+When `.ralph/` state files (`progress.md`, `activity.log`, `errors.log`) become too large, new agent iterations immediately consume their context window and trigger rotations. This creates a feedback loop where no progress can be made.
+
+## Solution
+
+Upon successful task completion (after `archive_completed_task()` runs), archive the accumulated state files to `.ralph/completed/` and reset them to their initial empty state.
 
 ## Success Criteria
 
 The task is complete when ALL of the following are true:
 
-- [x] THEME primary color changed from cyan to yellow in ui.py
-- [x] All "Ralph Wiggum" references replaced with "Ralph" throughout codebase
-- [x] "AI Assistant" replaced with "Ralph" in interview_turns.py
-- [x] Tests pass after branding changes
+- [ ] Archive `progress.md` to `.ralph/completed/` alongside task archive
+- [ ] Archive `activity.log` to `.ralph/completed/` alongside task archive  
+- [ ] Archive `errors.log` to `.ralph/completed/` alongside task archive
+- [ ] `guardrails.md` is NOT touched (persists across tasks - contains learned lessons)
+- [ ] Archives use matching timestamp with the task archive for easy correlation
+- [ ] Original files are reset to empty/initial state after archiving
+- [ ] Cleanup runs automatically after `archive_completed_task()` completes
+- [ ] All existing tests pass (`uv run pytest -v`)
 
-## Files to Update
+## Implementation Notes
 
-1. **src/ralph/ui.py**
-   - Change `"primary": "cyan"` to `"primary": "yellow"` in THEME dict
-   - Update `print_header` default title from "Ralph Wiggum" to "Ralph"
-
-2. **src/ralph/cli.py**
-   - Line 64: CLI help text docstring
-   - Line 209: Console output header
-
-3. **src/ralph/interview.py**
-   - Lines 51-53: Prompt text references to "Ralph Wiggum"
-
-4. **src/ralph/interview_turns.py**
-   - Line 85: Change "AI Assistant" to "Ralph" in panel title
-
-5. **src/ralph/__init__.py**
-   - Line 1: Module docstring
-
-6. **tests/test_cli.py**
-   - Line 37: Update test assertion from "Ralph Wiggum" to "Ralph"
-
-7. **README.md**
-   - Line 1: Title
-   - Line 351: Reference text
-
-8. **pyproject.toml**
-   - Line 4: Package description
+- Look at `archive_completed_task()` in `src/ralph/state.py` for the existing archive pattern
+- The function already archives `RALPH_TASK.md` with a timestamp - reuse that timestamp
+- Consider creating a helper function for archiving state files, or extending the existing archive function
+- Empty/initial state for logs is just empty files; for progress.md check if there's a template
 
 ## Constraints
 
-- Keep the yellow color readable (use bold styling where needed for visibility)
-- Maintain consistency across all files
-- Ensure tests still pass after changes
+- Do not modify or archive `guardrails.md` - it contains valuable cross-task learnings
+- Maintain backward compatibility with existing archive structure
+- Follow existing code patterns and style
 
 ---
 
 ## Ralph Instructions
 
-You are an autonomous agent working through this task. Follow these steps:
+### Before Starting Work
 
-1. **Read state files first**:
-   - Read `.ralph/guardrails.md` for lessons learned
-   - Read `.ralph/progress.md` for previous progress
-   - Read this file (RALPH_TASK.md) for current criteria status
+1. Read `.ralph/guardrails.md` for project-specific rules and lessons learned
+2. Read `.ralph/progress.md` to understand what's already been done
+3. Check git log for recent commits and context
 
-2. **Work on ONE unchecked criterion at a time**:
-   - Find the first unchecked `- [ ]` criterion
-   - Complete all work needed for that criterion
-   - Mark it complete by changing `- [ ]` to `- [x]`
+### Working Protocol
 
-3. **Commit after each criterion**:
-   - Stage your changes with `git add`
-   - Commit with a descriptive message
-   - Push if on a branch
+1. Work on ONE unchecked criterion at a time
+2. Make small, focused commits with descriptive messages
+3. After completing a criterion, check it off in this file
+4. If you encounter an issue that future agents should avoid, add it to `.ralph/guardrails.md`
 
-4. **Run tests after changes**:
-   - Run `python -m pytest tests/ -v` to verify changes
-   - Fix any failing tests before marking criterion complete
+### Git Protocol
 
-5. **If stuck or context is high**:
-   - Commit current progress
-   - Add notes to `.ralph/progress.md`
-   - The next agent will continue from your commit
+- Commit after each meaningful change
+- Use clear commit messages that explain what and why
+- Never force push or rewrite history
+
+### When Stuck
+
+- If you're stuck on a criterion, document what you tried in `.ralph/progress.md`
+- The next agent iteration will pick up from your commits

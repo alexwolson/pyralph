@@ -373,6 +373,9 @@ def run_verification_iteration(
     
     # Build provider command with workspace directory
     cmd = provider.get_command(prompt, workspace)
+    # #region agent log
+    debug_log("loop.py:run_verification_iteration", "Starting verification subprocess", {"cmd": cmd, "prompt_length": len(prompt), "provider": provider_display, "hypothesisId": "A"})
+    # #endregion
     
     # Start agent process
     agent_process = subprocess.Popen(
@@ -383,10 +386,17 @@ def run_verification_iteration(
         cwd=str(workspace),
         text=False,
     )
+    # #region agent log
+    debug_log("loop.py:run_verification_iteration", "Subprocess started", {"pid": agent_process.pid, "returncode": agent_process.returncode, "hypothesisId": "A"})
+    # #endregion
     
     # Send prompt
-    agent_process.stdin.write(prompt.encode("utf-8"))
+    prompt_bytes = prompt.encode("utf-8")
+    agent_process.stdin.write(prompt_bytes)
     agent_process.stdin.close()
+    # #region agent log
+    debug_log("loop.py:run_verification_iteration", "Prompt written to stdin", {"bytes_written": len(prompt_bytes), "hypothesisId": "B"})
+    # #endregion
     
     # Track start time for timeout
     start_time = time.time()
@@ -394,12 +404,18 @@ def run_verification_iteration(
     # Parse stream with timeout checking
     signal = ""
     try:
+        # #region agent log
+        debug_log("loop.py:run_verification_iteration", "Starting parse_stream iteration", {"hypothesisId": "C"})
+        # #endregion
         for sig in parser.parse_stream(
             workspace, agent_process, token_tracker, gutter_detector, provider,
             on_token_update=on_token_update,
             console=console,
         ):
             signal = sig
+            # #region agent log
+            debug_log("loop.py:run_verification_iteration", "Received signal from parse_stream", {"signal": signal, "hypothesisId": "F"})
+            # #endregion
             if signal in ("VERIFY_PASS", "VERIFY_FAIL", "ROTATE", "GUTTER"):
                 # Stop early if critical signal
                 agent_process.terminate()
@@ -420,10 +436,24 @@ def run_verification_iteration(
         debug_log(
             "loop.py:run_verification_iteration",
             "Exception during verification",
-            {"error": str(e)},
+            {"error": str(e), "error_type": type(e).__name__},
         )
         agent_process.terminate()
         signal = "VERIFY_FAIL"
+    
+    # #region agent log
+    debug_log("loop.py:run_verification_iteration", "parse_stream loop completed", {"final_signal": signal, "elapsed": time.time() - start_time, "hypothesisId": "G"})
+    # #endregion
+    
+    # Check stderr for any errors
+    try:
+        stderr_output = agent_process.stderr.read()
+        if stderr_output:
+            # #region agent log
+            debug_log("loop.py:run_verification_iteration", "Stderr output from subprocess", {"stderr": stderr_output.decode("utf-8", errors="ignore")[:500], "hypothesisId": "H"})
+            # #endregion
+    except Exception:
+        pass
     
     # Wait for process to finish with timeout
     try:
@@ -431,6 +461,10 @@ def run_verification_iteration(
     except subprocess.TimeoutExpired:
         agent_process.kill()
         agent_process.wait()
+    
+    # #region agent log
+    debug_log("loop.py:run_verification_iteration", "Verification iteration complete", {"final_signal": signal, "process_returncode": agent_process.returncode, "hypothesisId": "I"})
+    # #endregion
     
     return signal
 
