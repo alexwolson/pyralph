@@ -8,7 +8,6 @@ from typing import Callable, Iterator, Optional
 from rich.console import Console
 
 from ralph import gutter, state, tokens
-from ralph.debug import debug_log
 from ralph.providers.base import BaseProvider
 
 # Default console for standalone usage (not within Live context)
@@ -24,8 +23,6 @@ def parse_stream(
     on_token_update: Optional[Callable[[tokens.TokenTracker], None]] = None,
     on_task_file_update: Optional[Callable[[Path], None]] = None,
     console: Optional[Console] = None,
-    timeout: Optional[float] = None,
-    start_time: Optional[float] = None,
 ) -> Iterator[str]:
     """Parse cursor-agent stream-json output and emit signals.
     
@@ -52,42 +49,19 @@ def parse_stream(
     last_token_log = int(time.time())
 
     # Read line by line from agent stdout
-    lines_read = 0
-    empty_lines = 0
     while True:
-        # Check timeout before blocking on readline
-        if timeout is not None and start_time is not None:
-            elapsed = time.time() - start_time
-            if elapsed > timeout:
-                # #region agent log
-                debug_log("parser.py:parse_stream", "Timeout reached before readline", {"timeout": timeout, "elapsed": elapsed, "hypothesisId": "TIMEOUT"})
-                # #endregion
-                break
-        
         line = agent_process.stdout.readline()
         if not line:
-            # #region agent log
-            debug_log("parser.py:parse_stream", "No more output from subprocess", {"lines_read": lines_read, "empty_lines": empty_lines, "returncode": agent_process.poll(), "hypothesisId": "D"})
-            # #endregion
             # Process ended
             break
 
-        lines_read += 1
         line = line.decode("utf-8", errors="ignore").strip()
         if not line:
-            empty_lines += 1
             continue
-
-        # #region agent log
-        debug_log("parser.py:parse_stream", "Read line from stdout", {"line_number": lines_read, "line_preview": line[:100], "hypothesisId": "C"})
-        # #endregion
 
         # Parse line using provider adapter
         data = provider.parse_stream_line(line)
         if data is None:
-            # #region agent log
-            debug_log("parser.py:parse_stream", "Line parsed as None by provider", {"line_preview": line[:100], "hypothesisId": "E"})
-            # #endregion
             continue
 
         signal = process_line(

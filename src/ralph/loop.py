@@ -448,9 +448,6 @@ def run_verification_iteration(
     
     # Build provider command with workspace directory
     cmd = provider.get_command(prompt, workspace)
-    # #region agent log
-    debug_log("loop.py:run_verification_iteration", "Starting verification subprocess", {"cmd": cmd, "prompt_length": len(prompt), "provider": provider_display, "hypothesisId": "A"})
-    # #endregion
     
     # Start agent process
     agent_process = subprocess.Popen(
@@ -461,55 +458,36 @@ def run_verification_iteration(
         cwd=str(workspace),
         text=False,
     )
-    # #region agent log
-    debug_log("loop.py:run_verification_iteration", "Subprocess started", {"pid": agent_process.pid, "returncode": agent_process.returncode, "hypothesisId": "A"})
-    # #endregion
     
     # Send prompt
-    prompt_bytes = prompt.encode("utf-8")
-    agent_process.stdin.write(prompt_bytes)
+    agent_process.stdin.write(prompt.encode("utf-8"))
     agent_process.stdin.close()
-    # #region agent log
-    debug_log("loop.py:run_verification_iteration", "Prompt written to stdin", {"bytes_written": len(prompt_bytes), "hypothesisId": "B"})
-    # #endregion
     
     # Track start time for timeout
     start_time = time.time()
     
     # Set up timeout thread to terminate process if timeout is exceeded
+    # This ensures readline() doesn't block indefinitely
     import threading
     timeout_timer = None
     if timeout:
         def timeout_handler():
-            elapsed = time.time() - start_time
-            if elapsed >= timeout:
-                # #region agent log
-                debug_log("loop.py:run_verification_iteration", "Timeout thread terminating process", {"timeout": timeout, "elapsed": elapsed, "hypothesisId": "TIMEOUT"})
-                # #endregion
-                try:
-                    agent_process.terminate()
-                except Exception:
-                    pass
+            try:
+                agent_process.terminate()
+            except Exception:
+                pass
         timeout_timer = threading.Timer(timeout, timeout_handler)
         timeout_timer.start()
     
     # Parse stream with timeout checking
     signal = ""
     try:
-        # #region agent log
-        debug_log("loop.py:run_verification_iteration", "Starting parse_stream iteration", {"hypothesisId": "C"})
-        # #endregion
         for sig in parser.parse_stream(
             workspace, agent_process, token_tracker, gutter_detector, provider,
             on_token_update=on_token_update,
             console=console,
-            timeout=timeout,
-            start_time=start_time,
         ):
             signal = sig
-            # #region agent log
-            debug_log("loop.py:run_verification_iteration", "Received signal from parse_stream", {"signal": signal, "hypothesisId": "F"})
-            # #endregion
             if signal in ("VERIFY_PASS", "VERIFY_FAIL", "ROTATE", "GUTTER"):
                 # Stop early if critical signal
                 agent_process.terminate()
@@ -539,26 +517,9 @@ def run_verification_iteration(
         if timeout_timer:
             timeout_timer.cancel()
     
-    # #region agent log
-    debug_log("loop.py:run_verification_iteration", "parse_stream loop completed", {"final_signal": signal, "elapsed": time.time() - start_time, "hypothesisId": "G"})
-    # #endregion
-    
     # Check if timeout was the reason for termination
     if not signal and timeout and (time.time() - start_time) >= timeout:
         signal = "VERIFY_FAIL"
-        # #region agent log
-        debug_log("loop.py:run_verification_iteration", "Timeout detected after parse_stream", {"timeout": timeout, "elapsed": time.time() - start_time, "hypothesisId": "TIMEOUT2"})
-        # #endregion
-    
-    # Check stderr for any errors
-    try:
-        stderr_output = agent_process.stderr.read()
-        if stderr_output:
-            # #region agent log
-            debug_log("loop.py:run_verification_iteration", "Stderr output from subprocess", {"stderr": stderr_output.decode("utf-8", errors="ignore")[:500], "hypothesisId": "H"})
-            # #endregion
-    except Exception:
-        pass
     
     # Wait for process to finish with timeout
     try:
@@ -566,10 +527,6 @@ def run_verification_iteration(
     except subprocess.TimeoutExpired:
         agent_process.kill()
         agent_process.wait()
-    
-    # #region agent log
-    debug_log("loop.py:run_verification_iteration", "Verification iteration complete", {"final_signal": signal, "process_returncode": agent_process.returncode, "hypothesisId": "I"})
-    # #endregion
     
     return signal
 
