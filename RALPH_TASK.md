@@ -20,7 +20,7 @@ The task is complete when ALL of the following are true:
 - [x] Add `authors` field to `pyproject.toml` with value `[{name = "Ralph Test"}]`
 - [x] Create `CHANGELOG.md` in the project root with a "## [0.1.0] - Unreleased" section containing "- Initial release"
 - [x] Add `__author__ = "Ralph Test"` to `src/ralph/__init__.py` after the existing `__version__` line
-- [ ] Update the `description` field in `pyproject.toml` to append " for autonomous coding" at the end
+- [x] Update the `description` field in `pyproject.toml` to append " for autonomous coding" at the end
 
 ## Constraints
 
