@@ -65,6 +65,27 @@ def main(ctx: click.Context, verbose: bool) -> None:
 
     Runs LLM providers in a loop to complete coding tasks autonomously.
     """
+    # #region agent log
+    import json
+    import time
+    debug_log_path = Path("/Users/alex/repos/pyralph/.cursor/debug.log")
+    try:
+        with open(debug_log_path, "a") as f:
+            log_entry = {
+                "id": f"log_{int(time.time() * 1000)}",
+                "timestamp": int(time.time() * 1000),
+                "location": "cli.py:main",
+                "message": "cli main entry",
+                "data": {"verbose": verbose, "invoked_subcommand": ctx.invoked_subcommand},
+                "sessionId": "debug-session",
+                "runId": "ralph-loop",
+                "hypothesisId": "H1",
+            }
+            f.write(json.dumps(log_entry) + "\n")
+    except Exception:
+        pass
+    # #endregion
+
     # Store verbose flag in context for subcommands
     ctx.ensure_object(dict)
     ctx.obj["verbose"] = verbose
@@ -152,6 +173,33 @@ def run(
     If RALPH_TASK.md is missing, will interview you to create it.
     Automatically rotates between available providers on failure or gutter.
     """
+    # #region agent log
+    import json
+    import time
+    debug_log_path = Path("/Users/alex/repos/pyralph/.cursor/debug.log")
+    try:
+        with open(debug_log_path, "a") as f:
+            log_entry = {
+                "id": f"log_{int(time.time() * 1000)}",
+                "timestamp": int(time.time() * 1000),
+                "location": "cli.py:run",
+                "message": "run command entry",
+                "data": {
+                    "project_dir": str(project_dir),
+                    "iterations": iterations,
+                    "once": once,
+                    "branch": branch,
+                    "pr": pr,
+                },
+                "sessionId": "debug-session",
+                "runId": "ralph-loop",
+                "hypothesisId": "H1",
+            }
+            f.write(json.dumps(log_entry) + "\n")
+    except Exception:
+        pass
+    # #endregion
+
     verbose = ctx.obj.get("verbose", False)
     
     # Validate prerequisites
@@ -256,6 +304,24 @@ def run(
             console.print(f"\n📋 Single iteration complete. {remaining} criteria remaining.")
     else:
         try:
+            # #region agent log
+            try:
+                with open(debug_log_path, "a") as f:
+                    log_entry = {
+                        "id": f"log_{int(time.time() * 1000)}",
+                        "timestamp": int(time.time() * 1000),
+                        "location": "cli.py:run",
+                        "message": "before run_ralph_loop",
+                        "data": {"project_dir": str(project_dir)},
+                        "sessionId": "debug-session",
+                        "runId": "ralph-loop",
+                        "hypothesisId": "H2",
+                    }
+                    f.write(json.dumps(log_entry) + "\n")
+            except Exception:
+                pass
+            # #endregion
+
             loop.run_ralph_loop(
                 project_dir=project_dir,
                 max_iterations=iterations,
