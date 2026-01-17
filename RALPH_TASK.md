@@ -28,8 +28,8 @@ The task is complete when ALL of the following are true:
 
 ### Phase 1: Critical Cleanup
 
-- [ ] Remove hardcoded debug log paths from `loop.py` and `rotation.py` - replace with proper configurable logging using Python's logging module or optional file output
-- [ ] Extract duplicated `_debug_log` function from `loop.py` and `rotation.py` into a shared `debug.py` module (or remove entirely if replaced with logging)
+- [x] Remove hardcoded debug log paths from `loop.py` and `rotation.py` - replace with proper configurable logging using Python's logging module or optional file output
+- [x] Extract duplicated `_debug_log` function from `loop.py` and `rotation.py` into a shared `debug.py` module (or remove entirely if replaced with logging)
 
 ### Phase 2: Testing
 

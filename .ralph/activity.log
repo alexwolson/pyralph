@@ -29,3 +29,20 @@
 [20:19:37] 🟢 SHELL cd /Users/alex/repos/pyralph_fork && uv run python -c "from ralph.debug import debug_log, setup_logging; from ralph.loop import build_prompt; from ralph.providers.rotation import ProviderRotation; print('All imports successful!')" → exit 0
 [20:19:41] 🟢 SHELL cd /Users/alex/repos/pyralph_fork && rm -rf .venv && unset VIRTUAL_ENV && uv sync → exit 0
 [20:19:46] 🟢 SHELL cd /Users/alex/repos/pyralph_fork && uv run python -c "from ralph.debug import debug_log, setup_logging; from ralph.loop import build_prompt; from ralph.providers.rotation import ProviderRotation; print('All imports successful!')" → exit 0
+[20:19:52] 🟢 SHELL cd /Users/alex/repos/pyralph_fork && git add -A && git commit -m "$(cat <<'EOF'
+ralph: replace hardcoded debug logging with configurable shared module
+
+- Create src/ralph/debug.py with proper Python logging module
+- Remove hardcoded /Users/alex/repos/pyralph/.cursor/debug.log paths
+- Update loop.py to use shared debug_log function
+- Update providers/rotation.py to use shared debug_log function
+- Support configurable verbose mode and optional file logging
+EOF
+)" → exit 0
+[20:20:00] 🟢 TOKENS: 41460 / 200000 (20%) [read:157KB write:0KB assist:1KB shell:0KB]
+[20:20:10] 🟢 READ /Users/alex/repos/pyralph_fork/pyproject.toml (22 lines, ~2.1KB)
+[20:20:20] 🟢 SHELL cd /Users/alex/repos/pyralph_fork && uv sync --extra dev && mkdir -p tests → exit 0
+[20:20:39] 🟢 TOKENS: 42056 / 200000 (21%) [read:160KB write:0KB assist:1KB shell:0KB]
+[20:21:22] 🟢 TOKENS: 42076 / 200000 (21%) [read:160KB write:0KB assist:1KB shell:0KB]
+[20:22:02] 🟢 TOKENS: 42104 / 200000 (21%) [read:160KB write:0KB assist:1KB shell:0KB]
+[20:22:06] 🟢 SHELL cd /Users/alex/repos/pyralph_fork && uv run pytest -v → exit 0
