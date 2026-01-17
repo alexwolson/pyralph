@@ -1,8 +1,8 @@
 """Token tracking for Ralph."""
 
 # Default token thresholds
-WARN_THRESHOLD = 180_000
-ROTATE_THRESHOLD = 200_000
+WARN_THRESHOLD = 72_000
+ROTATE_THRESHOLD = 80_000
 
 
 class TokenTracker:

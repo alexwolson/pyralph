@@ -257,7 +257,7 @@ class TestThresholdOptions:
         result = runner.invoke(main, ["run", "--help"])
 
         assert "--warn-threshold" in result.output
-        assert "180000" in result.output  # Default value
+        assert "72000" in result.output  # Default value
 
     def test_rotate_threshold_option_in_help(self) -> None:
         """Test --rotate-threshold option appears in help."""
@@ -266,7 +266,7 @@ class TestThresholdOptions:
         result = runner.invoke(main, ["run", "--help"])
 
         assert "--rotate-threshold" in result.output
-        assert "200000" in result.output  # Default value
+        assert "80000" in result.output  # Default value
 
     def test_timeout_option_in_help(self) -> None:
         """Test --timeout option appears in help."""

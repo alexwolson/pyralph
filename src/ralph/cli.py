@@ -94,14 +94,14 @@ def main(ctx: click.Context, verbose: bool) -> None:
 @click.option(
     "--warn-threshold",
     type=int,
-    default=180_000,
+    default=72_000,
     help="Token count at which to warn about context size",
     show_default=True,
 )
 @click.option(
     "--rotate-threshold",
     type=int,
-    default=200_000,
+    default=80_000,
     help="Token count at which to trigger context rotation",
     show_default=True,
 )

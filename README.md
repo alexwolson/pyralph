@@ -151,8 +151,8 @@ Options:
   --pr                       Open PR when complete (requires --branch)
   --once                     Run single iteration only (for testing)
   --instruction TEXT         Initial instruction for task creation
-  --warn-threshold INTEGER   Token count for context warning [default: 180000]
-  --rotate-threshold INTEGER Token count to trigger rotation [default: 200000]
+  --warn-threshold INTEGER   Token count for context warning [default: 72000]
+  --rotate-threshold INTEGER Token count to trigger rotation [default: 80000]
   --timeout INTEGER          Provider operation timeout in seconds [default: 300]
 ```
 
@@ -172,7 +172,7 @@ ralph run ./my-project --once
 ralph run ./my-project --instruction "Add user authentication with JWT tokens"
 
 # Use custom token thresholds
-ralph run ./my-project --warn-threshold 150000 --rotate-threshold 180000
+ralph run ./my-project --warn-threshold 60000 --rotate-threshold 72000
 
 # Check task progress without running
 ralph status ./my-project
@@ -258,8 +258,8 @@ The task is complete when ALL of the following are true:
 
 Control when Ralph warns about context size and rotates to fresh context:
 
-- `--warn-threshold`: Token count at which to warn (default: 180,000)
-- `--rotate-threshold`: Token count to trigger rotation (default: 200,000)
+- `--warn-threshold`: Token count at which to warn (default: 72,000)
+- `--rotate-threshold`: Token count to trigger rotation (default: 80,000)
 
 ### Timeout
 
