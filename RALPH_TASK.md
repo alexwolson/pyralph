@@ -16,9 +16,9 @@ This is a test run of Ralph with simple tasks that require minimal file modifica
 
 The task is complete when ALL of the following are true:
 
-- [ ] Add a module-level docstring to `src/ralph/signals.py` describing its purpose (e.g., "Signal handling for Ralph agent communication")
-- [ ] Add a `DESCRIPTION` constant to `src/ralph/__init__.py` with a one-line project description string
-- [ ] Add a comment at the top of `main.py` (after any existing comments) explaining it is the CLI entry point for the ralph command
+- [x] Add a module-level docstring to `src/ralph/signals.py` describing its purpose (e.g., "Signal handling for Ralph agent communication")
+- [x] Add a `DESCRIPTION` constant to `src/ralph/__init__.py` with a one-line project description string
+- [x] Add a comment at the top of `main.py` (after any existing comments) explaining it is the CLI entry point for the ralph command
 
 ## Constraints
 
