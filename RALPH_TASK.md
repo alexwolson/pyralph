@@ -1,127 +1,85 @@
 ---
-task: Fix Rich UI integration and implement comprehensive terminal display
+task: Fix infinite verification loop
 completion_criteria:
-  - Live progress display with spinner, iteration count, provider, tokens, elapsed time works correctly during ralph run
-  - Live-updating criteria checklist updates in real-time as criteria are completed
-  - Parser console output integrates with Live display without conflicts
-  - Rich table for completion criteria in status command works
-  - Progress bar with percentage works in status command
-  - Task summary panel displays correctly
-  - Styled panels for AI questions in interview work
-  - Markdown rendering in interview responses works
-  - Rich.prompt with history support for interview input
-  - Syntax-highlighted code blocks in logs command
-  - Colored log levels display correctly
-  - Paginated log output works
-  - Provider table with availability status works
-  - Visual indicator for current/next provider in rotation works
-  - Rich tracebacks for errors work
-  - Styled error panels with helpful messages work
-  - Rule separators between sections work
-  - Consistent color theme across all commands
-max_iterations: 30
-test_command: "python -m pytest tests/ -v && ralph status . && ralph providers"
+  - Verification failure triggers a cooldown or state flag to prevent immediate re-verification
+  - After VERIFY_FAIL, the loop runs at least one regular work iteration before allowing another verification
+  - If verification agent doesn't uncheck criteria, the loop doesn't infinitely re-verify
+  - Add test coverage for the verification loop behavior
+  - All existing tests pass
+max_iterations: 20
+test_command: "make test"
 ---
 
-# Task: Fix Rich UI Integration and Implement Terminal Display
+# Task: Fix Infinite Verification Loop
 
-The Ralph CLI has Rich UI components defined in `ui.py` but they're not working correctly in practice due to integration issues.
+## Problem
 
-## Root Cause (Already Identified)
+The Ralph loop enters an infinite verification cycle when:
+1. All criteria are checked → triggers verification
+2. Verification fails (VERIFY_FAIL) but agent doesn't uncheck any criteria
+3. Next iteration sees all criteria still checked → triggers verification again
+4. Repeat forever
 
-The main bug is in `parser.py` which has a global `console = Console()` and makes direct `console.print()` calls. These conflict with `RalphLiveDisplay` which uses `rich.live.Live`. Direct console prints during a Live context cause display interference.
+## Root Cause
 
-**Solution approach:**
-1. Pass the live display or a callback to the parser so it can route output through the live display
-2. Use `Live.console.print()` for output during live display, or
-3. Batch console output and emit through the live display's update mechanism
-4. Consider using `Live(console=console, redirect_stdout=True, redirect_stderr=True)` options
+In `loop.py`, after a `VERIFY_FAIL`:
+- The loop increments iteration and continues
+- On next iteration, `run_single_iteration` runs
+- But if criteria are still all checked, `completion_status == "COMPLETE"` 
+- This immediately triggers another verification (line 629-631)
+
+The verification prompt asks the agent to uncheck criteria, but there's no enforcement. If the agent doesn't comply, we loop forever.
+
+## Solution Approach
+
+Add a state variable (e.g., `just_failed_verification`) that:
+1. Gets set to `True` after a `VERIFY_FAIL`
+2. Prevents `should_verify` from being set on the next iteration
+3. Gets reset to `False` after a regular work iteration completes
+4. Ensures at least one work iteration between verification attempts
+
+Alternative: Force uncheck at least one criterion programmatically when verification fails (but this changes semantics - agent should control criteria).
 
 ## Success Criteria
 
 The task is complete when ALL of the following are true:
 
-- [x] Live progress display with spinner, iteration count, provider, tokens, elapsed time works correctly during ralph run
-- [x] Live-updating criteria checklist updates in real-time as criteria are completed
-- [x] Parser console output integrates with Live display without conflicts
-- [x] Rich table for completion criteria in status command works
-- [x] Progress bar with percentage works in status command
-- [x] Task summary panel displays correctly
-- [x] Styled panels for AI questions in interview work
-- [x] Markdown rendering in interview responses works
-- [x] Rich.prompt with history support for interview input
-- [x] Syntax-highlighted code blocks in logs command
-- [x] Colored log levels display correctly
-- [x] Paginated log output works
-- [x] Provider table with availability status works
-- [x] Visual indicator for current/next provider in rotation works
-- [x] Rich tracebacks for errors work
-- [x] Styled error panels with helpful messages work
-- [x] Rule separators between sections work
-- [x] Consistent color theme across all commands
+- [ ] Verification failure triggers a cooldown or state flag to prevent immediate re-verification
+- [ ] After VERIFY_FAIL, the loop runs at least one regular work iteration before allowing another verification
+- [ ] If verification agent doesn't uncheck criteria, the loop doesn't infinitely re-verify
+- [ ] Add test coverage for the verification loop behavior
+- [ ] All existing tests pass
 
-## Key Files
+## Files to Modify
 
-- `src/ralph/ui.py` - RalphLiveDisplay class and UI components
-- `src/ralph/parser.py` - Stream parser with conflicting console.print() calls
-- `src/ralph/loop.py` - Main loop that creates and uses RalphLiveDisplay
-- `src/ralph/cli.py` - CLI commands (status, providers, logs, run)
-- `src/ralph/interview.py` - Interview flow for task creation
-- `src/ralph/interview_turns.py` - Interview turn handling
-
-## Implementation Notes
-
-1. **Fix parser.py console conflict**: Either:
-   - Remove the global console and pass output through callbacks
-   - Use the Live display's console for prints during live context
-   - Queue messages and display them in the Live update
-
-2. **Test manually**: After changes, run `ralph run .` on a test project to verify the live display works
-
-3. **Interview Rich.prompt**: Look at `rich.prompt.Prompt` for history support
-
-4. **Syntax highlighting in logs**: Use `rich.syntax.Syntax` for code blocks
+- `src/ralph/loop.py` - Main loop logic with verification handling
 
 ## Constraints
 
-- Maintain backward compatibility with existing CLI behavior
-- Don't break the core loop functionality while fixing UI
-- Use the existing THEME dict for consistent colors
-- Keep the codebase clean - don't add unnecessary dependencies
+- Keep the existing verification behavior intact (VERIFY_PASS completes, VERIFY_FAIL continues)
+- Don't change the signal detection logic in parser.py
+- Maintain the `max_verification_failures` limit functionality
+- Solution should be minimal and targeted
 
 ---
 ## Ralph Instructions
 
-You are an autonomous development agent. Before doing anything:
-
+Before doing anything:
 1. Read `RALPH_TASK.md` - your task and completion criteria
 2. Read `.ralph/guardrails.md` - lessons from past failures (FOLLOW THESE)
 3. Read `.ralph/progress.md` - what's been accomplished
-4. Read `.ralph/errors.log` - recent failures to avoid
 
-## Git Protocol
+### Git Protocol
 
-Ralph's strength is state-in-git, not LLM memory. Commit early and often:
+1. After completing each criterion, commit your changes
+2. Before any risky refactor: commit current state as checkpoint
+3. After committing, signal for fresh context: output `<ralph>ROTATE</ralph>`
 
-1. After completing each criterion, commit:
-   `git add -A && git commit -m 'ralph: <description>'`
-2. After any significant code change: commit with descriptive message
-3. Before any risky refactor: commit current state as checkpoint
-4. Push after every 2-3 commits: `git push`
-5. After committing, signal for fresh context: output `<ralph>ROTATE</ralph>`
+### Task Execution
 
-## Task Execution
-
-1. Work on the next unchecked criterion (look for `[ ]`)
-2. Run tests after changes: `python -m pytest tests/ -v`
-3. **Mark completed criteria**: Edit RALPH_TASK.md and change `[ ]` to `[x]`
+1. Work on the next unchecked criterion in RALPH_TASK.md (look for `[ ]`)
+2. Run tests after changes: `make test`
+3. Mark completed criteria: Edit RALPH_TASK.md and change `[ ]` to `[x]`
 4. Update `.ralph/progress.md` with what you accomplished
 5. When ALL criteria show `[x]`: output `<ralph>COMPLETE</ralph>`
 6. If stuck 3+ times on same issue: output `<ralph>GUTTER</ralph>`
-
-## Signals
-
-- `<ralph>ROTATE</ralph>` - Request fresh context (after commits)
-- `<ralph>COMPLETE</ralph>` - All criteria done
-- `<ralph>GUTTER</ralph>` - Stuck, need provider rotation
-- `<ralph>QUESTION</ralph>` - Need human input (use sparingly)
