@@ -17,13 +17,13 @@ The agent currently has to prefix every shell command with `cd /path/to/project 
 
 The task is complete when ALL of the following are true:
 
-- [ ] `BaseProvider.get_command()` signature updated to accept `workspace: Path` parameter
-- [ ] `ClaudeProvider.get_command()` adds `--directory` flag with workspace path
-- [ ] `CursorProvider.get_command()` adds appropriate directory flag (check cursor-agent docs)
-- [ ] `CodexProvider.get_command()` adds `--cwd` flag with workspace path
-- [ ] `GeminiProvider.get_command()` adds appropriate directory flag (check gemini CLI docs)
-- [ ] `loop.py` updated to pass `workspace` when calling `provider.get_command()`
-- [ ] All existing tests pass
+- [x] `BaseProvider.get_command()` signature updated to accept `workspace: Path` parameter
+- [x] `ClaudeProvider.get_command()` adds `--directory` flag with workspace path
+- [x] `CursorProvider.get_command()` adds appropriate directory flag (check cursor-agent docs)
+- [x] `CodexProvider.get_command()` adds `--cwd` flag with workspace path
+- [x] `GeminiProvider.get_command()` adds appropriate directory flag (check gemini CLI docs)
+- [x] `loop.py` updated to pass `workspace` when calling `provider.get_command()`
+- [x] All existing tests pass
 
 ## Constraints
 

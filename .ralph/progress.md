@@ -60,3 +60,21 @@ Completed work:
 
 ### 2026-01-16 20:48:01
 **Session 1 ended** - ✅ TASK COMPLETE
+
+### 2026-01-16 20:53:50
+**Session 1 started** (provider: cursor-agent)
+
+### 2026-01-16
+**Workspace directory parameter implemented**
+
+Completed work:
+- Updated `BaseProvider.get_command()` signature to accept `workspace: Path` parameter
+- Added `--directory` flag to `ClaudeProvider` and `CursorProvider`
+- Added `--cwd` flag to `CodexProvider`
+- Added `--directory` flag to `GeminiProvider`
+- Updated `loop.py` to pass workspace when calling `provider.get_command()`
+- All 82 relevant tests pass (3 pre-existing failures in test_tokens.py unrelated to this change)
+
+All 7 success criteria are now complete.
+
+**Session 1 ended** - ✅ TASK COMPLETE

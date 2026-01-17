@@ -1,6 +1,7 @@
 """Claude provider."""
 
 import json
+from pathlib import Path
 from typing import Optional
 
 from ralph.providers.base import BaseProvider
@@ -13,7 +14,7 @@ class ClaudeProvider(BaseProvider):
         """Return CLI tool name."""
         return "claude"
 
-    def get_command(self, prompt: str) -> list[str]:
+    def get_command(self, prompt: str, workspace: Path) -> list[str]:
         """Return command to run Claude CLI."""
         # --verbose is required for stream-json
         return [
@@ -22,6 +23,8 @@ class ClaudeProvider(BaseProvider):
             "--output-format",
             "stream-json",
             "--verbose",
+            "--directory",
+            str(workspace),
         ]
 
     def parse_stream_line(self, line: str) -> Optional[dict]:

@@ -1,6 +1,7 @@
 """cursor-agent provider."""
 
 import json
+from pathlib import Path
 from typing import Optional
 
 from ralph.providers.base import BaseProvider
@@ -13,7 +14,7 @@ class CursorProvider(BaseProvider):
         """Return CLI tool name."""
         return "cursor-agent"
 
-    def get_command(self, prompt: str) -> list[str]:
+    def get_command(self, prompt: str, workspace: Path) -> list[str]:
         """Return command to run cursor-agent."""
         return [
             "cursor-agent",
@@ -21,6 +22,8 @@ class CursorProvider(BaseProvider):
             "--force",
             "--output-format",
             "stream-json",
+            "--directory",
+            str(workspace),
         ]
 
     def parse_stream_line(self, line: str) -> Optional[dict]:

@@ -1,6 +1,7 @@
 """Codex provider."""
 
 import json
+from pathlib import Path
 from typing import Optional
 
 from ralph.providers.base import BaseProvider
@@ -13,12 +14,14 @@ class CodexProvider(BaseProvider):
         """Return CLI tool name."""
         return "codex"
 
-    def get_command(self, prompt: str) -> list[str]:
+    def get_command(self, prompt: str, workspace: Path) -> list[str]:
         """Return command to run Codex CLI."""
         return [
             "codex",
             "exec",
             "--json",
+            "--cwd",
+            str(workspace),
         ]
 
     def parse_stream_line(self, line: str) -> Optional[dict]:

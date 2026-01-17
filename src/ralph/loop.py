@@ -162,8 +162,8 @@ def run_single_iteration(
     provider_name = provider.cli_tool if hasattr(provider, 'cli_tool') else str(type(provider).__name__)
     state.log_progress(workspace, f"**Session {iteration} started** (provider: {provider_name})")
     
-    # Build provider command
-    cmd = provider.get_command(prompt)
+    # Build provider command with workspace directory
+    cmd = provider.get_command(prompt, workspace)
     
     # Start agent process
     agent_process = subprocess.Popen(

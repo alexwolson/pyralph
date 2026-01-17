@@ -1,6 +1,7 @@
 """Base provider interface."""
 
 from abc import ABC, abstractmethod
+from pathlib import Path
 from typing import Optional
 
 import shutil
@@ -19,8 +20,12 @@ class BaseProvider(ABC):
         pass
 
     @abstractmethod
-    def get_command(self, prompt: str) -> list[str]:
+    def get_command(self, prompt: str, workspace: Path) -> list[str]:
         """Return command to run provider CLI.
+        
+        Args:
+            prompt: The prompt to send to the CLI.
+            workspace: The workspace directory path for the CLI to operate in.
         
         Each provider uses its own default model internally.
         No model parameter needed - provider knows its best default.
