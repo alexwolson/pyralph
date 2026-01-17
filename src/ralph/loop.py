@@ -1,5 +1,6 @@
 """Main iteration loop for Ralph."""
 
+import json
 import subprocess
 import time
 from datetime import datetime
@@ -256,10 +257,47 @@ def run_ralph_loop(
         rotate_threshold: Token count at which to trigger rotation
         timeout: Timeout in seconds for provider operations (default 300)
     """
+    # #region agent log
+    debug_log_path = Path("/Users/alex/repos/pyralph/.cursor/debug.log")
+    try:
+        with open(debug_log_path, "a") as f:
+            log_entry = {
+                "id": f"log_{int(time.time() * 1000)}",
+                "timestamp": int(time.time() * 1000),
+                "location": "loop.py:239",
+                "message": "run_ralph_loop entry",
+                "data": {"project_dir": str(project_dir), "max_iterations": max_iterations},
+                "sessionId": "debug-session",
+                "runId": "ralph-loop",
+                "hypothesisId": "A"
+            }
+            f.write(json.dumps(log_entry) + "\n")
+    except Exception:
+        pass
+    # #endregion
+    
     from ralph.providers import get_provider_rotation
     
     workspace = project_dir.resolve()
     task_file = workspace / "RALPH_TASK.md"
+    
+    # #region agent log
+    try:
+        with open(debug_log_path, "a") as f:
+            log_entry = {
+                "id": f"log_{int(time.time() * 1000)}",
+                "timestamp": int(time.time() * 1000),
+                "location": "loop.py:262",
+                "message": "task_file path set",
+                "data": {"task_file": str(task_file), "exists": task_file.exists()},
+                "sessionId": "debug-session",
+                "runId": "ralph-loop",
+                "hypothesisId": "A"
+            }
+            f.write(json.dumps(log_entry) + "\n")
+    except Exception:
+        pass
+    # #endregion
     
     # Commit any uncommitted work first
     if git_utils.has_uncommitted_changes(workspace):
@@ -456,8 +494,33 @@ def run_ralph_loop(
                         iteration += 1
                         
             except Exception as e:
+                # #region agent log
                 import traceback
                 error_traceback = traceback.format_exc()
+                debug_log_path = Path("/Users/alex/repos/pyralph/.cursor/debug.log")
+                try:
+                    with open(debug_log_path, "a") as f:
+                        log_entry = {
+                            "id": f"log_{int(time.time() * 1000)}",
+                            "timestamp": int(time.time() * 1000),
+                            "location": "loop.py:458",
+                            "message": "Exception caught in loop",
+                            "data": {
+                                "iteration": iteration,
+                                "current_provider": provider_name,
+                                "error": str(e),
+                                "error_type": type(e).__name__,
+                                "traceback": error_traceback
+                            },
+                            "sessionId": "debug-session",
+                            "runId": "ralph-loop",
+                            "hypothesisId": "B"
+                        }
+                        f.write(json.dumps(log_entry) + "\n")
+                except Exception:
+                    pass
+                # #endregion
+                
                 debug_log(
                     "loop.py:run_ralph_loop",
                     "Exception caught - rotating provider",
