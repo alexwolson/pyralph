@@ -26,7 +26,7 @@ The task is complete when ALL of the following are true:
 
 - [x] Extract signal constants into a `src/ralph/signals.py` module with a `Signal` enum (COMPLETE, ROTATE, GUTTER, STUCK, etc.)
 - [x] Extract prompt building logic from `loop.py` into a `src/ralph/prompts.py` module (build_prompt, build_verification_prompt, etc.)
-- [ ] Extract archive functions from `loop.py` into a `src/ralph/archive.py` module (archive_task, get_archive_path, etc.)
+- [x] Extract archive functions from `loop.py` into a `src/ralph/archive.py` module (archive_task, get_archive_path, etc.)
 - [ ] Consolidate `run_single_iteration` and `run_verification_iteration` shared logic into a common helper or unified function
 - [ ] Add `get_display_name()` method to `BaseProvider` class with default implementation, remove hasattr checks throughout codebase
 - [ ] Consolidate YAML frontmatter parsing into a single utility function in `parser.py`, update all call sites
