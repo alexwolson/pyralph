@@ -6,11 +6,33 @@ from typing import Optional
 
 import click
 from rich.console import Console
+from rich.panel import Panel
+from rich.traceback import install as install_rich_traceback
 
 from ralph import __version__, git_utils, interview, loop, state, task
 from ralph.debug import setup_logging
+from ralph.ui import THEME
+
+# Install Rich tracebacks for beautiful error display
+install_rich_traceback(show_locals=False, width=100, word_wrap=True)
 
 console = Console()
+
+
+def show_error_panel(title: str, message: str, hint: Optional[str] = None) -> None:
+    """Display a styled error panel with optional hint."""
+    content = f"[bold]{message}[/bold]"
+    if hint:
+        content += f"\n\n[{THEME['muted']}]Hint: {hint}[/]"
+    
+    console.print()
+    console.print(Panel(
+        content,
+        title=f"[bold {THEME['error']}]{title}[/]",
+        border_style=THEME["error"],
+        padding=(1, 2),
+    ))
+    console.print()
 
 
 def print_version(ctx: click.Context, param: click.Parameter, value: bool) -> None:
@@ -134,9 +156,10 @@ def run(
     
     # Validate prerequisites
     if not git_utils.is_git_repo(project_dir):
-        console.print(
-            f"[red]❌[/red] {project_dir} is not a git repository. "
-            "Ralph requires git for state persistence."
+        show_error_panel(
+            "Not a Git Repository",
+            f"{project_dir} is not a git repository.",
+            "Ralph requires git for state persistence. Run 'git init' first."
         )
         sys.exit(1)
 
@@ -150,7 +173,11 @@ def run(
     try:
         task_data = task.parse_task_file(task_file)
     except Exception as e:
-        console.print(f"[red]❌[/red] Error parsing {task_file}: {e}")
+        show_error_panel(
+            "Task File Error",
+            f"Failed to parse {task_file}",
+            str(e)
+        )
         sys.exit(1)
 
     # Initialize .ralph directory
@@ -164,8 +191,10 @@ def run(
 
     # Validate PR flag
     if pr and not branch:
-        console.print(
-            "[red]❌[/red] --pr requires --branch. Please specify a branch name."
+        show_error_panel(
+            "Invalid Options",
+            "--pr requires --branch",
+            "Specify a branch name with --branch <name>"
         )
         sys.exit(1)
 
@@ -203,7 +232,11 @@ def run(
         
         provider_rotation = get_provider_rotation()
         if not provider_rotation.providers:
-            console.print("[red]❌[/red] No LLM providers available. Please install agent, claude, gemini, or codex.")
+            show_error_panel(
+                "No Providers Available",
+                "No LLM providers found on your system.",
+                "Install one of: agent (Cursor), claude, gemini, or codex"
+            )
             sys.exit(1)
         
         provider = provider_rotation.get_current()
@@ -238,7 +271,11 @@ def run(
                 console.print("[green]✓[/green] Progress saved.")
             sys.exit(1)
         except Exception as e:
-            console.print(f"\n[red]❌[/red] Error: {e}")
+            show_error_panel(
+                "Execution Error",
+                str(e),
+                "Check .ralph/errors.log for details"
+            )
             # Log error before exiting
             state.log_progress(project_dir, f"**Error**: {e}")
             sys.exit(1)

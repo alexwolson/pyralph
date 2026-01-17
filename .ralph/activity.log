@@ -414,3 +414,19 @@ EOF
 [21:17:44] 🟡 SHELL uv run ralph providers 2>&1 → exit 0
 [21:17:55] 🟡 SHELL uv run pytest -v 2>&1 | tail -10 → exit 0
 [21:17:55] 🟡 TOKENS: 48762 / 80000 (60%) [read:185KB write:0KB assist:2KB shell:0KB]
+[21:18:04] 🟡 SHELL git add -A && git commit -m "$(cat <<'EOF'
+ralph: add providers command with table and rotation indicators
+
+- Add 'ralph providers' command to show all known providers
+- Display table with provider name, CLI tool, availability status
+- Show visual indicators: ► for current, ● for available, ○ for unavailable
+- Show rotation order: current, next, #3, #4, etc.
+- Show summary count of available providers
+EOF
+)" → exit 0
+[21:18:08] 🔴 READ /Users/alex/repos/pyralph/src/ralph/cli.py (664 lines, ~64.8KB)
+[21:18:26] 🔴 TOKENS: 65404 / 80000 (81%) - approaching limit [read:250KB write:0KB assist:2KB shell:0KB]
+[21:19:02] 🔴 SHELL uv run pytest -v 2>&1 | tail -15 → exit 0
+[21:19:02] 🔴 TOKENS: 65431 / 80000 (81%) - approaching limit [read:250KB write:0KB assist:2KB shell:0KB]
+[21:19:06] 🔴 SHELL cd /tmp && uv run ralph run /tmp/nonexistent 2>&1 || true → exit 0
+[21:19:11] 🔴 SHELL mkdir -p /tmp/testdir && uv run ralph run /tmp/testdir 2>&1 || true → exit 0

@@ -55,8 +55,8 @@ The task is complete when ALL of the following are true:
 - [x] Provider display shows visual indicator for current/next provider in rotation
 
 ### Error Handling
-- [ ] Error handling uses Rich tracebacks
-- [ ] Error handling shows styled error panels with helpful messages
+- [x] Error handling uses Rich tracebacks
+- [x] Error handling shows styled error panels with helpful messages
 
 ### Visual Polish
 - [ ] Visual polish with rule separators between sections
