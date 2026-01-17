@@ -1,115 +1,75 @@
 ---
-task: General refactoring pass - extract modules, DRY up code, improve types
+task: Trivial test tasks to verify Ralph loop functionality
 completion_criteria:
-  - Extract signal constants into a signals.py module with an enum
-  - Extract prompt building logic from loop.py into a prompts.py module
-  - Extract archive functions from loop.py into an archive.py module
-  - Consolidate run_single_iteration and run_verification_iteration shared logic
-  - Add get_display_name() method to base provider class with default implementation
-  - Consolidate YAML frontmatter parsing into a single utility function
-  - Consolidate initial state file content into state.py only
-  - Add comprehensive type hints to all public functions
-  - Update all imports and usages after module extractions
-  - All existing tests pass after refactoring
-  - No regressions in CLI functionality
-max_iterations: 25
+  - Add author metadata to pyproject.toml
+  - Add a CHANGELOG.md file with initial entry
+  - Add __author__ variable to src/ralph/__init__.py
+  - Update the project description in pyproject.toml to mention autonomous coding
+max_iterations: 10
 test_command: "uv run pytest -v"
 ---
 
-# Task: General Refactoring Pass
+# Task: Trivial Test Tasks
 
-Perform a comprehensive refactoring of the pyralph codebase to improve code organization, reduce duplication, and enhance type safety.
+This is a test run of Ralph with trivial tasks. Each task requires a small file modification.
 
 ## Success Criteria
 
 The task is complete when ALL of the following are true:
 
-- [x] Extract signal constants into a `src/ralph/signals.py` module with a `Signal` enum (COMPLETE, ROTATE, GUTTER, STUCK, etc.)
-- [x] Extract prompt building logic from `loop.py` into a `src/ralph/prompts.py` module (build_prompt, build_verification_prompt, etc.)
-- [x] Extract archive functions from `loop.py` into a `src/ralph/archive.py` module (archive_task, get_archive_path, etc.)
-- [x] Consolidate `run_single_iteration` and `run_verification_iteration` shared logic into a common helper or unified function
-- [x] Add `get_display_name()` method to `BaseProvider` class with default implementation, remove hasattr checks throughout codebase
-- [x] Consolidate YAML frontmatter parsing into a single utility function in `parser.py`, update all call sites
-- [x] Consolidate initial state file content (progress.md, guardrails.md templates) into `state.py` only, remove duplication in `loop.py`
-- [x] Add comprehensive type hints to all public functions in extracted modules
-- [x] Update all imports and usages throughout codebase after module extractions
-- [x] All existing tests pass after refactoring (`uv run pytest -v`)
-- [x] No regressions in CLI functionality (ralph commands still work)
+- [ ] Add `authors` field to `pyproject.toml` with value `[{name = "Ralph Test"}]`
+- [ ] Create `CHANGELOG.md` in the project root with a "## [0.1.0] - Unreleased" section containing "- Initial release"
+- [ ] Add `__author__ = "Ralph Test"` to `src/ralph/__init__.py` after the existing `__version__` line
+- [ ] Update the `description` field in `pyproject.toml` to append " for autonomous coding" at the end
 
 ## Constraints
 
-- No need to maintain backwards API compatibility - internal function signatures can change
-- Follow existing code style and patterns in the project
-- Keep commits atomic and well-described (one logical change per commit)
-- Update tests as needed to reflect refactored code structure
-
-## Refactoring Details
-
-### 1. Signals Module
-Create `src/ralph/signals.py`:
-- Define `Signal` enum with values: COMPLETE, ROTATE, GUTTER, STUCK, ABANDON
-- Replace magic strings throughout codebase with enum values
-- Update signal detection logic to use the enum
-
-### 2. Prompts Module
-Create `src/ralph/prompts.py`:
-- Move `build_prompt()` from loop.py
-- Move `build_verification_prompt()` from loop.py
-- Move any prompt-related helper functions
-- Keep prompt templates as module-level constants or in a templates dict
-
-### 3. Archive Module
-Create `src/ralph/archive.py`:
-- Move `archive_task()` from loop.py
-- Move `get_archive_path()` from loop.py
-- Move any archive-related helpers
-
-### 4. Iteration Consolidation
-In `loop.py`:
-- Identify shared code between `run_single_iteration` and `run_verification_iteration`
-- Extract common logic into helper function(s) or unify into single parameterized function
-- Target: reduce duplication by ~60%
-
-### 5. Provider Display Name
-In `src/ralph/providers/base.py`:
-- Add `get_display_name()` method to `BaseProvider` with sensible default
-- Remove all `hasattr(provider, 'get_display_name')` checks in codebase
-- Update any provider subclasses as needed
-
-### 6. YAML Parsing Consolidation
-In `src/ralph/parser.py`:
-- Ensure single `parse_frontmatter()` function handles all YAML parsing needs
-- Update `build_verification_prompt()` and `task.py` to use this function
-- Remove any duplicated parsing logic
-
-### 7. State File Templates
-In `src/ralph/state.py`:
-- Consolidate all initial state file content (DEFAULT_PROGRESS_CONTENT, DEFAULT_GUARDRAILS_CONTENT)
-- Remove duplicated template strings from `loop.py`
-- Export templates for use by other modules
+- Each change should be committed separately with a descriptive commit message
+- Do not modify any other files
+- Keep changes minimal and focused
+- Tests must still pass after all changes
 
 ---
+
 ## Ralph Instructions
 
-**Before each iteration:**
-1. Read `.ralph/progress.md` to understand what's been done
-2. Read `.ralph/guardrails.md` for any constraints or lessons learned
-3. Read this file (RALPH_TASK.md) to find the next unchecked criterion
+You are an autonomous agent working in a loop. Follow these instructions precisely.
 
-**During each iteration:**
-1. Work on ONE unchecked criterion at a time
-2. Make atomic commits with clear messages describing the change
-3. Run tests frequently: `uv run pytest -v`
-4. If tests fail, fix them before moving on
+### Before Starting Work
 
-**After completing a criterion:**
-1. Check off the completed criterion in this file (change `- [ ]` to `- [x]`)
-2. Update `.ralph/progress.md` with what was accomplished
-3. Commit all changes including the checkbox update
+1. Read the state files:
+   - `RALPH_TASK.md` (this file) - your task definition
+   - `.ralph/progress.md` - what's been done in previous iterations
+   - `.ralph/guardrails.md` - lessons learned, avoid repeating mistakes
+   - `.ralph/errors.log` - recent errors to be aware of
 
-**If stuck:**
-1. Add notes to `.ralph/guardrails.md` about what's blocking progress
-2. Signal ROTATE to get a fresh perspective from another provider
+2. Identify the FIRST unchecked criterion (`- [ ]`) in this file
 
-**Completion:**
-When ALL criteria are checked off, signal COMPLETE.
+### Working Protocol
+
+1. Work on ONE criterion at a time
+2. Make the minimal changes needed to satisfy the criterion
+3. Run the test command if one is specified: `uv run pytest -v`
+4. If tests pass, check off the criterion by changing `- [ ]` to `- [x]`
+5. Commit your changes with a descriptive message
+
+### Git Protocol
+
+- Commit after completing each criterion
+- Use clear commit messages that describe what was done
+- Include the criterion text in your commit message
+
+### Completion
+
+When ALL criteria are checked (`- [x]`), output:
+```
+<ralph>COMPLETE</ralph>
+```
+
+### If Stuck
+
+If you cannot make progress after reasonable attempts:
+1. Document what you tried in `.ralph/progress.md`
+2. Output: `<ralph>GUTTER</ralph>`
+
+This signals Ralph to rotate to a fresh agent.

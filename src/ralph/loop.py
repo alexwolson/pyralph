@@ -89,16 +89,32 @@ def _run_iteration_core(
     timeout_timer = None
     if timeout:
         def timeout_handler():
+            # #region agent log
+            elapsed = time.time() - start_time
+            debug_log("loop.py:_run_iteration_core", "Timeout timer fired - terminating process", {"timeout": timeout, "elapsed": elapsed, "pid": agent_process.pid, "returncode_before": agent_process.poll(), "hypothesisId": "TIMEOUT_TIMER"})
+            # #endregion
             try:
                 agent_process.terminate()
-            except Exception:
+                # #region agent log
+                debug_log("loop.py:_run_iteration_core", "Process terminate() called from timer", {"pid": agent_process.pid, "returncode_after": agent_process.poll(), "hypothesisId": "TIMEOUT_TIMER"})
+                # #endregion
+            except Exception as e:
+                # #region agent log
+                debug_log("loop.py:_run_iteration_core", "Exception in timeout handler", {"error": str(e), "hypothesisId": "TIMEOUT_TIMER"})
+                # #endregion
                 pass
         timeout_timer = threading.Timer(timeout, timeout_handler)
         timeout_timer.start()
+        # #region agent log
+        debug_log("loop.py:_run_iteration_core", "Timeout timer started", {"timeout": timeout, "pid": agent_process.pid, "hypothesisId": "TIMEOUT_SETUP"})
+        # #endregion
     
     # Parse stream with timeout checking
     signal = ""
     try:
+        # #region agent log
+        debug_log("loop.py:_run_iteration_core", "Starting parse_stream iteration", {"timeout": timeout, "stop_signals": list(stop_signals), "hypothesisId": "PARSE_START"})
+        # #endregion
         for sig in parser.parse_stream(
             workspace, agent_process, token_tracker, gutter_detector, provider,
             on_token_update=on_token_update,
@@ -106,6 +122,9 @@ def _run_iteration_core(
             console=console,
         ):
             signal = sig
+            # #region agent log
+            debug_log("loop.py:_run_iteration_core", "Received signal from parse_stream", {"signal": str(signal), "signal_type": type(signal).__name__, "in_stop_signals": signal in stop_signals, "stop_signals": [str(s) for s in stop_signals], "hypothesisId": "SIGNAL_RECEIVED"})
+            # #endregion
             if signal in stop_signals:
                 # Stop early if critical signal
                 agent_process.terminate()
@@ -136,10 +155,20 @@ def _run_iteration_core(
         # Cancel timeout timer if it's still running
         if timeout_timer:
             timeout_timer.cancel()
+            # #region agent log
+            debug_log("loop.py:_run_iteration_core", "Timeout timer cancelled", {"hypothesisId": "TIMER_CANCELLED"})
+            # #endregion
     
     # Check if timeout was the reason for termination (no signal received)
-    if not signal and timeout and (time.time() - start_time) >= timeout:
+    elapsed = time.time() - start_time
+    # #region agent log
+    debug_log("loop.py:_run_iteration_core", "parse_stream loop completed", {"final_signal": str(signal) if signal else "empty", "elapsed": elapsed, "timeout": timeout, "timeout_reached": timeout and elapsed >= timeout, "hypothesisId": "LOOP_COMPLETE"})
+    # #endregion
+    if not signal and timeout and elapsed >= timeout:
         signal = timeout_signal
+        # #region agent log
+        debug_log("loop.py:_run_iteration_core", "Setting timeout signal after loop", {"signal": str(signal), "hypothesisId": "TIMEOUT_SIGNAL"})
+        # #endregion
     
     # Wait for process to finish with timeout
     try:

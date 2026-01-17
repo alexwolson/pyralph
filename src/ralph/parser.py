@@ -84,11 +84,28 @@ def parse_stream(
     last_token_log = int(time.time())
 
     # Read line by line from agent stdout
+    lines_read = 0
+    last_read_time = time.time()
     while True:
+        # #region agent log
+        read_start = time.time()
+        debug_log("parser.py:parse_stream", "About to call readline()", {"lines_read": lines_read, "time_since_last_read": read_start - last_read_time, "process_returncode": agent_process.poll(), "hypothesisId": "READLINE_START"})
+        # #endregion
         line = agent_process.stdout.readline()
+        read_end = time.time()
+        read_duration = read_end - read_start
+        last_read_time = read_end
+        # #region agent log
+        debug_log("parser.py:parse_stream", "readline() returned", {"lines_read": lines_read, "read_duration": read_duration, "has_line": bool(line), "line_length": len(line) if line else 0, "process_returncode": agent_process.poll(), "hypothesisId": "READLINE_RETURN"})
+        # #endregion
         if not line:
+            # #region agent log
+            debug_log("parser.py:parse_stream", "Process ended - no more output", {"lines_read": lines_read, "process_returncode": agent_process.poll(), "hypothesisId": "PROCESS_END"})
+            # #endregion
             # Process ended
             break
+        
+        lines_read += 1
 
         line = line.decode("utf-8", errors="ignore").strip()
         if not line:
