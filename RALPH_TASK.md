@@ -1,75 +1,58 @@
 ---
-task: Trivial test tasks to verify Ralph loop functionality
+task: Trivial test tasks for Ralph test run
 completion_criteria:
-  - Add author metadata to pyproject.toml
-  - Add a CHANGELOG.md file with initial entry
-  - Add __author__ variable to src/ralph/__init__.py
-  - Update the project description in pyproject.toml to mention autonomous coding
+  - Add a module-level docstring to src/ralph/signals.py describing its purpose
+  - Add a DESCRIPTION constant to src/ralph/__init__.py with a one-line project description
+  - Add a comment at the top of main.py explaining it is the CLI entry point
 max_iterations: 10
 test_command: "uv run pytest -v"
 ---
 
 # Task: Trivial Test Tasks
 
-This is a test run of Ralph with trivial tasks. Each task requires a small file modification.
+This is a test run of Ralph with simple tasks that require minimal file modifications.
 
 ## Success Criteria
 
 The task is complete when ALL of the following are true:
 
-- [x] Add `authors` field to `pyproject.toml` with value `[{name = "Ralph Test"}]`
-- [x] Create `CHANGELOG.md` in the project root with a "## [0.1.0] - Unreleased" section containing "- Initial release"
-- [x] Add `__author__ = "Ralph Test"` to `src/ralph/__init__.py` after the existing `__version__` line
-- [x] Update the `description` field in `pyproject.toml` to append " for autonomous coding" at the end
+- [ ] Add a module-level docstring to `src/ralph/signals.py` describing its purpose (e.g., "Signal handling for Ralph agent communication")
+- [ ] Add a `DESCRIPTION` constant to `src/ralph/__init__.py` with a one-line project description string
+- [ ] Add a comment at the top of `main.py` (after any existing comments) explaining it is the CLI entry point for the ralph command
 
 ## Constraints
 
-- Each change should be committed separately with a descriptive commit message
-- Do not modify any other files
 - Keep changes minimal and focused
-- Tests must still pass after all changes
+- Do not modify any logic or functionality
+- These are documentation/metadata changes only
 
 ---
 
 ## Ralph Instructions
 
-You are an autonomous agent working in a loop. Follow these instructions precisely.
+You are an autonomous agent working on this task. Follow these steps:
 
-### Before Starting Work
+1. **Read state files first**:
+   - This file (`RALPH_TASK.md`) for task definition
+   - `.ralph/progress.md` for what's been done
+   - `.ralph/guardrails.md` for lessons learned
 
-1. Read the state files:
-   - `RALPH_TASK.md` (this file) - your task definition
-   - `.ralph/progress.md` - what's been done in previous iterations
-   - `.ralph/guardrails.md` - lessons learned, avoid repeating mistakes
-   - `.ralph/errors.log` - recent errors to be aware of
+2. **Work on ONE unchecked criterion at a time**:
+   - Find the first unchecked `- [ ]` criterion
+   - Complete it fully
+   - Check it off as `- [x]`
+   - Commit your changes
 
-2. Identify the FIRST unchecked criterion (`- [ ]`) in this file
+3. **Git protocol**:
+   - Commit after completing each criterion
+   - Use descriptive commit messages
+   - Always commit before signaling completion
 
-### Working Protocol
+4. **When all criteria are complete**:
+   - Verify all checkboxes are checked
+   - Run the test command if specified
+   - Signal completion with: `<ralph>COMPLETE</ralph>`
 
-1. Work on ONE criterion at a time
-2. Make the minimal changes needed to satisfy the criterion
-3. Run the test command if one is specified: `uv run pytest -v`
-4. If tests pass, check off the criterion by changing `- [ ]` to `- [x]`
-5. Commit your changes with a descriptive message
-
-### Git Protocol
-
-- Commit after completing each criterion
-- Use clear commit messages that describe what was done
-- Include the criterion text in your commit message
-
-### Completion
-
-When ALL criteria are checked (`- [x]`), output:
-```
-<ralph>COMPLETE</ralph>
-```
-
-### If Stuck
-
-If you cannot make progress after reasonable attempts:
-1. Document what you tried in `.ralph/progress.md`
-2. Output: `<ralph>GUTTER</ralph>`
-
-This signals Ralph to rotate to a fresh agent.
+5. **If you get stuck**:
+   - Add what you learned to `.ralph/guardrails.md`
+   - Signal for rotation with: `<ralph>GUTTER</ralph>`

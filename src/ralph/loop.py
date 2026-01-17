@@ -90,30 +90,58 @@ def _run_iteration_core(
     if timeout:
         def timeout_handler():
             # #region agent log
+            import json
             elapsed = time.time() - start_time
-            debug_log("loop.py:_run_iteration_core", "Timeout timer fired - terminating process", {"timeout": timeout, "elapsed": elapsed, "pid": agent_process.pid, "returncode_before": agent_process.poll(), "hypothesisId": "TIMEOUT_TIMER"})
+            log_entry = {"location": "loop.py:_run_iteration_core", "message": "Timeout timer fired - terminating process", "data": {"timeout": timeout, "elapsed": elapsed, "pid": agent_process.pid, "returncode_before": agent_process.poll()}, "timestamp": int(time.time() * 1000), "sessionId": "debug-session", "runId": "run1", "hypothesisId": "TIMEOUT_TIMER"}
+            try:
+                with open("/Users/alex/repos/pyralph/.cursor/debug.log", "a") as f:
+                    f.write(json.dumps(log_entry) + "\n")
+            except Exception:
+                pass
             # #endregion
             try:
                 agent_process.terminate()
                 # #region agent log
-                debug_log("loop.py:_run_iteration_core", "Process terminate() called from timer", {"pid": agent_process.pid, "returncode_after": agent_process.poll(), "hypothesisId": "TIMEOUT_TIMER"})
+                log_entry2 = {"location": "loop.py:_run_iteration_core", "message": "Process terminate() called from timer", "data": {"pid": agent_process.pid, "returncode_after": agent_process.poll()}, "timestamp": int(time.time() * 1000), "sessionId": "debug-session", "runId": "run1", "hypothesisId": "TIMEOUT_TIMER"}
+                try:
+                    with open("/Users/alex/repos/pyralph/.cursor/debug.log", "a") as f:
+                        f.write(json.dumps(log_entry2) + "\n")
+                except Exception:
+                    pass
                 # #endregion
             except Exception as e:
                 # #region agent log
-                debug_log("loop.py:_run_iteration_core", "Exception in timeout handler", {"error": str(e), "hypothesisId": "TIMEOUT_TIMER"})
+                log_entry3 = {"location": "loop.py:_run_iteration_core", "message": "Exception in timeout handler", "data": {"error": str(e)}, "timestamp": int(time.time() * 1000), "sessionId": "debug-session", "runId": "run1", "hypothesisId": "TIMEOUT_TIMER"}
+                try:
+                    with open("/Users/alex/repos/pyralph/.cursor/debug.log", "a") as f:
+                        f.write(json.dumps(log_entry3) + "\n")
+                except Exception:
+                    pass
                 # #endregion
                 pass
         timeout_timer = threading.Timer(timeout, timeout_handler)
         timeout_timer.start()
         # #region agent log
-        debug_log("loop.py:_run_iteration_core", "Timeout timer started", {"timeout": timeout, "pid": agent_process.pid, "hypothesisId": "TIMEOUT_SETUP"})
+        import json
+        log_entry = {"location": "loop.py:_run_iteration_core", "message": "Timeout timer started", "data": {"timeout": timeout, "pid": agent_process.pid}, "timestamp": int(time.time() * 1000), "sessionId": "debug-session", "runId": "run1", "hypothesisId": "TIMEOUT_SETUP"}
+        try:
+            with open("/Users/alex/repos/pyralph/.cursor/debug.log", "a") as f:
+                f.write(json.dumps(log_entry) + "\n")
+        except Exception:
+            pass
         # #endregion
     
     # Parse stream with timeout checking
     signal = ""
     try:
         # #region agent log
-        debug_log("loop.py:_run_iteration_core", "Starting parse_stream iteration", {"timeout": timeout, "stop_signals": list(stop_signals), "hypothesisId": "PARSE_START"})
+        import json
+        log_entry = {"location": "loop.py:_run_iteration_core", "message": "Starting parse_stream iteration", "data": {"timeout": timeout, "stop_signals": [str(s) for s in stop_signals]}, "timestamp": int(time.time() * 1000), "sessionId": "debug-session", "runId": "run1", "hypothesisId": "PARSE_START"}
+        try:
+            with open("/Users/alex/repos/pyralph/.cursor/debug.log", "a") as f:
+                f.write(json.dumps(log_entry) + "\n")
+        except Exception:
+            pass
         # #endregion
         for sig in parser.parse_stream(
             workspace, agent_process, token_tracker, gutter_detector, provider,
@@ -123,7 +151,12 @@ def _run_iteration_core(
         ):
             signal = sig
             # #region agent log
-            debug_log("loop.py:_run_iteration_core", "Received signal from parse_stream", {"signal": str(signal), "signal_type": type(signal).__name__, "in_stop_signals": signal in stop_signals, "stop_signals": [str(s) for s in stop_signals], "hypothesisId": "SIGNAL_RECEIVED"})
+            log_entry2 = {"location": "loop.py:_run_iteration_core", "message": "Received signal from parse_stream", "data": {"signal": str(signal), "signal_type": type(signal).__name__, "in_stop_signals": signal in stop_signals, "stop_signals": [str(s) for s in stop_signals]}, "timestamp": int(time.time() * 1000), "sessionId": "debug-session", "runId": "run1", "hypothesisId": "SIGNAL_RECEIVED"}
+            try:
+                with open("/Users/alex/repos/pyralph/.cursor/debug.log", "a") as f:
+                    f.write(json.dumps(log_entry2) + "\n")
+            except Exception:
+                pass
             # #endregion
             if signal in stop_signals:
                 # Stop early if critical signal
@@ -156,18 +189,35 @@ def _run_iteration_core(
         if timeout_timer:
             timeout_timer.cancel()
             # #region agent log
-            debug_log("loop.py:_run_iteration_core", "Timeout timer cancelled", {"hypothesisId": "TIMER_CANCELLED"})
+            import json
+            log_entry = {"location": "loop.py:_run_iteration_core", "message": "Timeout timer cancelled", "timestamp": int(time.time() * 1000), "sessionId": "debug-session", "runId": "run1", "hypothesisId": "TIMER_CANCELLED"}
+            try:
+                with open("/Users/alex/repos/pyralph/.cursor/debug.log", "a") as f:
+                    f.write(json.dumps(log_entry) + "\n")
+            except Exception:
+                pass
             # #endregion
     
     # Check if timeout was the reason for termination (no signal received)
     elapsed = time.time() - start_time
     # #region agent log
-    debug_log("loop.py:_run_iteration_core", "parse_stream loop completed", {"final_signal": str(signal) if signal else "empty", "elapsed": elapsed, "timeout": timeout, "timeout_reached": timeout and elapsed >= timeout, "hypothesisId": "LOOP_COMPLETE"})
+    import json
+    log_entry = {"location": "loop.py:_run_iteration_core", "message": "parse_stream loop completed", "data": {"final_signal": str(signal) if signal else "empty", "elapsed": elapsed, "timeout": timeout, "timeout_reached": timeout and elapsed >= timeout}, "timestamp": int(time.time() * 1000), "sessionId": "debug-session", "runId": "run1", "hypothesisId": "LOOP_COMPLETE"}
+    try:
+        with open("/Users/alex/repos/pyralph/.cursor/debug.log", "a") as f:
+            f.write(json.dumps(log_entry) + "\n")
+    except Exception:
+        pass
     # #endregion
     if not signal and timeout and elapsed >= timeout:
         signal = timeout_signal
         # #region agent log
-        debug_log("loop.py:_run_iteration_core", "Setting timeout signal after loop", {"signal": str(signal), "hypothesisId": "TIMEOUT_SIGNAL"})
+        log_entry2 = {"location": "loop.py:_run_iteration_core", "message": "Setting timeout signal after loop", "data": {"signal": str(signal)}, "timestamp": int(time.time() * 1000), "sessionId": "debug-session", "runId": "run1", "hypothesisId": "TIMEOUT_SIGNAL"}
+        try:
+            with open("/Users/alex/repos/pyralph/.cursor/debug.log", "a") as f:
+                f.write(json.dumps(log_entry2) + "\n")
+        except Exception:
+            pass
         # #endregion
     
     # Wait for process to finish with timeout

@@ -88,19 +88,35 @@ def parse_stream(
     last_read_time = time.time()
     while True:
         # #region agent log
+        import json
         read_start = time.time()
-        debug_log("parser.py:parse_stream", "About to call readline()", {"lines_read": lines_read, "time_since_last_read": read_start - last_read_time, "process_returncode": agent_process.poll(), "hypothesisId": "READLINE_START"})
+        log_entry = {"location": "parser.py:parse_stream", "message": "About to call readline()", "data": {"lines_read": lines_read, "time_since_last_read": read_start - last_read_time, "process_returncode": agent_process.poll()}, "timestamp": int(time.time() * 1000), "sessionId": "debug-session", "runId": "run1", "hypothesisId": "READLINE_START"}
+        try:
+            with open("/Users/alex/repos/pyralph/.cursor/debug.log", "a") as f:
+                f.write(json.dumps(log_entry) + "\n")
+        except Exception:
+            pass
         # #endregion
         line = agent_process.stdout.readline()
         read_end = time.time()
         read_duration = read_end - read_start
         last_read_time = read_end
         # #region agent log
-        debug_log("parser.py:parse_stream", "readline() returned", {"lines_read": lines_read, "read_duration": read_duration, "has_line": bool(line), "line_length": len(line) if line else 0, "process_returncode": agent_process.poll(), "hypothesisId": "READLINE_RETURN"})
+        log_entry2 = {"location": "parser.py:parse_stream", "message": "readline() returned", "data": {"lines_read": lines_read, "read_duration": read_duration, "has_line": bool(line), "line_length": len(line) if line else 0, "process_returncode": agent_process.poll()}, "timestamp": int(time.time() * 1000), "sessionId": "debug-session", "runId": "run1", "hypothesisId": "READLINE_RETURN"}
+        try:
+            with open("/Users/alex/repos/pyralph/.cursor/debug.log", "a") as f:
+                f.write(json.dumps(log_entry2) + "\n")
+        except Exception:
+            pass
         # #endregion
         if not line:
             # #region agent log
-            debug_log("parser.py:parse_stream", "Process ended - no more output", {"lines_read": lines_read, "process_returncode": agent_process.poll(), "hypothesisId": "PROCESS_END"})
+            log_entry3 = {"location": "parser.py:parse_stream", "message": "Process ended - no more output", "data": {"lines_read": lines_read, "process_returncode": agent_process.poll()}, "timestamp": int(time.time() * 1000), "sessionId": "debug-session", "runId": "run1", "hypothesisId": "PROCESS_END"}
+            try:
+                with open("/Users/alex/repos/pyralph/.cursor/debug.log", "a") as f:
+                    f.write(json.dumps(log_entry3) + "\n")
+            except Exception:
+                pass
             # #endregion
             # Process ended
             break
