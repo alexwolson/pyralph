@@ -350,3 +350,35 @@ EOF
 [21:13:35] 🔴 READ /Users/alex/repos/pyralph/tests/test_cli.py (279 lines, ~27.2KB)
 [21:13:40] 🔴 TOKENS: 71681 / 80000 (89%) - approaching limit [read:275KB write:0KB assist:1KB shell:0KB]
 [21:13:44] 🔴 SHELL cd /Users/alex/repos/pyralph && uv run python -m pytest tests/test_cli.py -v 2>&1 → exit 0
+[21:13:58] 🔴 SHELL cd /Users/alex/repos/pyralph && git add -A && git commit -m "$(cat <<'EOF'
+ralph: enhance status command with Rich table, progress bar, and panel
+
+- Add Rich table for completion criteria with checkmarks/crosses
+- Add progress bar with percentage using rich.progress
+- Add panel with task summary and metadata
+- Add rule separators between sections
+- Update test to match new output format
+EOF
+)" → exit 0
+[21:14:11] 🔴 TOKENS: 71704 / 80000 (89%) - approaching limit [read:275KB write:0KB assist:1KB shell:0KB]
+[21:14:17] 🔴 READ /Users/alex/repos/pyralph/src/ralph/interview.py (345 lines, ~33.7KB)
+[21:14:17] ROTATE: Token threshold reached (80329 >= 80000)
+[21:14:19] ═══════════════════════════════════════════════════════════════
+[21:14:19] Ralph Session Started: 2026-01-16 21:14:19.553897
+[21:14:20] SESSION START: model=Claude 4.5 Opus (Thinking)
+[21:14:25] 🟢 READ /Users/alex/repos/pyralph/RALPH_TASK.md (135 lines, ~13.2KB)
+[21:14:25] 🟢 READ /Users/alex/repos/pyralph/.ralph/guardrails.md (26 lines, ~2.5KB)
+[21:14:26] 🟢 READ /Users/alex/repos/pyralph/.ralph/progress.md (130 lines, ~12.7KB)
+[21:14:26] 🟢 READ /Users/alex/repos/pyralph/.ralph/errors.log (5 lines, ~0.5KB)
+[21:14:34] 🟢 READ /Users/alex/repos/pyralph/src/ralph/interview.py (345 lines, ~33.7KB)
+[21:14:34] 🟢 READ /Users/alex/repos/pyralph/src/ralph/interview_turns.py (132 lines, ~12.9KB)
+[21:14:34] 🟢 READ /Users/alex/repos/pyralph/src/ralph/ui.py (250 lines, ~24.4KB)
+[21:14:46] 🟢 READ /Users/alex/repos/pyralph/pyproject.toml (31 lines, ~3.0KB)
+[21:14:46] 🟢 READ /Users/alex/repos/pyralph/src/ralph/cli.py (408 lines, ~39.8KB)
+[21:14:49] 🟢 TOKENS: 37434 / 80000 (46%) [read:142KB write:0KB assist:0KB shell:0KB]
+[21:15:19] 🟢 TOKENS: 37548 / 80000 (46%) [read:142KB write:0KB assist:0KB shell:0KB]
+[21:15:21] 🟢 SHELL make test → exit 0
+[21:15:24] 🟢 READ /Users/alex/repos/pyralph/Makefile (39 lines, ~3.8KB)
+[21:15:36] 🟢 SHELL uv run pytest -v → exit 0
+[21:15:49] 🟢 TOKENS: 38606 / 80000 (48%) [read:146KB write:0KB assist:1KB shell:0KB]
+[21:15:57] 🟢 SHELL make test 2>&1 | tail -20 → exit 0

@@ -36,14 +36,14 @@ The task is complete when ALL of the following are true:
 - [x] Live-updating criteria checklist during ralph run
 
 ### Status Command Upgrade
-- [ ] Status command shows Rich table for completion criteria with checkmarks/crosses
-- [ ] Status command shows progress bar with percentage
-- [ ] Status command shows panel with task summary and metadata
+- [x] Status command shows Rich table for completion criteria with checkmarks/crosses
+- [x] Status command shows progress bar with percentage
+- [x] Status command shows panel with task summary and metadata
 
 ### Interview Experience
-- [ ] Interview experience uses styled panels for AI questions
-- [ ] Interview renders markdown in responses
-- [ ] Interview uses rich.prompt with history support
+- [x] Interview experience uses styled panels for AI questions
+- [x] Interview renders markdown in responses
+- [x] Interview uses rich.prompt with history support
 
 ### Log Viewing
 - [ ] Log viewing has syntax-highlighted code blocks

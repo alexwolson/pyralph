@@ -1,11 +1,16 @@
 """Helper functions for turn-based interview using conversation file."""
 
+import readline  # Enables up-arrow history in input
 import subprocess
 from pathlib import Path
 from typing import Optional
 
 from rich.console import Console
 from rich.markdown import Markdown
+from rich.panel import Panel
+from rich.prompt import Prompt
+
+from ralph.ui import THEME
 
 console = Console()
 
@@ -72,10 +77,15 @@ def run_single_turn(
                         text = item["text"]
                         ai_response_parts.append(text)
                         
-                        # Display to user with markdown rendering
+                        # Display to user with styled panel and markdown rendering
                         if text.strip():
-                            console.print("[cyan]🤖[/cyan]", end=" ")
-                            console.print(Markdown(text))
+                            console.print()
+                            console.print(Panel(
+                                Markdown(text),
+                                title="[bold]🤖 AI Assistant[/bold]",
+                                border_style=THEME["primary"],
+                                padding=(1, 2),
+                            ))
                         
                         last_ai_message = text
                         
@@ -117,9 +127,17 @@ def run_single_turn(
 
 
 def wait_for_user_input() -> str:
-    """Wait for user to type a response and return it."""
+    """Wait for user to type a response and return it.
+    
+    Uses rich.prompt.Prompt for styled input with readline history support
+    (up-arrow to recall previous responses within the session).
+    """
     try:
-        user_input = console.input("\n[bold]Your response:[/bold] ")
+        console.print()  # Add spacing
+        user_input = Prompt.ask(
+            f"[bold {THEME['accent']}]Your response[/]",
+            console=console,
+        )
         return user_input
     except (EOFError, KeyboardInterrupt):
         return ""

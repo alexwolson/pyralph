@@ -1,7 +1,7 @@
 # Makefile for pyralph
 # Global installation via uv tool
 
-.PHONY: install update uninstall help
+.PHONY: install update uninstall test help
 
 ## install: Install ralph globally using uv tool (accessible from any directory)
 install:
@@ -30,6 +30,10 @@ uninstall:
 	@echo "Uninstalling ralph..."
 	uv tool uninstall pyralph
 	@echo "Done!"
+
+## test: Run the test suite
+test:
+	uv run pytest -v
 
 ## help: Show this help message
 help:
