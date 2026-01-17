@@ -380,3 +380,11 @@ EOF
 [15:18:30] ● READ /Users/alex/repos/pyralph/src/ralph/__init__.py (4 lines, ~0.4KB)
 [15:18:46] ● SHELL uv run pytest -v → exit 0
 [15:18:46] ● TOKENS: 9277 / 80000 (11%) [read:32KB write:0KB assist:0KB shell:0KB]
+[15:18:55] ● SHELL git add -A && git commit -m "$(cat <<'EOF'
+ralph: add authors field to pyproject.toml
+
+Added authors = [{name = "Ralph Test"}] to pyproject.toml
+EOF
+)" → exit 0
+[15:19:11] ● SHELL uv run pytest -v → exit 0
+[15:19:17] ● TOKENS: 9311 / 80000 (11%) [read:32KB write:0KB assist:0KB shell:0KB]
