@@ -1,71 +1,94 @@
 ---
-task: Pass workspace directory to CLI providers to eliminate cd prefix commands
+task: Fix task archiving and rename cursor-agent to agent CLI
 completion_criteria:
-  - BaseProvider.get_command() accepts workspace parameter
-  - All providers pass directory flag to their CLI tool
-  - loop.py passes workspace to get_command()
-  - Tests pass
-max_iterations: 10
-test_command: "pytest tests/ -v"
+  - Archived task files are committed to git after being moved to .ralph/completed/
+  - CursorProvider uses "agent" as CLI tool (not "cursor-agent")
+  - BaseProvider has get_display_name() method returning user-facing name
+  - CursorProvider.get_display_name() returns "cursor"
+  - All user-facing output uses display name instead of CLI tool name
+  - PROVIDERS dict in __init__.py uses "agent" key for CursorProvider
+  - Error messages reference "agent" not "cursor-agent" for CLI installation
+  - README.md updated to reflect "agent" command (if cursor-agent is mentioned)
+  - All tests pass
+max_iterations: 20
+test_command: "pytest"
 ---
 
-# Task: Pass Workspace Directory to CLI Providers
+# Task: Fix task archiving and rename cursor-agent to agent CLI
 
-The agent currently has to prefix every shell command with `cd /path/to/project &&` because the CLI tools don't know which directory they're working in. Fix this by passing the workspace path to each provider so they can use their directory flag.
+Two separate improvements to Ralph:
+
+## 1. Fix Task Archiving Git Commit
+
+The `archive_completed_task()` function in `loop.py` moves completed RALPH_TASK.md files to `.ralph/completed/` but doesn't commit the change to git. Since Ralph's strength is state-in-git, the archived file should be committed.
+
+**Current behavior**: Task file is moved locally but not committed
+**Expected behavior**: After archiving, git commit the removal of RALPH_TASK.md and addition of the archived file
+
+Location: `src/ralph/loop.py` - `archive_completed_task()` function and its call sites
+
+## 2. Rename cursor-agent CLI to agent
+
+The cursor-agent CLI tool has been renamed to just `agent` on the command line. Update Ralph to:
+- Call `agent` instead of `cursor-agent` when invoking the CLI
+- Display "cursor" (not "agent" or "cursor-agent") in user-facing output
+- This requires adding a display name concept to providers
+
+**Files to modify**:
+- `src/ralph/providers/base.py` - Add `get_display_name()` method
+- `src/ralph/providers/cursor.py` - Update CLI tool to "agent", display name to "cursor"
+- `src/ralph/providers/__init__.py` - Update PROVIDERS dict key
+- `src/ralph/providers/rotation.py` - Use display name for user output
+- `src/ralph/loop.py` - Use display name for user output, keep CLI tool for debug logs
+- `src/ralph/cli.py` - Use display name for user output
+- `src/ralph/interview.py` - Use display name for user output
+- Error messages that mention "cursor-agent" should say "agent"
+- `README.md` - Update any cursor-agent references
 
 ## Success Criteria
 
 The task is complete when ALL of the following are true:
 
-- [x] `BaseProvider.get_command()` signature updated to accept `workspace: Path` parameter
-- [x] `ClaudeProvider.get_command()` adds `--directory` flag with workspace path
-- [x] `CursorProvider.get_command()` adds appropriate directory flag (check cursor-agent docs)
-- [x] `CodexProvider.get_command()` adds `--cwd` flag with workspace path
-- [x] `GeminiProvider.get_command()` adds appropriate directory flag (check gemini CLI docs)
-- [x] `loop.py` updated to pass `workspace` when calling `provider.get_command()`
-- [x] All existing tests pass
+- [ ] Archived task files are committed to git after being moved to .ralph/completed/
+- [ ] CursorProvider uses "agent" as CLI tool (not "cursor-agent")
+- [ ] BaseProvider has get_display_name() method returning user-facing name
+- [ ] CursorProvider.get_display_name() returns "cursor"
+- [ ] All user-facing output uses display name instead of CLI tool name
+- [ ] PROVIDERS dict in __init__.py uses "agent" key for CursorProvider
+- [ ] Error messages reference "agent" not "cursor-agent" for CLI installation
+- [ ] README.md updated to reflect "agent" command (if cursor-agent is mentioned)
+- [ ] All tests pass
 
 ## Constraints
 
-- Keep changes minimal - this is a simple plumbing change
-- Don't over-engineer - just add the directory flag to each provider
-- If a CLI tool doesn't support a directory flag, document it and skip that provider
-
-## Files to Modify
-
-- `src/ralph/providers/base.py` - Update abstract method signature
-- `src/ralph/providers/claude.py` - Add --directory flag
-- `src/ralph/providers/cursor.py` - Add directory flag
-- `src/ralph/providers/codex.py` - Add --cwd flag
-- `src/ralph/providers/gemini.py` - Add directory flag
-- `src/ralph/loop.py` - Pass workspace to get_command()
+- Keep debug/log output using CLI tool names for technical accuracy
+- User-facing console output should use friendly display names
+- Don't break existing provider rotation logic
+- Maintain backward compatibility for other providers (claude, gemini, codex)
 
 ---
 ## Ralph Instructions
-
-You are an autonomous development agent using the Ralph methodology.
-
-### FIRST: Read State Files
 
 Before doing anything:
 1. Read `RALPH_TASK.md` - your task and completion criteria
 2. Read `.ralph/guardrails.md` - lessons from past failures (FOLLOW THESE)
 3. Read `.ralph/progress.md` - what's been accomplished
+4. Read `.ralph/errors.log` - recent failures to avoid
 
-### Git Protocol (Critical)
+## Git Protocol
 
 Ralph's strength is state-in-git, not LLM memory. Commit early and often:
 
 1. After completing each criterion, commit your changes
 2. After any significant code change: commit with descriptive message
-3. Push after every 2-3 commits: `git push`
+3. Before any risky refactor: commit current state as checkpoint
 4. After committing, signal for fresh context: output `<ralph>ROTATE</ralph>`
 
-### Task Execution
+## Task Execution
 
 1. Work on the next unchecked criterion (look for `[ ]`)
-2. Run tests after changes: `pytest tests/ -v`
-3. **Mark completed criteria**: Edit RALPH_TASK.md and change `[ ]` to `[x]`
+2. Run tests after changes: `pytest`
+3. Mark completed criteria: change `[ ]` to `[x]` in this file
 4. Update `.ralph/progress.md` with what you accomplished
 5. When ALL criteria show `[x]`: output `<ralph>COMPLETE</ralph>`
 6. If stuck 3+ times on same issue: output `<ralph>GUTTER</ralph>`

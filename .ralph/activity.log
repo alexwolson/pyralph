@@ -246,3 +246,19 @@ print('Codex:', CodexProvider().get_command('test', ws))
 print('Gemini:', GeminiProvider().get_command('test', ws))
 " → exit 0
 [20:55:25] 🟢 TOKENS: 27296 / 80000 (34%) [read:102KB write:0KB assist:0KB shell:0KB]
+[20:55:37] 🟢 SHELL git add -A && git commit -m "$(cat <<'EOF'
+ralph: add workspace directory parameter to CLI providers
+
+- Update BaseProvider.get_command() to accept workspace: Path parameter
+- ClaudeProvider: add --directory flag
+- CursorProvider: add --directory flag
+- CodexProvider: add --cwd flag
+- GeminiProvider: add --directory flag
+- loop.py: pass workspace to provider.get_command()
+
+This allows CLI tools to operate in the correct directory without
+requiring cd prefix commands in every shell invocation.
+EOF
+)" → exit 0
+[20:55:42] 🟢 SHELL git push → exit 0
+[20:55:46] ✅ Agent signaled COMPLETE
