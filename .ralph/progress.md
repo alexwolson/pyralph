@@ -44,3 +44,16 @@ Completed work:
 
 ### 2026-01-16 20:36:44
 **Session 1 ended** - ✅ TASK COMPLETE
+
+### 2026-01-16 20:45:52
+**Session 1 started** (provider: cursor-agent)
+
+### 2026-01-16
+**Commit-based rotation and task archival implemented**
+
+Completed work:
+- Added ROTATE signal instruction in `build_prompt()` Git Protocol section (item 5)
+- Created `archive_completed_task()` function using datetime and Path.mkdir/rename
+- Integrated task archival into both completion branches in `run_ralph_loop()`
+- Verified no existing tests cover affected functions (none needed updating)
+- All 4 success criteria complete

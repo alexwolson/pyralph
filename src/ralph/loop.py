@@ -2,12 +2,43 @@
 
 import subprocess
 import time
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
 from ralph import git_utils, gutter, parser, state, task, tokens
 from ralph.debug import debug_log
 from ralph.providers import ProviderRotation
+
+
+def archive_completed_task(workspace: Path) -> Optional[Path]:
+    """Archive completed RALPH_TASK.md to .ralph/completed/ with timestamp.
+    
+    Returns the path to the archived file, or None if no task file exists.
+    """
+    task_file = workspace / "RALPH_TASK.md"
+    if not task_file.exists():
+        return None
+    
+    # Create completed directory if needed
+    completed_dir = workspace / ".ralph" / "completed"
+    completed_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Generate timestamp
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    archive_name = f"RALPH_TASK_{timestamp}.md"
+    archive_path = completed_dir / archive_name
+    
+    # Move task file to archive
+    task_file.rename(archive_path)
+    
+    debug_log(
+        "loop.py:archive_completed_task",
+        "Task archived",
+        {"archive_path": str(archive_path)},
+    )
+    
+    return archive_path
 
 
 def build_prompt(workspace: Path, iteration: int) -> str:
@@ -56,6 +87,8 @@ Ralph's strength is state-in-git, not LLM memory. Commit early and often:
 2. After any significant code change (even partial): commit with descriptive message
 3. Before any risky refactor: commit current state as checkpoint
 4. Push after every 2-3 commits: `git push`
+5. After committing, signal for fresh context: output `<ralph>ROTATE</ralph>`
+   This ensures each commit checkpoint gets a fresh agent context.
 
 If you get rotated, the next agent picks up from your last commit. Your commits ARE your memory.
 
@@ -270,6 +303,12 @@ def run_ralph_loop(
                 print(f"\n🎉 RALPH COMPLETE! All criteria satisfied.")
                 print(f"Completed in {iteration} iteration(s).")
                 
+                # Archive completed task
+                archive_path = archive_completed_task(workspace)
+                if archive_path:
+                    print(f"📁 Task archived to: {archive_path.relative_to(workspace)}")
+                    state.log_progress(workspace, f"**Task archived** to {archive_path.name}")
+                
                 # Open PR if requested
                 if open_pr and branch:
                     git_utils.push_branch(workspace, branch)
@@ -284,6 +323,12 @@ def run_ralph_loop(
                     state.log_progress(workspace, f"**Session {iteration} ended** - ✅ TASK COMPLETE (agent signaled)")
                     print(f"\n🎉 RALPH COMPLETE! Agent signaled completion and all criteria verified.")
                     print(f"Completed in {iteration} iteration(s).")
+                    
+                    # Archive completed task
+                    archive_path = archive_completed_task(workspace)
+                    if archive_path:
+                        print(f"📁 Task archived to: {archive_path.relative_to(workspace)}")
+                        state.log_progress(workspace, f"**Task archived** to {archive_path.name}")
                     
                     if open_pr and branch:
                         git_utils.push_branch(workspace, branch)

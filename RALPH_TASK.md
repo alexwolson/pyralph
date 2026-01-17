@@ -21,10 +21,10 @@ Implement two enhancements to the Ralph loop:
 
 The task is complete when ALL of the following are true:
 
-- [ ] Add instruction in `build_prompt()` (src/ralph/loop.py) telling agents to output `<ralph>ROTATE</ralph>` after making a git commit
-- [ ] Modify completion handling in `run_ralph_loop()` to rename RALPH_TASK.md to `.ralph/completed/RALPH_TASK_<timestamp>.md` (format: `RALPH_TASK_20260116_143052.md`)
-- [ ] Create `.ralph/completed/` directory if it doesn't exist before archiving
-- [ ] Update any existing tests that may be affected by these changes (check tests/ directory)
+- [x] Add instruction in `build_prompt()` (src/ralph/loop.py) telling agents to output `<ralph>ROTATE</ralph>` after making a git commit
+- [x] Modify completion handling in `run_ralph_loop()` to rename RALPH_TASK.md to `.ralph/completed/RALPH_TASK_<timestamp>.md` (format: `RALPH_TASK_20260116_143052.md`)
+- [x] Create `.ralph/completed/` directory if it doesn't exist before archiving
+- [x] Update any existing tests that may be affected by these changes (check tests/ directory)
 
 ## Implementation Details
 
