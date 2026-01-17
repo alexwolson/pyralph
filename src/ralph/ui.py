@@ -103,7 +103,15 @@ class RalphLiveDisplay:
             else:
                 status = f"[{THEME['muted']}]○[/]"
                 style = ""
-            table.add_row(status, f"[{style}]{text}[/]")
+            
+            # Use Text class to escape markup in criteria text and apply style
+            # This prevents Rich from parsing brackets in the text as markup tags
+            if style:
+                criterion_text = Text(text, style=style)
+            else:
+                criterion_text = Text(text)
+            
+            table.add_row(status, criterion_text)
         
         return table
 
