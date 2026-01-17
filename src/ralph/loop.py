@@ -61,7 +61,7 @@ def _run_iteration_core(
     gutter_detector = gutter.GutterDetector()
     
     # Log session start - use display name for user-facing output
-    provider_display = provider.get_display_name() if hasattr(provider, 'get_display_name') else provider.cli_tool
+    provider_display = provider.get_display_name()
     provider_cli = provider.cli_tool if hasattr(provider, 'cli_tool') else str(type(provider).__name__)
     state.log_progress(workspace, f"**{log_message}** (provider: {provider_display})")
     

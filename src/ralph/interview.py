@@ -254,7 +254,7 @@ def create_task_file(project_dir: Path, initial_instruction: Optional[str] = Non
     
     while attempt < max_attempts:
         provider = provider_rotation.get_current()
-        provider_display = provider.get_display_name() if hasattr(provider, 'get_display_name') else provider.cli_tool
+        provider_display = provider.get_display_name()
         
         if attempt == 0:
             console.print(f"[{THEME['muted']}]Using LLM provider: {provider_display}[/]")

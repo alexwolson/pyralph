@@ -203,7 +203,7 @@ def run(
     from ralph.providers import detect_available_providers
     
     available_providers = detect_available_providers()
-    provider_names = [p.get_display_name() if hasattr(p, 'get_display_name') else p.cli_tool for p in available_providers]
+    provider_names = [p.get_display_name() for p in available_providers]
     
     console.print()
     console.print(Rule(f"[bold {THEME['primary']}]Ralph[/]", style=THEME["primary"]))
@@ -344,7 +344,7 @@ def status(ctx: click.Context, project_dir: Path) -> None:
     from ralph.providers import detect_available_providers
     
     available_providers = detect_available_providers()
-    provider_names = [p.get_display_name() if hasattr(p, 'get_display_name') else p.cli_tool for p in available_providers]
+    provider_names = [p.get_display_name() for p in available_providers]
 
     # Print header
     console.print()
@@ -463,7 +463,7 @@ def providers(ctx: click.Context) -> None:
     
     # Get all known providers and which are available
     available = detect_available_providers()
-    available_names = {p.get_display_name() if hasattr(p, 'get_display_name') else p.cli_tool for p in available}
+    available_names = {p.get_display_name() for p in available}
     
     # Get rotation to show current/next
     rotation = None
@@ -472,7 +472,7 @@ def providers(ctx: click.Context) -> None:
         rotation = get_provider_rotation()
         if rotation.providers:
             current = rotation.get_current()
-            current_name = current.get_display_name() if hasattr(current, 'get_display_name') else current.cli_tool
+            current_name = current.get_display_name()
     
     # Build table
     table = Table(show_header=True, box=None, padding=(0, 2))
@@ -487,7 +487,7 @@ def providers(ctx: click.Context) -> None:
     
     for cli_name, provider_class in all_providers:
         provider = provider_class()
-        display_name = provider.get_display_name() if hasattr(provider, 'get_display_name') else cli_name
+        display_name = provider.get_display_name()
         
         is_available = display_name in available_names
         is_current = display_name == current_name
@@ -509,8 +509,7 @@ def providers(ctx: click.Context) -> None:
         # Rotation position
         if is_available and rotation:
             try:
-                idx = [p.get_display_name() if hasattr(p, 'get_display_name') else p.cli_tool 
-                       for p in rotation.providers].index(display_name)
+                idx = [p.get_display_name() for p in rotation.providers].index(display_name)
                 if is_current:
                     rotation_text = f"[{THEME['accent']}]current[/]"
                 elif idx == 1:

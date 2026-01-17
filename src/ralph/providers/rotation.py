@@ -59,7 +59,4 @@ class ProviderRotation:
 
     def get_provider_name(self) -> str:
         """Get user-facing display name of current provider."""
-        provider = self.get_current()
-        if hasattr(provider, 'get_display_name'):
-            return provider.get_display_name()
-        return provider.cli_tool if hasattr(provider, 'cli_tool') else str(type(provider).__name__)
+        return self.get_current().get_display_name()

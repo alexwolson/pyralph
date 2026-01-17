@@ -141,3 +141,9 @@ All three test criteria completed successfully.
 
 ### 2026-01-17 15:00:21
 **Session 2 started** (provider: cursor)
+
+### 2026-01-17 15:04:41
+**Session 2 ended** - ↻ Context rotation (token limit reached)
+
+### 2026-01-17 15:04:43
+**Session 3 started** (provider: cursor)
