@@ -99,9 +99,30 @@ class RalphLiveDisplay:
 
     def _build_criteria_table(self) -> Table:
         """Build the criteria checklist table."""
+        # #region agent log
+        import json
+        import time
+        debug_log_path = Path("/Users/alex/repos/pyralph/.cursor/debug.log")
+        try:
+            with open(debug_log_path, "a") as f:
+                log_entry = {
+                    "id": f"log_{int(time.time() * 1000)}",
+                    "timestamp": int(time.time() * 1000),
+                    "location": "ui.py:_build_criteria_table",
+                    "message": "building criteria table",
+                    "data": {"criteria_count": len(self.criteria), "criteria_texts": [t[0][:50] for t in self.criteria]},
+                    "sessionId": "debug-session",
+                    "runId": "ralph-loop",
+                    "hypothesisId": "B"
+                }
+                f.write(json.dumps(log_entry) + "\n")
+        except Exception:
+            pass
+        # #endregion
+        
         table = Table(show_header=False, box=None, padding=(0, 1))
         table.add_column("Status", width=3)
-        table.add_column("Criterion")
+        table.add_column("Criterion", overflow="fold")
         
         for text, is_checked in self.criteria:
             if is_checked:
@@ -111,23 +132,38 @@ class RalphLiveDisplay:
                 status = f"[{THEME['muted']}]○[/]"
                 style = ""
             
-            # Create Text object from plain text string
-            # Text objects should not trigger markup parsing, but Rich's measurement
-            # system might convert them to strings. To be safe, we ensure the text
-            # is treated as plain by using Text.plain property when creating
-            # However, since we're creating from a string, we need to ensure brackets
-            # don't get parsed. The safest approach is to use Text objects which
-            # Rich should handle correctly, but if measurement fails, we catch it.
+            # #region agent log
             try:
-                if style:
-                    criterion_text = Text(text, style=style)
-                else:
-                    criterion_text = Text(text)
-                table.add_row(status, criterion_text)
+                with open(debug_log_path, "a") as f:
+                    log_entry = {
+                        "id": f"log_{int(time.time() * 1000)}",
+                        "timestamp": int(time.time() * 1000),
+                        "location": "ui.py:_build_criteria_table",
+                        "message": "processing criterion",
+                        "data": {"text": text[:100], "has_brackets": "[" in text or "]" in text, "is_checked": is_checked},
+                        "sessionId": "debug-session",
+                        "runId": "ralph-loop",
+                        "hypothesisId": "B"
+                    }
+                    f.write(json.dumps(log_entry) + "\n")
             except Exception:
-                # If there's any error (like MarkupError), fall back to plain string
-                # This should not happen with Text objects, but just in case
-                table.add_row(status, text)
+                pass
+            # #endregion
+            
+            # The issue is that Rich's measurement system converts Text objects to strings
+            # and tries to parse them as markup. To prevent this, we need to ensure
+            # the text doesn't contain any markup-like patterns that Rich will try to parse.
+            # The safest approach is to replace brackets with visually similar characters
+            # that won't be parsed as markup.
+            safe_text = text.replace("[", "【").replace("]", "】")
+            
+            # Create Text object with the safe text
+            if style:
+                criterion_text = Text(safe_text, style=style)
+            else:
+                criterion_text = Text(safe_text)
+            
+            table.add_row(status, criterion_text)
         
         return table
 
@@ -200,8 +236,20 @@ class RalphLiveDisplay:
             pass
         # #endregion
         
+        # Build display with error handling for MarkupError
+        try:
+            display = self._build_display()
+        except Exception as e:
+            # If building display fails (e.g., MarkupError in criteria table),
+            # fall back to just the progress bar
+            from rich.errors import MarkupError
+            if isinstance(e, MarkupError):
+                display = Group(self.progress)
+            else:
+                raise
+        
         self._live = Live(
-            self._build_display(),
+            display,
             console=self.console,
             refresh_per_second=4,
             transient=False,
