@@ -1,66 +1,74 @@
 ---
-task: Make pyralph globally installable on macOS via uv tool
+task: Add commit-based rotation and completed task archival
 completion_criteria:
-  - Makefile exists with install target that uses uv tool install
-  - Makefile has update target that reinstalls/upgrades the tool
-  - Running make install installs ralph command globally
-  - Running make update updates to latest version from repo
-  - ralph command works from any directory after installation
-  - README documents the global installation method
-max_iterations: 10
-test_command: "make install && which ralph && ralph --help"
+  - Add ROTATE signal instruction after git commits in build_prompt()
+  - Archive completed RALPH_TASK.md to .ralph/completed/ with timestamp
+  - Ensure .ralph/completed/ directory is created if it doesn't exist
+  - Update tests if existing tests cover affected functionality
+max_iterations: 20
+test_command: "pytest"
 ---
 
-# Task: Make pyralph globally installable on macOS
+# Task: Add Commit-Based Rotation and Completed Task Archival
 
-Make the `ralph` CLI installable system-wide on macOS so it can be run from any directory. Use `uv tool install` for isolated global installation. Provide Makefile targets for easy install and update.
+Implement two enhancements to the Ralph loop:
+
+1. **Rotation after commits**: Instruct agents via the prompt to signal ROTATE after successfully committing changes. This ensures fresh context after each meaningful checkpoint.
+
+2. **Archive completed tasks**: When a task completes successfully, rename `RALPH_TASK.md` to `.ralph/completed/RALPH_TASK_<timestamp>.md` so a new task file can be provided.
 
 ## Success Criteria
 
 The task is complete when ALL of the following are true:
 
-- [x] Makefile exists at project root with `install` target using `uv tool install`
-- [x] Makefile has `update` target that reinstalls/upgrades the tool
-- [x] Running `make install` successfully installs `ralph` command globally
-- [x] Running `make update` updates to the latest version from the repo
-- [x] `ralph` command is accessible from any directory after installation
-- [x] README.md documents the global installation method with uv tool
+- [ ] Add instruction in `build_prompt()` (src/ralph/loop.py) telling agents to output `<ralph>ROTATE</ralph>` after making a git commit
+- [ ] Modify completion handling in `run_ralph_loop()` to rename RALPH_TASK.md to `.ralph/completed/RALPH_TASK_<timestamp>.md` (format: `RALPH_TASK_20260116_143052.md`)
+- [ ] Create `.ralph/completed/` directory if it doesn't exist before archiving
+- [ ] Update any existing tests that may be affected by these changes (check tests/ directory)
 
-## Technical Context
+## Implementation Details
 
-- Package is already properly configured in `pyproject.toml` with entry point `ralph = "ralph.cli:main"`
-- Use `uv tool install` which installs into an isolated environment but makes CLI available globally
-- `uv tool install .` installs from local repo
-- `uv tool install . --force` or `uv tool upgrade` for updates
-- uv tools go to `~/.local/bin` by default (ensure this is in PATH)
+### Criterion 1: Prompt update in build_prompt()
+Location: `src/ralph/loop.py`, function `build_prompt()`, around line 58
+
+Add to the "Git Protocol" section:
+```
+5. After committing, signal for fresh context: output `<ralph>ROTATE</ralph>`
+   This ensures each commit checkpoint gets a fresh agent context.
+```
+
+### Criterion 2 & 3: Archive completed tasks
+Location: `src/ralph/loop.py`, function `run_ralph_loop()`, around lines 268-292 (completion handling)
+
+When task is complete:
+1. Create `.ralph/completed/` directory if needed
+2. Generate timestamp string (format: `YYYYMMDD_HHMMSS`)
+3. Rename `RALPH_TASK.md` to `.ralph/completed/RALPH_TASK_<timestamp>.md`
+4. Log the archival action
 
 ## Constraints
 
-- Use `uv` tooling (not pipx)
-- Command name should remain `ralph`
-- Keep existing development install methods (pip install -e ., uv sync) working
-- Makefile targets should be simple and self-documenting
+- Use Python's `datetime` module for timestamp generation
+- Use `Path.mkdir(parents=True, exist_ok=True)` for directory creation
+- Use `Path.rename()` for file moving
+- Keep existing completion logic (PR opening, etc.) working
 
 ---
 ## Ralph Instructions
 
-**Before starting work:**
-1. Read `.ralph/guardrails.md` if it exists for project-specific rules
-2. Read `.ralph/progress.md` if it exists for context on previous work
-3. Check which criteria are already marked complete above
+Read these state files before starting:
+- `RALPH_TASK.md` - this file, your task definition
+- `.ralph/guardrails.md` - lessons from past failures
+- `.ralph/progress.md` - what's been accomplished
 
-**Working protocol:**
-- Work on ONE unchecked criterion at a time
-- After completing a criterion, check it off: `- [ ]` → `- [x]`
-- Commit changes with descriptive message referencing the criterion
-- Update `.ralph/progress.md` with what was done
+**Git Protocol:**
+1. Commit after completing each criterion
+2. Use descriptive commit messages: `ralph: <what you did>`
+3. Push after every 2-3 commits
+4. After committing, output `<ralph>ROTATE</ralph>` for fresh context
 
-**Git protocol:**
-- Commit after each meaningful change
-- Use clear commit messages: "feat: add Makefile with install target"
-- Never force push or rewrite history
-
-**If stuck:**
-- Document the blocker in `.ralph/progress.md`
-- Move to the next criterion if possible
-- The next agent iteration will pick up from your commits
+**Progress tracking:**
+- Mark criteria complete by changing `[ ]` to `[x]` in this file
+- Update `.ralph/progress.md` with accomplishments
+- When ALL criteria show `[x]`: output `<ralph>COMPLETE</ralph>`
+- If stuck 3+ times on same issue: output `<ralph>GUTTER</ralph>`
