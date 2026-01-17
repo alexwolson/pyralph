@@ -17,6 +17,7 @@ from rich.progress import (
 )
 from rich.table import Table
 from rich.text import Text
+from rich.markup import escape
 
 from ralph import tokens
 
@@ -84,44 +85,20 @@ class RalphLiveDisplay:
         components.append(self.progress)
         
         # Add criteria checklist if available
-        # TEMPORARILY DISABLED to fix MarkupError issue
-        # The criteria table causes Rich to try to parse Text objects as markup during measurement
-        # TODO: Re-enable once we have a proper fix for the markup parsing issue
-        # if self.criteria:
-        #     try:
-        #         criteria_table = self._build_criteria_table()
-        #         components.append(criteria_table)
-        #     except Exception:
-        #         # If there's any error building/measuring the criteria table
-        #         # (e.g., MarkupError from malformed text), just skip it
-        #         # This prevents the entire display from crashing
-        #         pass
+        if self.criteria:
+            try:
+                criteria_table = self._build_criteria_table()
+                components.append(criteria_table)
+            except Exception:
+                # If there's any error building/measuring the criteria table
+                # (e.g., MarkupError from malformed text), just skip it
+                # This prevents the entire display from crashing
+                pass
         
         return Group(*components)
 
     def _build_criteria_table(self) -> Table:
         """Build the criteria checklist table."""
-        # #region agent log
-        import json
-        import time
-        debug_log_path = Path("/Users/alex/repos/pyralph/.cursor/debug.log")
-        try:
-            with open(debug_log_path, "a") as f:
-                log_entry = {
-                    "id": f"log_{int(time.time() * 1000)}",
-                    "timestamp": int(time.time() * 1000),
-                    "location": "ui.py:_build_criteria_table",
-                    "message": "building criteria table",
-                    "data": {"criteria_count": len(self.criteria), "criteria_texts": [t[0][:50] for t in self.criteria]},
-                    "sessionId": "debug-session",
-                    "runId": "ralph-loop",
-                    "hypothesisId": "B"
-                }
-                f.write(json.dumps(log_entry) + "\n")
-        except Exception:
-            pass
-        # #endregion
-        
         table = Table(show_header=False, box=None, padding=(0, 1))
         table.add_column("Status", width=3)
         table.add_column("Criterion", overflow="fold")
@@ -134,36 +111,15 @@ class RalphLiveDisplay:
                 status = f"[{THEME['muted']}]○[/]"
                 style = ""
             
-            # #region agent log
-            try:
-                with open(debug_log_path, "a") as f:
-                    log_entry = {
-                        "id": f"log_{int(time.time() * 1000)}",
-                        "timestamp": int(time.time() * 1000),
-                        "location": "ui.py:_build_criteria_table",
-                        "message": "processing criterion",
-                        "data": {"text": text[:100], "has_brackets": "[" in text or "]" in text, "is_checked": is_checked},
-                        "sessionId": "debug-session",
-                        "runId": "ralph-loop",
-                        "hypothesisId": "B"
-                    }
-                    f.write(json.dumps(log_entry) + "\n")
-            except Exception:
-                pass
-            # #endregion
+            # Escape any markup-like patterns in the criterion text to prevent MarkupError
+            # Rich's measurement system may parse Text objects as markup, so we escape first
+            escaped_text = escape(text)
             
-            # The issue is that Rich's measurement system converts Text objects to strings
-            # and tries to parse them as markup. To prevent this, we need to ensure
-            # the text doesn't contain any markup-like patterns that Rich will try to parse.
-            # The safest approach is to replace brackets with visually similar characters
-            # that won't be parsed as markup.
-            safe_text = text.replace("[", "【").replace("]", "】")
-            
-            # Create Text object with the safe text
+            # Create Text object with the escaped content
             if style:
-                criterion_text = Text(safe_text, style=style)
+                criterion_text = Text(escaped_text, style=style)
             else:
-                criterion_text = Text(safe_text)
+                criterion_text = Text(escaped_text)
             
             table.add_row(status, criterion_text)
         
@@ -175,7 +131,7 @@ class RalphLiveDisplay:
             return f"[{THEME['muted']}]0 tokens[/]"
         
         current = self.token_tracker.calculate_tokens()
-        emoji = self.token_tracker.get_health_emoji()
+        health_indicator = self.token_tracker.get_health_emoji()
         pct = (current * 100) // self.rotate_threshold
         
         # Color based on usage
@@ -186,31 +142,10 @@ class RalphLiveDisplay:
         else:
             color = THEME["error"]
         
-        return f"{emoji} [{color}]{current:,}[/][{THEME['muted']}]/{self.rotate_threshold:,}[/]"
+        return f"{health_indicator} [{color}]{current:,}[/][{THEME['muted']}]/{self.rotate_threshold:,}[/]"
 
     def start(self) -> "RalphLiveDisplay":
         """Start the live display."""
-        # #region agent log
-        import json
-        import time
-        debug_log_path = Path("/Users/alex/repos/pyralph/.cursor/debug.log")
-        try:
-            with open(debug_log_path, "a") as f:
-                log_entry = {
-                    "id": f"log_{int(time.time() * 1000)}",
-                    "timestamp": int(time.time() * 1000),
-                    "location": "ui.py:start",
-                    "message": "start() entry",
-                    "data": {},
-                    "sessionId": "debug-session",
-                    "runId": "ralph-loop",
-                    "hypothesisId": "A"
-                }
-                f.write(json.dumps(log_entry) + "\n")
-        except Exception:
-            pass
-        # #endregion
-        
         self._task_id = self.progress.add_task(
             "ralph",
             total=None,  # Indeterminate
@@ -219,24 +154,6 @@ class RalphLiveDisplay:
             provider=self.provider_name or "starting",
             tokens=self._get_token_display(),
         )
-        
-        # #region agent log
-        try:
-            with open(debug_log_path, "a") as f:
-                log_entry = {
-                    "id": f"log_{int(time.time() * 1000)}",
-                    "timestamp": int(time.time() * 1000),
-                    "location": "ui.py:start",
-                    "message": "before creating Live",
-                    "data": {},
-                    "sessionId": "debug-session",
-                    "runId": "ralph-loop",
-                    "hypothesisId": "A"
-                }
-                f.write(json.dumps(log_entry) + "\n")
-        except Exception:
-            pass
-        # #endregion
         
         # Build display with error handling for MarkupError
         try:
@@ -256,45 +173,7 @@ class RalphLiveDisplay:
             refresh_per_second=4,
             transient=False,
         )
-        
-        # #region agent log
-        try:
-            with open(debug_log_path, "a") as f:
-                log_entry = {
-                    "id": f"log_{int(time.time() * 1000)}",
-                    "timestamp": int(time.time() * 1000),
-                    "location": "ui.py:start",
-                    "message": "before _live.start()",
-                    "data": {},
-                    "sessionId": "debug-session",
-                    "runId": "ralph-loop",
-                    "hypothesisId": "A"
-                }
-                f.write(json.dumps(log_entry) + "\n")
-        except Exception:
-            pass
-        # #endregion
-        
         self._live.start()
-        
-        # #region agent log
-        try:
-            with open(debug_log_path, "a") as f:
-                log_entry = {
-                    "id": f"log_{int(time.time() * 1000)}",
-                    "timestamp": int(time.time() * 1000),
-                    "location": "ui.py:start",
-                    "message": "after _live.start()",
-                    "data": {},
-                    "sessionId": "debug-session",
-                    "runId": "ralph-loop",
-                    "hypothesisId": "A"
-                }
-                f.write(json.dumps(log_entry) + "\n")
-        except Exception:
-            pass
-        # #endregion
-        
         return self
 
     def stop(self) -> None:
@@ -312,27 +191,6 @@ class RalphLiveDisplay:
         criteria: Optional[List[Tuple[str, bool]]] = None,
     ) -> None:
         """Update the live display with new values."""
-        # #region agent log
-        import json
-        import time
-        debug_log_path = Path("/Users/alex/repos/pyralph/.cursor/debug.log")
-        try:
-            with open(debug_log_path, "a") as f:
-                log_entry = {
-                    "id": f"log_{int(time.time() * 1000)}",
-                    "timestamp": int(time.time() * 1000),
-                    "location": "ui.py:update",
-                    "message": "update() entry",
-                    "data": {"iteration": iteration, "provider": provider, "has_live": self._live is not None},
-                    "sessionId": "debug-session",
-                    "runId": "ralph-loop",
-                    "hypothesisId": "B"
-                }
-                f.write(json.dumps(log_entry) + "\n")
-        except Exception:
-            pass
-        # #endregion
-        
         if iteration is not None:
             self.current_iteration = iteration
         if provider is not None:
@@ -346,24 +204,6 @@ class RalphLiveDisplay:
         
         # Update progress task
         if self._task_id is not None:
-            # #region agent log
-            try:
-                with open(debug_log_path, "a") as f:
-                    log_entry = {
-                        "id": f"log_{int(time.time() * 1000)}",
-                        "timestamp": int(time.time() * 1000),
-                        "location": "ui.py:update",
-                        "message": "before progress.update()",
-                        "data": {},
-                        "sessionId": "debug-session",
-                        "runId": "ralph-loop",
-                        "hypothesisId": "B"
-                    }
-                    f.write(json.dumps(log_entry) + "\n")
-            except Exception:
-                pass
-            # #endregion
-            
             self.progress.update(
                 self._task_id,
                 iteration=self.current_iteration,
@@ -371,45 +211,9 @@ class RalphLiveDisplay:
                 provider=self.provider_name or "unknown",
                 tokens=self._get_token_display(),
             )
-            
-            # #region agent log
-            try:
-                with open(debug_log_path, "a") as f:
-                    log_entry = {
-                        "id": f"log_{int(time.time() * 1000)}",
-                        "timestamp": int(time.time() * 1000),
-                        "location": "ui.py:update",
-                        "message": "after progress.update(), before _build_display()",
-                        "data": {},
-                        "sessionId": "debug-session",
-                        "runId": "ralph-loop",
-                        "hypothesisId": "B"
-                    }
-                    f.write(json.dumps(log_entry) + "\n")
-            except Exception:
-                pass
-            # #endregion
         
         # Refresh live display with updated criteria
         if self._live:
-            # #region agent log
-            try:
-                with open(debug_log_path, "a") as f:
-                    log_entry = {
-                        "id": f"log_{int(time.time() * 1000)}",
-                        "timestamp": int(time.time() * 1000),
-                        "location": "ui.py:update",
-                        "message": "before _live.update()",
-                        "data": {},
-                        "sessionId": "debug-session",
-                        "runId": "ralph-loop",
-                        "hypothesisId": "B"
-                    }
-                    f.write(json.dumps(log_entry) + "\n")
-            except Exception:
-                pass
-            # #endregion
-            
             try:
                 self._live.update(self._build_display())
             except Exception as e:
@@ -428,24 +232,6 @@ class RalphLiveDisplay:
                     # For other errors, re-raise
                     raise
             
-            # #region agent log
-            try:
-                with open(debug_log_path, "a") as f:
-                    log_entry = {
-                        "id": f"log_{int(time.time() * 1000)}",
-                        "timestamp": int(time.time() * 1000),
-                        "location": "ui.py:update",
-                        "message": "after _live.update()",
-                        "data": {},
-                        "sessionId": "debug-session",
-                        "runId": "ralph-loop",
-                        "hypothesisId": "B"
-                    }
-                    f.write(json.dumps(log_entry) + "\n")
-            except Exception:
-                pass
-            # #endregion
-
     def __enter__(self) -> "RalphLiveDisplay":
         return self.start()
 
@@ -524,7 +310,7 @@ def display_question_panel(console: Console, question_text: str) -> None:
     console.print()
     console.print(Panel(
         Markdown(question_text),
-        title="[bold]❓ Agent Question[/bold]",
+        title="[bold cyan]? Agent Question[/]",
         border_style=THEME["warning"],
         padding=(1, 2),
     ))

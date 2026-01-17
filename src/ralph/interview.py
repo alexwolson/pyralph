@@ -214,13 +214,13 @@ def create_task_file(project_dir: Path, initial_instruction: Optional[str] = Non
     task_file = project_dir / "RALPH_TASK.md"
     
     if task_file.exists():
-        console.print(f"[{THEME['warning']}]⚠️[/] RALPH_TASK.md already exists. Skipping interview.")
+        console.print(f"[{THEME['warning']}]⚠[/] RALPH_TASK.md already exists. Skipping interview.")
         return
     
     # Detect available providers and create rotation manager
     provider_rotation = get_provider_rotation()
     if not provider_rotation.providers:
-        console.print(f"[{THEME['error']}]❌[/] No LLM providers available. Please install agent, claude, gemini, or codex.")
+        console.print(f"[{THEME['error']}]✗[/] No LLM providers available. Please install agent, claude, gemini, or codex.")
         raise Exception("No LLM providers available for interview")
     
     console.print()
@@ -229,7 +229,7 @@ def create_task_file(project_dir: Path, initial_instruction: Optional[str] = Non
     console.print(f"[{THEME['muted']}]The AI will analyze your project and ask questions to understand your task.[/]")
     console.print()
     
-    console.print(f"[{THEME['muted']}]📋 Analyzing project structure and context...[/]")
+    console.print(f"[{THEME['muted']}]Analyzing project structure and context...[/]")
     initial_prompt = build_interview_prompt(project_dir)
     console.print(f"[{THEME['success']}]✓[/] Project context analyzed")
     console.print()
@@ -256,12 +256,12 @@ def create_task_file(project_dir: Path, initial_instruction: Optional[str] = Non
         provider_display = provider.get_display_name() if hasattr(provider, 'get_display_name') else provider.cli_tool
         
         if attempt == 0:
-            console.print(f"[{THEME['muted']}]🔌 Using LLM provider: {provider_display}[/]")
+            console.print(f"[{THEME['muted']}]Using LLM provider: {provider_display}[/]")
         else:
-            console.print(f"[{THEME['primary']}]🔄 Trying LLM provider: {provider_display}[/]")
+            console.print(f"[{THEME['primary']}]↻ Trying LLM provider: {provider_display}[/]")
         
         try:
-            console.print(f"[bold {THEME['success']}]💬 Interview started! The AI will ask questions...[/]")
+            console.print(f"[bold {THEME['success']}]Interview started! The AI will ask questions...[/]")
             console.print()
             
             # Import turn-based helpers
@@ -299,7 +299,7 @@ def create_task_file(project_dir: Path, initial_instruction: Optional[str] = Non
                 if last_message and ("---" in last_message and "task:" in last_message.lower()):
                     extracted = extract_task_file_from_message(last_message, project_dir)
                     if extracted and extracted.exists():
-                        console.print(f"[{THEME['success']}]✅[/] Task file extracted from conversation.")
+                        console.print(f"[{THEME['success']}]✓[/] Task file extracted from conversation.")
                         console.print()
                         if conversation_file.exists():
                             conversation_file.unlink()
@@ -312,7 +312,7 @@ def create_task_file(project_dir: Path, initial_instruction: Optional[str] = Non
                     user_response = wait_for_user_input()
                     
                     if not user_response.strip():
-                        console.print(f"[{THEME['warning']}]⚠️[/] Empty response. Continuing...")
+                        console.print(f"[{THEME['warning']}]⚠[/] Empty response. Continuing...")
                         continue
                     
                     # Append user response to conversation file
@@ -322,11 +322,11 @@ def create_task_file(project_dir: Path, initial_instruction: Optional[str] = Non
                     break
             
             # Conversation ended without creating task file
-            console.print(f"[{THEME['warning']}]⚠️[/] Provider {provider_display} did not create task file after {turn} turns. Rotating...")
+            console.print(f"[{THEME['warning']}]⚠[/] Provider {provider_display} did not create task file after {turn} turns. Rotating...")
             
         except Exception as e:
             # Provider error - rotate to next provider
-            console.print(f"[{THEME['warning']}]⚠️[/] Provider {provider_display} failed: {e}. Rotating...")
+            console.print(f"[{THEME['warning']}]⚠[/] Provider {provider_display} failed: {e}. Rotating...")
             
             # Don't delete conversation file - keep it for next provider
         
@@ -336,7 +336,7 @@ def create_task_file(project_dir: Path, initial_instruction: Optional[str] = Non
         
         if next_provider and attempt < max_attempts:
             next_name = provider_rotation.get_provider_name()
-            console.print(f"[{THEME['primary']}]🔄[/] Trying provider: {next_name}")
+            console.print(f"[{THEME['primary']}]↻[/] Trying provider: {next_name}")
             console.print()
         else:
             break
@@ -347,6 +347,6 @@ def create_task_file(project_dir: Path, initial_instruction: Optional[str] = Non
     
     # All providers exhausted
     if not task_file.exists():
-        console.print(f"[{THEME['error']}]❌[/] Interview completed but RALPH_TASK.md was not created.")
-        console.print(f"[{THEME['warning']}]⚠️[/] All providers were tried. Please create RALPH_TASK.md manually.")
+        console.print(f"[{THEME['error']}]✗[/] Interview completed but RALPH_TASK.md was not created.")
+        console.print(f"[{THEME['warning']}]⚠[/] All providers were tried. Please create RALPH_TASK.md manually.")
         raise Exception("RALPH_TASK.md was not created during interview with any provider")

@@ -82,7 +82,7 @@ def run_single_turn(
                             console.print()
                             console.print(Panel(
                                 Markdown(text),
-                                title="[bold]🤖 AI Assistant[/bold]",
+                                title="[bold cyan]AI Assistant[/]",
                                 border_style=THEME["primary"],
                                 padding=(1, 2),
                             ))
@@ -92,7 +92,7 @@ def run_single_turn(
                         # Check for completion sigil
                         if "<ralph>DONE</ralph>" in text:
                             task_file_created = True
-                            console.print("[green]✅[/green] Interview complete! Task file generated.\n")
+                            console.print("[green]✓[/green] Interview complete! Task file generated.\n")
         
         # Detect task file write via tool call
         elif msg_type == "tool_call" and subtype == "completed":
@@ -112,7 +112,7 @@ def run_single_turn(
                         
                         if written_file.exists() and written_file.name == "RALPH_TASK.md":
                             task_file_created = True
-                            console.print(f"[green]✅[/green] RALPH_TASK.md created at {written_file}\n")
+                            console.print(f"[green]✓[/green] RALPH_TASK.md created at {written_file}\n")
     
     # Wait for process
     agent_process.wait()
@@ -171,7 +171,7 @@ def wait_for_user_input_with_timeout(timeout: int = 60) -> Optional[str]:
         else:
             # Timeout reached
             console.print()  # New line after timeout
-            console.print(f"[{THEME['warning']}]⏱️  Timeout reached - continuing without answer[/]")
+            console.print(f"[{THEME['warning']}]Timeout reached - continuing without answer[/]")
             return None
             
     except (EOFError, KeyboardInterrupt):

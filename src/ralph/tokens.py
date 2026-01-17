@@ -55,17 +55,35 @@ class TokenTracker:
         )
         return total_bytes // 4
 
-    def get_health_emoji(self) -> str:
-        """Get health emoji based on token percentage."""
+    def get_health_symbol(self) -> str:
+        """Get health indicator symbol (plain Unicode) for log files.
+        
+        Returns a plain Unicode symbol without Rich markup.
+        """
         tokens = self.calculate_tokens()
         pct = (tokens * 100) // self.rotate_threshold
 
         if pct < 60:
-            return "🟢"
+            return "●"
         elif pct < 80:
-            return "🟡"
+            return "●"
         else:
-            return "🔴"
+            return "●"
+
+    def get_health_emoji(self) -> str:
+        """Get health indicator symbol based on token percentage.
+        
+        Returns a Unicode symbol with Rich color markup for display.
+        """
+        tokens = self.calculate_tokens()
+        pct = (tokens * 100) // self.rotate_threshold
+
+        if pct < 60:
+            return "[green]●[/]"
+        elif pct < 80:
+            return "[yellow]●[/]"
+        else:
+            return "[red]●[/]"
 
     def should_warn(self) -> bool:
         """Check if warning threshold reached (only once)."""

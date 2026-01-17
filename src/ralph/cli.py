@@ -65,27 +65,6 @@ def main(ctx: click.Context, verbose: bool) -> None:
 
     Runs LLM providers in a loop to complete coding tasks autonomously.
     """
-    # #region agent log
-    import json
-    import time
-    debug_log_path = Path("/Users/alex/repos/pyralph/.cursor/debug.log")
-    try:
-        with open(debug_log_path, "a") as f:
-            log_entry = {
-                "id": f"log_{int(time.time() * 1000)}",
-                "timestamp": int(time.time() * 1000),
-                "location": "cli.py:main",
-                "message": "cli main entry",
-                "data": {"verbose": verbose, "invoked_subcommand": ctx.invoked_subcommand},
-                "sessionId": "debug-session",
-                "runId": "ralph-loop",
-                "hypothesisId": "H1",
-            }
-            f.write(json.dumps(log_entry) + "\n")
-    except Exception:
-        pass
-    # #endregion
-
     # Store verbose flag in context for subcommands
     ctx.ensure_object(dict)
     ctx.obj["verbose"] = verbose
@@ -173,33 +152,6 @@ def run(
     If RALPH_TASK.md is missing, will interview you to create it.
     Automatically rotates between available providers on failure or gutter.
     """
-    # #region agent log
-    import json
-    import time
-    debug_log_path = Path("/Users/alex/repos/pyralph/.cursor/debug.log")
-    try:
-        with open(debug_log_path, "a") as f:
-            log_entry = {
-                "id": f"log_{int(time.time() * 1000)}",
-                "timestamp": int(time.time() * 1000),
-                "location": "cli.py:run",
-                "message": "run command entry",
-                "data": {
-                    "project_dir": str(project_dir),
-                    "iterations": iterations,
-                    "once": once,
-                    "branch": branch,
-                    "pr": pr,
-                },
-                "sessionId": "debug-session",
-                "runId": "ralph-loop",
-                "hypothesisId": "H1",
-            }
-            f.write(json.dumps(log_entry) + "\n")
-    except Exception:
-        pass
-    # #endregion
-
     verbose = ctx.obj.get("verbose", False)
     
     # Validate prerequisites
@@ -234,7 +186,7 @@ def run(
     # Check if already complete
     completion_status = task.check_completion(task_file)
     if completion_status == "COMPLETE":
-        console.print("[green]🎉[/green] Task already complete! All criteria are checked.")
+        console.print("[green]✓[/green] Task already complete! All criteria are checked.")
         sys.exit(0)
 
     # Validate PR flag
@@ -299,29 +251,11 @@ def run(
         )
         completion_status = task.check_completion(task_file)
         if completion_status == "COMPLETE":
-            console.print("\n[green]🎉[/green] Task completed in single iteration!")
+            console.print("\n[green]✓[/green] Task completed in single iteration!")
         else:
-            console.print(f"\n📋 Single iteration complete. {remaining} criteria remaining.")
+            console.print(f"\n[dim]Single iteration complete. {remaining} criteria remaining.[/]")
     else:
         try:
-            # #region agent log
-            try:
-                with open(debug_log_path, "a") as f:
-                    log_entry = {
-                        "id": f"log_{int(time.time() * 1000)}",
-                        "timestamp": int(time.time() * 1000),
-                        "location": "cli.py:run",
-                        "message": "before run_ralph_loop",
-                        "data": {"project_dir": str(project_dir)},
-                        "sessionId": "debug-session",
-                        "runId": "ralph-loop",
-                        "hypothesisId": "H2",
-                    }
-                    f.write(json.dumps(log_entry) + "\n")
-            except Exception:
-                pass
-            # #endregion
-
             loop.run_ralph_loop(
                 project_dir=project_dir,
                 max_iterations=iterations,
@@ -332,7 +266,7 @@ def run(
                 timeout=timeout,
             )
         except KeyboardInterrupt:
-            console.print("\n[yellow]⚠️[/yellow] Interrupted by user.")
+            console.print("\n[yellow]⚠[/yellow] Interrupted by user.")
             # Commit current progress before exiting
             if git_utils.has_uncommitted_changes(project_dir):
                 console.print("[dim]Committing current progress...[/dim]")
@@ -662,15 +596,14 @@ def logs(ctx: click.Context, project_dir: Path, errors: bool, lines: int, no_pag
     if lines is not None and lines > 0:
         log_lines = log_lines[-lines:]
     
-    # Color mapping for log levels
+    # Color mapping for log levels (using Unicode symbols and text patterns)
     level_colors = {
-        "🟢": THEME["success"],
-        "🟡": THEME["warning"],
-        "🔴": THEME["error"],
-        "✅": THEME["success"],
-        "❌": THEME["error"],
-        "⚠️": THEME["warning"],
-        "🚨": THEME["error"],
+        "●": THEME["success"],  # Will be colored based on context
+        "✓": THEME["success"],
+        "✗": THEME["error"],
+        "⚠": THEME["warning"],
+        "ROTATE": THEME["error"],
+        "WARN": THEME["warning"],
     }
     
     def colorize_line(line: str) -> Text:
@@ -694,12 +627,33 @@ def logs(ctx: click.Context, project_dir: Path, errors: bool, lines: int, no_pag
             text.append(line, style=f"bold {THEME['accent']}")
             return text
         
-        # Check for emojis and color accordingly
+        # Check for symbols and color accordingly
         found_color = None
-        for emoji, color in level_colors.items():
-            if emoji in line:
+        for symbol, color in level_colors.items():
+            if symbol in line:
                 found_color = color
                 break
+        
+        # Special handling for ● symbol - check context to determine color
+        if "●" in line:
+            # Determine color based on surrounding context
+            if "TOKENS" in line:
+                # Token status line - check percentage
+                import re
+                pct_match = re.search(r'\((\d+)%\)', line)
+                if pct_match:
+                    pct = int(pct_match.group(1))
+                    if pct < 60:
+                        found_color = THEME["success"]
+                    elif pct < 80:
+                        found_color = THEME["warning"]
+                    else:
+                        found_color = THEME["error"]
+                else:
+                    found_color = THEME["success"]  # Default to green
+            else:
+                # Other uses - default to success
+                found_color = THEME["success"]
         
         # Check for ROTATE/WARN keywords
         if "ROTATE" in line:

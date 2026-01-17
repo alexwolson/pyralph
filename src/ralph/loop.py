@@ -1,6 +1,5 @@
 """Main iteration loop for Ralph."""
 
-import json
 import subprocess
 import time
 from datetime import datetime
@@ -243,6 +242,7 @@ def run_single_iteration(
     rotate_threshold: int = tokens.ROTATE_THRESHOLD,
     timeout: int = 300,
     on_token_update: Optional[Callable[[tokens.TokenTracker], None]] = None,
+    on_task_file_update: Optional[Callable[[Path], None]] = None,
     console: Optional["Console"] = None,
 ) -> str:
     """Run a single iteration. Returns signal (ROTATE, GUTTER, COMPLETE, or empty).
@@ -257,46 +257,7 @@ def run_single_iteration(
         on_token_update: Optional callback for token tracker updates
         console: Optional Rich Console for output (use Live.console when within Live context)
     """
-    # #region agent log
-    import json
-    import time
-    debug_log_path = Path("/Users/alex/repos/pyralph/.cursor/debug.log")
-    try:
-        with open(debug_log_path, "a") as f:
-            log_entry = {
-                "id": f"log_{int(time.time() * 1000)}",
-                "timestamp": int(time.time() * 1000),
-                "location": "loop.py:run_single_iteration",
-                "message": "run_single_iteration entry",
-                "data": {"iteration": iteration},
-                "sessionId": "debug-session",
-                "runId": "ralph-loop",
-                "hypothesisId": "D"
-            }
-            f.write(json.dumps(log_entry) + "\n")
-    except Exception:
-        pass
-    # #endregion
-    
     prompt = build_prompt(workspace, iteration)
-    
-    # #region agent log
-    try:
-        with open(debug_log_path, "a") as f:
-            log_entry = {
-                "id": f"log_{int(time.time() * 1000)}",
-                "timestamp": int(time.time() * 1000),
-                "location": "loop.py:run_single_iteration",
-                "message": "after build_prompt, before creating token tracker",
-                "data": {},
-                "sessionId": "debug-session",
-                "runId": "ralph-loop",
-                "hypothesisId": "D"
-            }
-            f.write(json.dumps(log_entry) + "\n")
-    except Exception:
-        pass
-    # #endregion
     
     # Create token tracker and gutter detector with configurable thresholds
     token_tracker = tokens.TokenTracker(
@@ -311,43 +272,7 @@ def run_single_iteration(
     state.log_progress(workspace, f"**Session {iteration} started** (provider: {provider_display})")
     
     # Build provider command with workspace directory
-    # #region agent log
-    try:
-        with open(debug_log_path, "a") as f:
-            log_entry = {
-                "id": f"log_{int(time.time() * 1000)}",
-                "timestamp": int(time.time() * 1000),
-                "location": "loop.py:run_single_iteration",
-                "message": "before get_command",
-                "data": {},
-                "sessionId": "debug-session",
-                "runId": "ralph-loop",
-                "hypothesisId": "D"
-            }
-            f.write(json.dumps(log_entry) + "\n")
-    except Exception:
-        pass
-    # #endregion
-    
     cmd = provider.get_command(prompt, workspace)
-    
-    # #region agent log
-    try:
-        with open(debug_log_path, "a") as f:
-            log_entry = {
-                "id": f"log_{int(time.time() * 1000)}",
-                "timestamp": int(time.time() * 1000),
-                "location": "loop.py:run_single_iteration",
-                "message": "after get_command, before subprocess.Popen",
-                "data": {"cmd": str(cmd) if isinstance(cmd, list) else cmd},
-                "sessionId": "debug-session",
-                "runId": "ralph-loop",
-                "hypothesisId": "D"
-            }
-            f.write(json.dumps(log_entry) + "\n")
-    except Exception:
-        pass
-    # #endregion
     
     # Start agent process
     agent_process = subprocess.Popen(
@@ -359,45 +284,9 @@ def run_single_iteration(
         text=False,
     )
     
-    # #region agent log
-    try:
-        with open(debug_log_path, "a") as f:
-            log_entry = {
-                "id": f"log_{int(time.time() * 1000)}",
-                "timestamp": int(time.time() * 1000),
-                "location": "loop.py:run_single_iteration",
-                "message": "after subprocess.Popen, before sending prompt",
-                "data": {"pid": agent_process.pid},
-                "sessionId": "debug-session",
-                "runId": "ralph-loop",
-                "hypothesisId": "D"
-            }
-            f.write(json.dumps(log_entry) + "\n")
-    except Exception:
-        pass
-    # #endregion
-    
     # Send prompt
     agent_process.stdin.write(prompt.encode("utf-8"))
     agent_process.stdin.close()
-    
-    # #region agent log
-    try:
-        with open(debug_log_path, "a") as f:
-            log_entry = {
-                "id": f"log_{int(time.time() * 1000)}",
-                "timestamp": int(time.time() * 1000),
-                "location": "loop.py:run_single_iteration",
-                "message": "after sending prompt, before parse_stream",
-                "data": {},
-                "sessionId": "debug-session",
-                "runId": "ralph-loop",
-                "hypothesisId": "D"
-            }
-            f.write(json.dumps(log_entry) + "\n")
-    except Exception:
-        pass
-    # #endregion
     
     # Track start time for timeout
     start_time = time.time()
@@ -408,6 +297,7 @@ def run_single_iteration(
         for sig in parser.parse_stream(
             workspace, agent_process, token_tracker, gutter_detector, provider,
             on_token_update=on_token_update,
+            on_task_file_update=on_task_file_update,
             console=console,
         ):
             signal = sig
@@ -567,47 +457,10 @@ def run_ralph_loop(
         timeout: Timeout in seconds for provider operations (default 300)
         max_verification_failures: Maximum consecutive verification failures before giving up (default 3)
     """
-    # #region agent log
-    debug_log_path = Path("/Users/alex/repos/pyralph/.cursor/debug.log")
-    try:
-        with open(debug_log_path, "a") as f:
-            log_entry = {
-                "id": f"log_{int(time.time() * 1000)}",
-                "timestamp": int(time.time() * 1000),
-                "location": "loop.py:239",
-                "message": "run_ralph_loop entry",
-                "data": {"project_dir": str(project_dir), "max_iterations": max_iterations},
-                "sessionId": "debug-session",
-                "runId": "ralph-loop",
-                "hypothesisId": "A"
-            }
-            f.write(json.dumps(log_entry) + "\n")
-    except Exception:
-        pass
-    # #endregion
-    
     from ralph.providers import get_provider_rotation
     
     workspace = project_dir.resolve()
     task_file = workspace / "RALPH_TASK.md"
-    
-    # #region agent log
-    try:
-        with open(debug_log_path, "a") as f:
-            log_entry = {
-                "id": f"log_{int(time.time() * 1000)}",
-                "timestamp": int(time.time() * 1000),
-                "location": "loop.py:262",
-                "message": "task_file path set",
-                "data": {"task_file": str(task_file), "exists": task_file.exists()},
-                "sessionId": "debug-session",
-                "runId": "ralph-loop",
-                "hypothesisId": "A"
-            }
-            f.write(json.dumps(log_entry) + "\n")
-    except Exception:
-        pass
-    # #endregion
     
     # Commit any uncommitted work first
     if git_utils.has_uncommitted_changes(workspace):
@@ -629,24 +482,6 @@ def run_ralph_loop(
     from rich.console import Console
     console = Console()
     
-    # #region agent log
-    try:
-        with open(debug_log_path, "a") as f:
-            log_entry = {
-                "id": f"log_{int(time.time() * 1000)}",
-                "timestamp": int(time.time() * 1000),
-                "location": "loop.py:322",
-                "message": "about to create live display",
-                "data": {},
-                "sessionId": "debug-session",
-                "runId": "ralph-loop",
-                "hypothesisId": "C"
-            }
-            f.write(json.dumps(log_entry) + "\n")
-    except Exception:
-        pass
-    # #endregion
-    
     # Create live display
     try:
         live_display = RalphLiveDisplay(
@@ -654,25 +489,7 @@ def run_ralph_loop(
             rotate_threshold=rotate_threshold,
             console=console,
         )
-    except Exception as e:
-        # #region agent log
-        import traceback
-        try:
-            with open(debug_log_path, "a") as f:
-                log_entry = {
-                    "id": f"log_{int(time.time() * 1000)}",
-                    "timestamp": int(time.time() * 1000),
-                    "location": "loop.py:336",
-                    "message": "Exception creating live display",
-                    "data": {"error": str(e), "error_type": type(e).__name__, "traceback": traceback.format_exc()},
-                    "sessionId": "debug-session",
-                    "runId": "ralph-loop",
-                    "hypothesisId": "C"
-                }
-                f.write(json.dumps(log_entry) + "\n")
-        except Exception:
-            pass
-        # #endregion
+    except Exception:
         raise
     
     # Callback to update live display with token tracker
@@ -681,43 +498,13 @@ def run_ralph_loop(
         criteria = get_criteria_list(task_file)
         live_display.update(token_tracker=tracker, criteria=criteria)
     
-    # #region agent log
-    try:
-        with open(debug_log_path, "a") as f:
-            log_entry = {
-                "id": f"log_{int(time.time() * 1000)}",
-                "timestamp": int(time.time() * 1000),
-                "location": "loop.py:574",
-                "message": "before entering with live_display:",
-                "data": {},
-                "sessionId": "debug-session",
-                "runId": "ralph-loop",
-                "hypothesisId": "A"
-            }
-            f.write(json.dumps(log_entry) + "\n")
-    except Exception:
-        pass
-    # #endregion
+    # Callback to update criteria display when RALPH_TASK.md is written
+    def on_task_file_update(file_path: Path) -> None:
+        # Re-read criteria and update display immediately
+        criteria = get_criteria_list(file_path)
+        live_display.update(criteria=criteria)
     
     with live_display:
-        # #region agent log
-        try:
-            with open(debug_log_path, "a") as f:
-                log_entry = {
-                    "id": f"log_{int(time.time() * 1000)}",
-                    "timestamp": int(time.time() * 1000),
-                    "location": "loop.py:576",
-                    "message": "after entering with live_display:",
-                    "data": {},
-                    "sessionId": "debug-session",
-                    "runId": "ralph-loop",
-                    "hypothesisId": "A"
-                }
-                f.write(json.dumps(log_entry) + "\n")
-        except Exception:
-            pass
-        # #endregion
-        
         while iteration <= max_iterations:
             # Clean up any leftover question/answer files from previous iteration
             question_file = workspace / ".ralph" / "question.md"
@@ -725,45 +512,9 @@ def run_ralph_loop(
             question_file.unlink(missing_ok=True)
             answer_file.unlink(missing_ok=True)
             
-            # #region agent log
-            try:
-                with open(debug_log_path, "a") as f:
-                    log_entry = {
-                        "id": f"log_{int(time.time() * 1000)}",
-                        "timestamp": int(time.time() * 1000),
-                        "location": "loop.py:590",
-                        "message": "before getting provider",
-                        "data": {"iteration": iteration},
-                        "sessionId": "debug-session",
-                        "runId": "ralph-loop",
-                        "hypothesisId": "C"
-                    }
-                    f.write(json.dumps(log_entry) + "\n")
-            except Exception:
-                pass
-            # #endregion
-            
             # Get current provider
             provider = provider_rotation.get_current()
             provider_name = provider_rotation.get_provider_name()
-            
-            # #region agent log
-            try:
-                with open(debug_log_path, "a") as f:
-                    log_entry = {
-                        "id": f"log_{int(time.time() * 1000)}",
-                        "timestamp": int(time.time() * 1000),
-                        "location": "loop.py:595",
-                        "message": "after getting provider, before first update",
-                        "data": {"provider_name": provider_name, "iteration": iteration},
-                        "sessionId": "debug-session",
-                        "runId": "ralph-loop",
-                        "hypothesisId": "B"
-                    }
-                    f.write(json.dumps(log_entry) + "\n")
-            except Exception:
-                pass
-            # #endregion
             
             # Update live display
             criteria = get_criteria_list(task_file)
@@ -772,24 +523,6 @@ def run_ralph_loop(
                 provider=provider_name,
                 criteria=criteria,
             )
-            
-            # #region agent log
-            try:
-                with open(debug_log_path, "a") as f:
-                    log_entry = {
-                        "id": f"log_{int(time.time() * 1000)}",
-                        "timestamp": int(time.time() * 1000),
-                        "location": "loop.py:603",
-                        "message": "after first update, before run_single_iteration",
-                        "data": {"iteration": iteration},
-                        "sessionId": "debug-session",
-                        "runId": "ralph-loop",
-                        "hypothesisId": "D"
-                    }
-                    f.write(json.dumps(log_entry) + "\n")
-            except Exception:
-                pass
-            # #endregion
             
             debug_log(
                 "loop.py:run_ralph_loop",
@@ -813,6 +546,7 @@ def run_ralph_loop(
                     rotate_threshold=rotate_threshold,
                     timeout=timeout,
                     on_token_update=on_token_update,
+                    on_task_file_update=on_task_file_update,
                     console=live_display.console,
                 )
                 
@@ -846,14 +580,14 @@ def run_ralph_loop(
                     if verification_failures >= max_verification_failures:
                         state.log_progress(workspace, f"**Verification skipped** - Max failures ({max_verification_failures}) reached, completing anyway")
                         live_display.stop()
-                        console.print(f"\n[yellow]⚠️  Max verification failures ({max_verification_failures}) reached.[/]")
-                        console.print(f"[bold green]🎉 RALPH COMPLETE![/] Completing without final verification.")
+                        console.print(f"\n[yellow]⚠ Max verification failures ({max_verification_failures}) reached.[/]")
+                        console.print(f"[bold green]✓ RALPH COMPLETE![/] Completing without final verification.")
                         console.print(f"Completed in {iteration} iteration(s).")
                         
                         # Archive completed task
                         archive_path = archive_completed_task(workspace)
                         if archive_path:
-                            console.print(f"[dim]📁 Task archived to: {archive_path.relative_to(workspace)}[/]")
+                            console.print(f"[dim]Task archived to: {archive_path.relative_to(workspace)}[/]")
                             state.log_progress(workspace, f"**Task archived** to {archive_path.name}")
                         
                         if open_pr and branch:
@@ -869,7 +603,7 @@ def run_ralph_loop(
                     verification_provider_name = provider_rotation.get_provider_name()
                     
                     state.log_progress(workspace, f"**Verification phase** - Provider: {completing_provider_name} → {verification_provider_name}")
-                    console.print(f"\n[cyan]🔍 Starting verification phase with {verification_provider_name}...[/]")
+                    console.print(f"\n[cyan]Starting verification phase with {verification_provider_name}...[/]")
                     
                     # Update live display for verification
                     live_display.update(
@@ -894,13 +628,13 @@ def run_ralph_loop(
                         # Verification passed - archive and exit
                         state.log_progress(workspace, f"**Verification PASSED** - Task complete")
                         live_display.stop()
-                        console.print(f"\n[bold green]🎉 RALPH COMPLETE![/] Task verified by independent agent.")
+                        console.print(f"\n[bold green]✓ RALPH COMPLETE![/] Task verified by independent agent.")
                         console.print(f"Completed in {iteration} iteration(s).")
                         
                         # Archive completed task
                         archive_path = archive_completed_task(workspace)
                         if archive_path:
-                            console.print(f"[dim]📁 Task archived to: {archive_path.relative_to(workspace)}[/]")
+                            console.print(f"[dim]Task archived to: {archive_path.relative_to(workspace)}[/]")
                             state.log_progress(workspace, f"**Task archived** to {archive_path.name}")
                         
                         if open_pr and branch:
@@ -913,7 +647,7 @@ def run_ralph_loop(
                         # Verification failed - continue loop
                         verification_failures += 1
                         state.log_progress(workspace, f"**Verification FAILED** ({verification_failures}/{max_verification_failures}) - Continuing loop")
-                        console.print(f"[yellow]❌ Verification failed ({verification_failures}/{max_verification_failures}). Continuing...[/]")
+                        console.print(f"[yellow]✗ Verification failed ({verification_failures}/{max_verification_failures}). Continuing...[/]")
                         
                         # Re-read criteria after verification agent may have unchecked some
                         criteria = get_criteria_list(task_file)
@@ -926,7 +660,7 @@ def run_ralph_loop(
                         # Unexpected signal or timeout - treat as verification failure
                         verification_failures += 1
                         state.log_progress(workspace, f"**Verification inconclusive** ({verification_failures}/{max_verification_failures}) - Signal: {verify_signal}")
-                        console.print(f"[yellow]⚠️  Verification inconclusive (signal: {verify_signal}). Treating as failure.[/]")
+                        console.print(f"[yellow]⚠ Verification inconclusive (signal: {verify_signal}). Treating as failure.[/]")
                         iteration += 1
                         continue
                         
@@ -943,7 +677,7 @@ def run_ralph_loop(
                         "A"
                     )
                     
-                    state.log_progress(workspace, f"**Session {iteration} ended** - 🔄 Context rotation (token limit reached)")
+                    state.log_progress(workspace, f"**Session {iteration} ended** - ↻ Context rotation (token limit reached)")
                     iteration += 1
                     debug_log(
                         "loop.py:run_ralph_loop",
@@ -968,7 +702,7 @@ def run_ralph_loop(
                         "B"
                     )
                     
-                    state.log_progress(workspace, f"**Session {iteration} ended** - 🚨 GUTTER (agent stuck) - {provider_name}")
+                    state.log_progress(workspace, f"**Session {iteration} ended** - ⚠ GUTTER (agent stuck) - {provider_name}")
                     
                     # Rotate to next provider
                     next_provider = provider_rotation.rotate()
@@ -1020,7 +754,7 @@ def run_ralph_loop(
                         # Display question with Rich panel
                         display_question_panel(console, question_text)
                         
-                        state.log_activity(workspace, f"❓ QUESTION: {question_text[:100]}...")
+                        state.log_activity(workspace, f"? QUESTION: {question_text[:100]}...")
                         state.log_progress(workspace, f"**Agent asked question** (iteration {iteration})")
                         
                         # Prompt user for answer with timeout
@@ -1029,18 +763,18 @@ def run_ralph_loop(
                         if user_answer:
                             # Write answer to file
                             answer_file.write_text(user_answer, encoding="utf-8")
-                            state.log_activity(workspace, f"✅ User answered: {user_answer[:100]}...")
+                            state.log_activity(workspace, f"✓ User answered: {user_answer[:100]}...")
                             console.print(f"[green]✓[/] Answer saved to .ralph/answer.md")
                         else:
                             # No answer (timeout or skipped) - write empty marker
                             answer_file.write_text("", encoding="utf-8")
-                            state.log_activity(workspace, "⏱️ No user answer (timeout or skipped)")
+                            state.log_activity(workspace, "Timeout: No user answer (timeout or skipped)")
                         
                         # Clean up question file after answer written
                         question_file.unlink(missing_ok=True)
                     else:
-                        console.print(f"[yellow]⚠️  Agent signaled QUESTION but no question.md found[/]")
-                        state.log_activity(workspace, "⚠️ QUESTION signal but no question.md file")
+                        console.print(f"[yellow]⚠ Agent signaled QUESTION but no question.md found[/]")
+                        state.log_activity(workspace, "⚠ QUESTION signal but no question.md file")
                     
                     # Restart live display and continue same iteration
                     # Agent will read answer.md on next turn
@@ -1056,33 +790,9 @@ def run_ralph_loop(
                         iteration += 1
                         
             except Exception as e:
-                # #region agent log
                 import traceback
                 error_traceback = traceback.format_exc()
-                debug_log_path = Path("/Users/alex/repos/pyralph/.cursor/debug.log")
-                try:
-                    with open(debug_log_path, "a") as f:
-                        log_entry = {
-                            "id": f"log_{int(time.time() * 1000)}",
-                            "timestamp": int(time.time() * 1000),
-                            "location": "loop.py:458",
-                            "message": "Exception caught in loop",
-                            "data": {
-                                "iteration": iteration,
-                                "current_provider": provider_name,
-                                "error": str(e),
-                                "error_type": type(e).__name__,
-                                "traceback": error_traceback
-                            },
-                            "sessionId": "debug-session",
-                            "runId": "ralph-loop",
-                            "hypothesisId": "B"
-                        }
-                        f.write(json.dumps(log_entry) + "\n")
-                except Exception:
-                    pass
-                # #endregion
-                
+
                 debug_log(
                     "loop.py:run_ralph_loop",
                     "Exception caught - rotating provider",
@@ -1131,7 +841,7 @@ def run_ralph_loop(
             time.sleep(2)
     
     # Max iterations reached
-    state.log_progress(workspace, f"**Loop ended** - ⚠️ Max iterations ({max_iterations}) reached")
-    console.print(f"\n[yellow]⚠️  Max iterations ({max_iterations}) reached.[/]")
+    state.log_progress(workspace, f"**Loop ended** - ⚠ Max iterations ({max_iterations}) reached")
+    console.print(f"\n[yellow]⚠ Max iterations ({max_iterations}) reached.[/]")
     console.print("   Task may not be complete. Check progress manually.")
     raise Exception(f"Max iterations ({max_iterations}) reached")
