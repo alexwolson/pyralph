@@ -1,58 +1,65 @@
 ---
 task: Trivial test tasks for Ralph test run
 completion_criteria:
-  - Add a module-level docstring to src/ralph/signals.py describing its purpose
-  - Add a DESCRIPTION constant to src/ralph/__init__.py with a one-line project description
-  - Add a comment at the top of main.py explaining it is the CLI entry point
+  - Add a PROJECT_URL constant to src/ralph/__init__.py
+  - Add a module-level docstring to src/ralph/tokens.py if missing
+  - Add a RALPH_EMOJI constant set to a robot emoji in src/ralph/__init__.py
 max_iterations: 10
-test_command: "uv run pytest -v"
+test_command: "python -c \"from ralph import PROJECT_URL, RALPH_EMOJI; print(PROJECT_URL, RALPH_EMOJI)\""
 ---
 
 # Task: Trivial Test Tasks
 
-This is a test run of Ralph with simple tasks that require minimal file modifications.
+This is a test run to verify Ralph is working correctly. Complete these simple file modification tasks.
 
 ## Success Criteria
 
 The task is complete when ALL of the following are true:
 
-- [x] Add a module-level docstring to `src/ralph/signals.py` describing its purpose (e.g., "Signal handling for Ralph agent communication")
-- [x] Add a `DESCRIPTION` constant to `src/ralph/__init__.py` with a one-line project description string
-- [x] Add a comment at the top of `main.py` (after any existing comments) explaining it is the CLI entry point for the ralph command
+- [ ] Add a `PROJECT_URL` constant to `src/ralph/__init__.py` with value `"https://github.com/pyralph/pyralph"`
+- [ ] Add a module-level docstring to `src/ralph/tokens.py` describing what the module does (if one doesn't already exist)
+- [ ] Add a `RALPH_EMOJI` constant to `src/ralph/__init__.py` with value `"🤖"`
 
 ## Constraints
 
 - Keep changes minimal and focused
-- Do not modify any logic or functionality
-- These are documentation/metadata changes only
+- Do not modify any existing functionality
+- All changes should be additive only
 
 ---
 
 ## Ralph Instructions
 
-You are an autonomous agent working on this task. Follow these steps:
+You are an autonomous agent working on a coding task. Follow these instructions carefully:
 
-1. **Read state files first**:
-   - This file (`RALPH_TASK.md`) for task definition
-   - `.ralph/progress.md` for what's been done
-   - `.ralph/guardrails.md` for lessons learned
+### Before Starting Work
 
-2. **Work on ONE unchecked criterion at a time**:
-   - Find the first unchecked `- [ ]` criterion
-   - Complete it fully
-   - Check it off as `- [x]`
-   - Commit your changes
+1. Read `.ralph/progress.md` to understand what has been accomplished
+2. Read `.ralph/guardrails.md` for important lessons and constraints
+3. Check which criteria in this file are already marked complete
 
-3. **Git protocol**:
-   - Commit after completing each criterion
-   - Use descriptive commit messages
-   - Always commit before signaling completion
+### Working Protocol
 
-4. **When all criteria are complete**:
-   - Verify all checkboxes are checked
-   - Run the test command if specified
-   - Signal completion with: `<ralph>COMPLETE</ralph>`
+1. Work on ONE unchecked criterion at a time
+2. Make the minimal changes needed to satisfy the criterion
+3. After completing a criterion, mark it with `[x]` in this file
+4. Commit your changes with a descriptive message
+5. Update `.ralph/progress.md` with what you accomplished
 
-5. **If you get stuck**:
-   - Add what you learned to `.ralph/guardrails.md`
-   - Signal for rotation with: `<ralph>GUTTER</ralph>`
+### Git Protocol
+
+- Commit after completing each criterion
+- Use clear commit messages describing the change
+- Never amend commits or rewrite history
+
+### Completion
+
+When ALL criteria are checked:
+1. Verify the test command passes (if provided)
+2. Output: `<ralph>COMPLETE</ralph>`
+
+### If Stuck
+
+If you cannot make progress:
+1. Document the issue in `.ralph/progress.md`
+2. Output: `<ralph>GUTTER</ralph>`
