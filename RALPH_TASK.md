@@ -51,19 +51,19 @@ The task is complete when ALL of the following are true:
 
 - [x] Make token thresholds (WARN_THRESHOLD, ROTATE_THRESHOLD) configurable via `--warn-threshold` and `--rotate-threshold` CLI options
 - [x] Add `--timeout` CLI option for provider operation timeout (default 300 seconds)
-- [ ] Document all CLI options in README
+- [x] Document all CLI options in README
 
 ### Phase 5: Robustness
 
-- [ ] Add retry logic (3 attempts with exponential backoff) to git operations in `git_utils.py`
-- [ ] Add timeout handling to subprocess calls in `loop.py` (terminate and rotate on timeout)
-- [ ] Improve error handling: log errors before re-raising, don't silently swallow important exceptions
-- [ ] Handle KeyboardInterrupt gracefully - commit current progress before exiting
-- [ ] Add explicit UTF-8 encoding to all file operations
+- [x] Add retry logic (3 attempts with exponential backoff) to git operations in `git_utils.py`
+- [x] Add timeout handling to subprocess calls in `loop.py` (terminate and rotate on timeout)
+- [x] Improve error handling: log errors before re-raising, don't silently swallow important exceptions
+- [x] Handle KeyboardInterrupt gracefully - commit current progress before exiting
+- [x] Add explicit UTF-8 encoding to all file operations
 
 ### Phase 6: Documentation
 
-- [ ] Write comprehensive README.md with: project description, installation, quick start, CLI usage, how Ralph works, provider requirements, contributing guidelines
+- [x] Write comprehensive README.md with: project description, installation, quick start, CLI usage, how Ralph works, provider requirements, contributing guidelines
 
 ## Constraints
 
