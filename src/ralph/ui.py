@@ -250,3 +250,21 @@ def print_warning(console: Console, message: str) -> None:
 def print_info(console: Console, message: str) -> None:
     """Print an info message."""
     console.print(f"[{THEME['info']}]ℹ[/] {message}")
+
+
+def display_question_panel(console: Console, question_text: str) -> None:
+    """Display an agent question in a styled Rich panel.
+    
+    Args:
+        console: Rich console instance
+        question_text: The question text to display (can be markdown)
+    """
+    from rich.markdown import Markdown
+    
+    console.print()
+    console.print(Panel(
+        Markdown(question_text),
+        title="[bold]❓ Agent Question[/bold]",
+        border_style=THEME["warning"],
+        padding=(1, 2),
+    ))

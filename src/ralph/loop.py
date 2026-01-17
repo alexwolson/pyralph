@@ -10,7 +10,7 @@ from typing import Callable, Optional
 from ralph import git_utils, gutter, parser, state, task, tokens
 from ralph.debug import debug_log
 from ralph.providers import ProviderRotation
-from ralph.ui import RalphLiveDisplay, get_criteria_list
+from ralph.ui import RalphLiveDisplay, get_criteria_list, display_question_panel
 
 
 def archive_completed_task(workspace: Path) -> Optional[Path]:
@@ -126,6 +126,18 @@ When something fails:
 - **Added after**: Iteration {iteration} - what happened
 ```
 
+## Asking Questions (Use Sparingly)
+
+If you are genuinely stuck and human input would significantly help, you can ask the user a question:
+
+1. Write your question to `.ralph/question.md` (be specific and concise)
+2. Output the signal: `<ralph>QUESTION</ralph>`
+3. The loop will pause and prompt the user for an answer
+4. The user's answer (if any) will be written to `.ralph/answer.md`
+5. You can read `.ralph/answer.md` to get the response
+
+**Important**: Use this sparingly - only when you truly need clarification that would significantly change your approach. Most tasks should be completable without asking questions. If the user doesn't respond (timeout), proceed with your best judgment.
+
 ## Context Rotation Warning
 
 You may receive a warning that context is running low. When you see it:
@@ -202,7 +214,7 @@ def run_single_iteration(
             on_token_update=on_token_update,
         ):
             signal = sig
-            if signal in ("ROTATE", "GUTTER", "COMPLETE"):
+            if signal in ("ROTATE", "GUTTER", "COMPLETE", "QUESTION"):
                 # Stop early if critical signal
                 agent_process.terminate()
                 break
@@ -372,6 +384,12 @@ def run_ralph_loop(
     
     with live_display:
         while iteration <= max_iterations:
+            # Clean up any leftover question/answer files from previous iteration
+            question_file = workspace / ".ralph" / "question.md"
+            answer_file = workspace / ".ralph" / "answer.md"
+            question_file.unlink(missing_ok=True)
+            answer_file.unlink(missing_ok=True)
+            
             # Get current provider
             provider = provider_rotation.get_current()
             provider_name = provider_rotation.get_provider_name()
@@ -524,6 +542,57 @@ def run_ralph_loop(
                         # No more providers - continue to next iteration
                         iteration += 1
                         continue
+                
+                elif signal == "QUESTION":
+                    # Handle agent question - pause, display, prompt user
+                    from ralph.interview_turns import wait_for_user_input_with_timeout
+                    
+                    debug_log(
+                        "loop.py:run_ralph_loop",
+                        "QUESTION signal received",
+                        {"iteration": iteration, "provider": provider_name},
+                    )
+                    
+                    # Pause live display during user interaction
+                    live_display.stop()
+                    
+                    # Read question from file
+                    question_file = workspace / ".ralph" / "question.md"
+                    answer_file = workspace / ".ralph" / "answer.md"
+                    
+                    if question_file.exists():
+                        question_text = question_file.read_text(encoding="utf-8")
+                        
+                        # Display question with Rich panel
+                        display_question_panel(console, question_text)
+                        
+                        state.log_activity(workspace, f"❓ QUESTION: {question_text[:100]}...")
+                        state.log_progress(workspace, f"**Agent asked question** (iteration {iteration})")
+                        
+                        # Prompt user for answer with timeout
+                        user_answer = wait_for_user_input_with_timeout(timeout=60)
+                        
+                        if user_answer:
+                            # Write answer to file
+                            answer_file.write_text(user_answer, encoding="utf-8")
+                            state.log_activity(workspace, f"✅ User answered: {user_answer[:100]}...")
+                            console.print(f"[green]✓[/] Answer saved to .ralph/answer.md")
+                        else:
+                            # No answer (timeout or skipped) - write empty marker
+                            answer_file.write_text("", encoding="utf-8")
+                            state.log_activity(workspace, "⏱️ No user answer (timeout or skipped)")
+                        
+                        # Clean up question file after answer written
+                        question_file.unlink(missing_ok=True)
+                    else:
+                        console.print(f"[yellow]⚠️  Agent signaled QUESTION but no question.md found[/]")
+                        state.log_activity(workspace, "⚠️ QUESTION signal but no question.md file")
+                    
+                    # Restart live display and continue same iteration
+                    # Agent will read answer.md on next turn
+                    live_display.start()
+                    iteration += 1
+                    continue
                     
                 else:
                     # Agent finished naturally

@@ -143,6 +143,51 @@ def wait_for_user_input() -> str:
         return ""
 
 
+def wait_for_user_input_with_timeout(timeout: int = 60) -> Optional[str]:
+    """Wait for user input with a timeout.
+    
+    Args:
+        timeout: Seconds to wait for input (default 60)
+        
+    Returns:
+        User's input string, or None if timeout reached or cancelled.
+    """
+    import select
+    import sys
+    
+    console.print()  # Add spacing
+    console.print(f"[{THEME['muted']}]You have {timeout} seconds to respond (press Enter to skip)...[/]")
+    console.print(f"[bold {THEME['accent']}]Your answer:[/] ", end="")
+    
+    try:
+        # Use select to implement timeout on stdin
+        # This works on Unix-like systems
+        rlist, _, _ = select.select([sys.stdin], [], [], timeout)
+        
+        if rlist:
+            # Input available
+            user_input = sys.stdin.readline().strip()
+            return user_input if user_input else None
+        else:
+            # Timeout reached
+            console.print()  # New line after timeout
+            console.print(f"[{THEME['warning']}]⏱️  Timeout reached - continuing without answer[/]")
+            return None
+            
+    except (EOFError, KeyboardInterrupt):
+        console.print()  # New line after interrupt
+        return None
+    except Exception:
+        # select may not work on Windows - fall back to blocking input
+        # with a warning
+        console.print(f"[{THEME['warning']}]Note: timeout not supported on this platform[/]")
+        try:
+            user_input = input().strip()
+            return user_input if user_input else None
+        except (EOFError, KeyboardInterrupt):
+            return None
+
+
 def append_user_response(conversation_file: Path, user_response: str) -> None:
     """Append user's response to the conversation file."""
     current = conversation_file.read_text(encoding="utf-8")

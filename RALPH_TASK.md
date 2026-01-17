@@ -22,15 +22,15 @@ Implement a file-based mechanism that allows the agent to ask questions of the u
 
 The task is complete when ALL of the following are true:
 
-- [ ] Agent can write questions to `.ralph/question.md` and emit `<ralph>QUESTION</ralph>` signal
-- [ ] Loop detects QUESTION signal in agent output and pauses execution
-- [ ] Loop reads and displays question from `.ralph/question.md` using Rich panel (similar to interview display)
-- [ ] Loop prompts user for answer using `wait_for_user_input()` with timeout
-- [ ] User's answer is written to `.ralph/answer.md` for the agent to read
-- [ ] On timeout without user answer, loop continues (agent proceeds with best guess - no failure/rotation)
-- [ ] Agent prompt in `loop.py:build_prompt()` includes instructions about the question mechanism and emphasizes using it sparingly
-- [ ] Question/answer files are cleaned up appropriately (e.g., question.md removed after answer written, or both cleaned at iteration start)
-- [ ] All new code has corresponding tests
+- [x] Agent can write questions to `.ralph/question.md` and emit `<ralph>QUESTION</ralph>` signal
+- [x] Loop detects QUESTION signal in agent output and pauses execution
+- [x] Loop reads and displays question from `.ralph/question.md` using Rich panel (similar to interview display)
+- [x] Loop prompts user for answer using `wait_for_user_input()` with timeout
+- [x] User's answer is written to `.ralph/answer.md` for the agent to read
+- [x] On timeout without user answer, loop continues (agent proceeds with best guess - no failure/rotation)
+- [x] Agent prompt in `loop.py:build_prompt()` includes instructions about the question mechanism and emphasizes using it sparingly
+- [x] Question/answer files are cleaned up appropriately (e.g., question.md removed after answer written, or both cleaned at iteration start)
+- [x] All new code has corresponding tests
 
 ## Implementation Notes
 

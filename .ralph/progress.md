@@ -158,3 +158,24 @@ All 17 success criteria are now complete.
 
 ### 2026-01-16 21:48:39
 **Error**: 'task'
+
+### 2026-01-16 21:53:01
+**Session 1 started** (provider: cursor)
+
+### 2026-01-16
+**Agent-to-user question mechanism implemented**
+
+Completed work:
+- Added QUESTION signal detection in `parser.py` (similar to COMPLETE/GUTTER signals)
+- Added `wait_for_user_input_with_timeout()` function in `interview_turns.py` using `select.select()` for timeout support
+- Added `display_question_panel()` function in `ui.py` for styled Rich panel display
+- Updated `run_single_iteration()` to handle QUESTION signal
+- Added QUESTION signal handling in `run_ralph_loop()`: read question.md, display panel, prompt user, write answer.md
+- Added cleanup of question/answer files at iteration start
+- Added "Asking Questions" section to `build_prompt()` with instructions emphasizing sparse usage
+- Created comprehensive test suite in `tests/test_question.py` (13 new tests)
+- All 98 tests pass
+
+All 9 success criteria are now complete.
+
+**Session 1 ended** - TASK COMPLETE

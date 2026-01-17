@@ -31,7 +31,7 @@ def parse_stream(
         provider: LLM provider instance
         on_token_update: Optional callback for token tracker updates
     
-    Yields: "ROTATE", "WARN", "GUTTER", "COMPLETE"
+    Yields: "ROTATE", "WARN", "GUTTER", "COMPLETE", "QUESTION"
     """
     # Initialize activity log
     from datetime import datetime
@@ -127,6 +127,12 @@ def process_line(
                         state.log_activity(workspace, "🚨 Agent signaled GUTTER (stuck)")
                         console.print("[yellow]🚨 Agent signaled GUTTER (stuck)[/yellow]")
                         return "GUTTER"
+                    
+                    # Check for question sigil
+                    if "<ralph>QUESTION</ralph>" in text:
+                        state.log_activity(workspace, "❓ Agent has a question for user")
+                        console.print("[cyan]❓ Agent has a question for user[/cyan]")
+                        return "QUESTION"
 
     elif msg_type == "tool_call":
         if subtype == "started":
