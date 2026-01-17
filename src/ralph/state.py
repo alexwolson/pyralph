@@ -4,6 +4,43 @@ from pathlib import Path
 from typing import Optional
 
 
+# Initial content templates for state files
+DEFAULT_PROGRESS_CONTENT = (
+    "# Progress Log\n\n"
+    "> Updated by the agent after significant work.\n\n"
+    "---\n\n"
+    "## Session History\n\n"
+)
+
+DEFAULT_GUARDRAILS_CONTENT = (
+    "# Ralph Guardrails (Signs)\n\n"
+    "> Lessons learned from past failures. READ THESE BEFORE ACTING.\n\n"
+    "## Core Signs\n\n"
+    "### Sign: Read Before Writing\n"
+    "- **Trigger**: Before modifying any file\n"
+    "- **Instruction**: Always read the existing file first\n"
+    "- **Added after**: Core principle\n\n"
+    "### Sign: Test After Changes\n"
+    "- **Trigger**: After any code change\n"
+    "- **Instruction**: Run tests to verify nothing broke\n"
+    "- **Added after**: Core principle\n\n"
+    "### Sign: Commit Checkpoints\n"
+    "- **Trigger**: Before risky changes\n"
+    "- **Instruction**: Commit current working state first\n"
+    "- **Added after**: Core principle\n\n"
+    "---\n\n"
+    "## Learned Signs\n\n"
+)
+
+DEFAULT_ERRORS_CONTENT = (
+    "# Error Log\n\n> Failures detected by parser. Use to update guardrails.\n\n"
+)
+
+DEFAULT_ACTIVITY_CONTENT = (
+    "# Activity Log\n\n> Real-time tool call logging from parser.\n\n"
+)
+
+
 def init_ralph_dir(workspace: Path) -> Path:
     """Initialize .ralph directory with default files."""
     ralph_dir = workspace / ".ralph"
@@ -12,53 +49,22 @@ def init_ralph_dir(workspace: Path) -> Path:
     # Initialize progress.md
     progress_file = ralph_dir / "progress.md"
     if not progress_file.exists():
-        progress_file.write_text(
-            "# Progress Log\n\n"
-            "> Updated by the agent after significant work.\n\n"
-            "---\n\n"
-            "## Session History\n\n",
-            encoding="utf-8",
-        )
+        progress_file.write_text(DEFAULT_PROGRESS_CONTENT, encoding="utf-8")
 
     # Initialize guardrails.md
     guardrails_file = ralph_dir / "guardrails.md"
     if not guardrails_file.exists():
-        guardrails_file.write_text(
-            "# Ralph Guardrails (Signs)\n\n"
-            "> Lessons learned from past failures. READ THESE BEFORE ACTING.\n\n"
-            "## Core Signs\n\n"
-            "### Sign: Read Before Writing\n"
-            "- **Trigger**: Before modifying any file\n"
-            "- **Instruction**: Always read the existing file first\n"
-            "- **Added after**: Core principle\n\n"
-            "### Sign: Test After Changes\n"
-            "- **Trigger**: After any code change\n"
-            "- **Instruction**: Run tests to verify nothing broke\n"
-            "- **Added after**: Core principle\n\n"
-            "### Sign: Commit Checkpoints\n"
-            "- **Trigger**: Before risky changes\n"
-            "- **Instruction**: Commit current working state first\n"
-            "- **Added after**: Core principle\n\n"
-            "---\n\n"
-            "## Learned Signs\n\n",
-            encoding="utf-8",
-        )
+        guardrails_file.write_text(DEFAULT_GUARDRAILS_CONTENT, encoding="utf-8")
 
     # Initialize errors.log
     errors_file = ralph_dir / "errors.log"
     if not errors_file.exists():
-        errors_file.write_text(
-            "# Error Log\n\n> Failures detected by parser. Use to update guardrails.\n\n",
-            encoding="utf-8",
-        )
+        errors_file.write_text(DEFAULT_ERRORS_CONTENT, encoding="utf-8")
 
     # Initialize activity.log
     activity_file = ralph_dir / "activity.log"
     if not activity_file.exists():
-        activity_file.write_text(
-            "# Activity Log\n\n> Real-time tool call logging from parser.\n\n",
-            encoding="utf-8",
-        )
+        activity_file.write_text(DEFAULT_ACTIVITY_CONTENT, encoding="utf-8")
 
     return ralph_dir
 

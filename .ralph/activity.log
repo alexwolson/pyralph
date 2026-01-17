@@ -240,3 +240,18 @@ EOF
 [15:06:14] ● TOKENS: 52878 / 80000 (66%) [read:202KB write:0KB assist:1KB shell:0KB]
 [15:06:38] ● SHELL uv run pytest -v → exit 0
 [15:06:45] ● TOKENS: 52928 / 80000 (66%) [read:202KB write:0KB assist:1KB shell:0KB]
+[15:06:50] ● SHELL git add -A && git commit -m "$(cat <<'EOF'
+ralph: consolidate YAML frontmatter parsing into parser.py
+
+Added parse_frontmatter() function in parser.py that extracts YAML
+frontmatter from markdown content. Updated task.py and prompts.py
+to use this consolidated function instead of duplicating the logic.
+EOF
+)" → exit 0
+[15:06:55] ● READ /Users/alex/repos/pyralph/src/ralph/state.py (113 lines, ~11.0KB)
+[15:06:56] ● READ /Users/alex/repos/pyralph/src/ralph/loop.py (648 lines, ~63.3KB)
+[15:07:00] WARN: Approaching token limit (72006 >= 72000)
+[15:07:00] ● READ /Users/alex/repos/pyralph/src/ralph/archive.py (125 lines, ~12.2KB)
+[15:07:18] ● TOKENS: 75177 / 80000 (93%) - rotation imminent [read:288KB write:0KB assist:1KB shell:0KB]
+[15:07:37] ● SHELL uv run pytest -v → exit 0
+[15:07:49] ● TOKENS: 75218 / 80000 (94%) - rotation imminent [read:288KB write:0KB assist:2KB shell:0KB]

@@ -6,6 +6,11 @@ from typing import Optional
 
 from ralph import git_utils
 from ralph.debug import debug_log
+from ralph.state import (
+    DEFAULT_PROGRESS_CONTENT,
+    DEFAULT_ACTIVITY_CONTENT,
+    DEFAULT_ERRORS_CONTENT,
+)
 
 
 def archive_completed_task(workspace: Path) -> Optional[Path]:
@@ -73,20 +78,11 @@ def _archive_state_files(workspace: Path, timestamp: str) -> None:
     completed_dir = ralph_dir / "completed"
     completed_dir.mkdir(parents=True, exist_ok=True)
     
-    # Define state files to archive with their initial content
+    # Define state files to archive with their initial content (from state.py)
     state_files = {
-        "progress.md": (
-            "# Progress Log\n\n"
-            "> Updated by the agent after significant work.\n\n"
-            "---\n\n"
-            "## Session History\n\n"
-        ),
-        "activity.log": (
-            "# Activity Log\n\n> Real-time tool call logging from parser.\n\n"
-        ),
-        "errors.log": (
-            "# Error Log\n\n> Failures detected by parser. Use to update guardrails.\n\n"
-        ),
+        "progress.md": DEFAULT_PROGRESS_CONTENT,
+        "activity.log": DEFAULT_ACTIVITY_CONTENT,
+        "errors.log": DEFAULT_ERRORS_CONTENT,
     }
     
     archived_files = []

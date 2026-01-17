@@ -30,7 +30,7 @@ The task is complete when ALL of the following are true:
 - [x] Consolidate `run_single_iteration` and `run_verification_iteration` shared logic into a common helper or unified function
 - [x] Add `get_display_name()` method to `BaseProvider` class with default implementation, remove hasattr checks throughout codebase
 - [x] Consolidate YAML frontmatter parsing into a single utility function in `parser.py`, update all call sites
-- [ ] Consolidate initial state file content (progress.md, guardrails.md templates) into `state.py` only, remove duplication in `loop.py`
+- [x] Consolidate initial state file content (progress.md, guardrails.md templates) into `state.py` only, remove duplication in `loop.py`
 - [ ] Add comprehensive type hints to all public functions in extracted modules
 - [ ] Update all imports and usages throughout codebase after module extractions
 - [ ] All existing tests pass after refactoring (`uv run pytest -v`)
