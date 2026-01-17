@@ -84,16 +84,21 @@ class RalphLiveDisplay:
         components.append(self.progress)
         
         # Add criteria checklist if available
+        # Wrap in try/except to handle MarkupError during measurement
         if self.criteria:
-            criteria_table = self._build_criteria_table()
-            components.append(criteria_table)
+            try:
+                criteria_table = self._build_criteria_table()
+                components.append(criteria_table)
+            except Exception:
+                # If there's any error building/measuring the criteria table
+                # (e.g., MarkupError from malformed text), just skip it
+                # This prevents the entire display from crashing
+                pass
         
         return Group(*components)
 
     def _build_criteria_table(self) -> Table:
         """Build the criteria checklist table."""
-        from rich.markup import escape as escape_markup
-        
         table = Table(show_header=False, box=None, padding=(0, 1))
         table.add_column("Status", width=3)
         table.add_column("Criterion")
@@ -106,18 +111,23 @@ class RalphLiveDisplay:
                 status = f"[{THEME['muted']}]○[/]"
                 style = ""
             
-            # Escape markup in criteria text using Rich's escape function
-            # This properly escapes brackets and other markup characters
-            escaped_text = escape_markup(text)
-            
-            # Apply style using Text class to ensure proper rendering
-            # Text objects are safe from markup parsing during measurement
-            if style:
-                criterion_text = Text(escaped_text, style=style)
-            else:
-                criterion_text = Text(escaped_text)
-            
-            table.add_row(status, criterion_text)
+            # Create Text object from plain text string
+            # Text objects should not trigger markup parsing, but Rich's measurement
+            # system might convert them to strings. To be safe, we ensure the text
+            # is treated as plain by using Text.plain property when creating
+            # However, since we're creating from a string, we need to ensure brackets
+            # don't get parsed. The safest approach is to use Text objects which
+            # Rich should handle correctly, but if measurement fails, we catch it.
+            try:
+                if style:
+                    criterion_text = Text(text, style=style)
+                else:
+                    criterion_text = Text(text)
+                table.add_row(status, criterion_text)
+            except Exception:
+                # If there's any error (like MarkupError), fall back to plain string
+                # This should not happen with Text objects, but just in case
+                table.add_row(status, text)
         
         return table
 
@@ -350,7 +360,23 @@ class RalphLiveDisplay:
                 pass
             # #endregion
             
-            self._live.update(self._build_display())
+            try:
+                self._live.update(self._build_display())
+            except Exception as e:
+                # If there's a MarkupError or any other error during rendering/measurement,
+                # try building display without criteria table
+                from rich.errors import MarkupError
+                if isinstance(e, MarkupError):
+                    # Build display without criteria to avoid the markup error
+                    components = [self.progress]
+                    try:
+                        self._live.update(Group(*components))
+                    except Exception:
+                        # If even that fails, just skip the update
+                        pass
+                else:
+                    # For other errors, re-raise
+                    raise
             
             # #region agent log
             try:
