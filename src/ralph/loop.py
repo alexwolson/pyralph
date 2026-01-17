@@ -4,11 +4,12 @@ import subprocess
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import Callable, Optional
 
 from ralph import git_utils, gutter, parser, state, task, tokens
 from ralph.debug import debug_log
 from ralph.providers import ProviderRotation
+from ralph.ui import RalphLiveDisplay, get_criteria_list
 
 
 def archive_completed_task(workspace: Path) -> Optional[Path]:
@@ -144,6 +145,7 @@ def run_single_iteration(
     warn_threshold: int = tokens.WARN_THRESHOLD,
     rotate_threshold: int = tokens.ROTATE_THRESHOLD,
     timeout: int = 300,
+    on_token_update: Optional[Callable[[tokens.TokenTracker], None]] = None,
 ) -> str:
     """Run a single iteration. Returns signal (ROTATE, GUTTER, COMPLETE, or empty).
     
@@ -154,6 +156,7 @@ def run_single_iteration(
         warn_threshold: Token count at which to warn about context size
         rotate_threshold: Token count at which to trigger rotation
         timeout: Timeout in seconds for provider operations (default 300)
+        on_token_update: Optional callback for token tracker updates
     """
     
     prompt = build_prompt(workspace, iteration)
@@ -193,7 +196,10 @@ def run_single_iteration(
     # Parse stream with timeout checking
     signal = ""
     try:
-        for sig in parser.parse_stream(workspace, agent_process, token_tracker, gutter_detector, provider):
+        for sig in parser.parse_stream(
+            workspace, agent_process, token_tracker, gutter_detector, provider,
+            on_token_update=on_token_update,
+        ):
             signal = sig
             if signal in ("ROTATE", "GUTTER", "COMPLETE"):
                 # Stop early if critical signal
@@ -253,6 +259,7 @@ def run_ralph_loop(
     from ralph.providers import get_provider_rotation
     
     workspace = project_dir.resolve()
+    task_file = workspace / "RALPH_TASK.md"
     
     # Commit any uncommitted work first
     if git_utils.has_uncommitted_changes(workspace):
@@ -273,123 +280,196 @@ def run_ralph_loop(
     from rich.console import Console
     console = Console()
     
-    while iteration <= max_iterations:
-        # Get current provider
-        provider = provider_rotation.get_current()
-        provider_name = provider_rotation.get_provider_name()
-        
-        debug_log(
-            "loop.py:run_ralph_loop",
-            "Loop iteration started",
-            {
-                "iteration": iteration,
-                "provider_name": provider_name,
-                "current_index": provider_rotation.current_index,
-                "total_providers": len(provider_rotation.providers),
-                "provider_names": [p.cli_tool if hasattr(p, 'cli_tool') else str(type(p).__name__) for p in provider_rotation.providers]
-            },
-            "A"
-        )
-        
-        console.print(f"\n[bold cyan]🔄 Iteration {iteration}/{max_iterations}[/bold cyan] [dim](provider: {provider_name})[/dim]")
-        
-        try:
-            # Run iteration
-            signal = run_single_iteration(
-                workspace, provider, iteration,
-                warn_threshold=warn_threshold,
-                rotate_threshold=rotate_threshold,
-                timeout=timeout,
+    # Create live display
+    live_display = RalphLiveDisplay(
+        max_iterations=max_iterations,
+        rotate_threshold=rotate_threshold,
+        console=console,
+    )
+    
+    # Callback to update live display with token tracker
+    def on_token_update(tracker: tokens.TokenTracker) -> None:
+        # Re-read criteria to get latest status
+        criteria = get_criteria_list(task_file)
+        live_display.update(token_tracker=tracker, criteria=criteria)
+    
+    with live_display:
+        while iteration <= max_iterations:
+            # Get current provider
+            provider = provider_rotation.get_current()
+            provider_name = provider_rotation.get_provider_name()
+            
+            # Update live display
+            criteria = get_criteria_list(task_file)
+            live_display.update(
+                iteration=iteration,
+                provider=provider_name,
+                criteria=criteria,
             )
             
-            # Check task completion
-            task_file = workspace / "RALPH_TASK.md"
-            completion_status = task.check_completion(task_file)
+            debug_log(
+                "loop.py:run_ralph_loop",
+                "Loop iteration started",
+                {
+                    "iteration": iteration,
+                    "provider_name": provider_name,
+                    "current_index": provider_rotation.current_index,
+                    "total_providers": len(provider_rotation.providers),
+                    "provider_names": [p.cli_tool if hasattr(p, 'cli_tool') else str(type(p).__name__) for p in provider_rotation.providers]
+                },
+                "A"
+            )
             
-            if completion_status == "COMPLETE":
-                state.log_progress(workspace, f"**Session {iteration} ended** - ✅ TASK COMPLETE")
-                print(f"\n🎉 RALPH COMPLETE! All criteria satisfied.")
-                print(f"Completed in {iteration} iteration(s).")
+            try:
+                # Run iteration with token update callback
+                signal = run_single_iteration(
+                    workspace, provider, iteration,
+                    warn_threshold=warn_threshold,
+                    rotate_threshold=rotate_threshold,
+                    timeout=timeout,
+                    on_token_update=on_token_update,
+                )
                 
-                # Archive completed task
-                archive_path = archive_completed_task(workspace)
-                if archive_path:
-                    print(f"📁 Task archived to: {archive_path.relative_to(workspace)}")
-                    state.log_progress(workspace, f"**Task archived** to {archive_path.name}")
+                # Check task completion
+                completion_status = task.check_completion(task_file)
                 
-                # Open PR if requested
-                if open_pr and branch:
-                    git_utils.push_branch(workspace, branch)
-                    git_utils.open_pr(workspace, branch)
+                # Update criteria display after iteration
+                criteria = get_criteria_list(task_file)
+                live_display.update(criteria=criteria)
                 
-                return
-            
-            # Handle signals
-            if signal == "COMPLETE":
-                # Verify with checkbox check
                 if completion_status == "COMPLETE":
-                    state.log_progress(workspace, f"**Session {iteration} ended** - ✅ TASK COMPLETE (agent signaled)")
-                    print(f"\n🎉 RALPH COMPLETE! Agent signaled completion and all criteria verified.")
-                    print(f"Completed in {iteration} iteration(s).")
+                    state.log_progress(workspace, f"**Session {iteration} ended** - ✅ TASK COMPLETE")
+                    live_display.stop()
+                    console.print(f"\n[bold green]🎉 RALPH COMPLETE![/] All criteria satisfied.")
+                    console.print(f"Completed in {iteration} iteration(s).")
                     
                     # Archive completed task
                     archive_path = archive_completed_task(workspace)
                     if archive_path:
-                        print(f"📁 Task archived to: {archive_path.relative_to(workspace)}")
+                        console.print(f"[dim]📁 Task archived to: {archive_path.relative_to(workspace)}[/]")
                         state.log_progress(workspace, f"**Task archived** to {archive_path.name}")
                     
+                    # Open PR if requested
                     if open_pr and branch:
                         git_utils.push_branch(workspace, branch)
                         git_utils.open_pr(workspace, branch)
                     
                     return
-                else:
-                    # Agent said complete but checkboxes say otherwise
-                    state.log_progress(workspace, f"**Session {iteration} ended** - Agent signaled complete but criteria remain")
-                    iteration += 1
+                
+                # Handle signals
+                if signal == "COMPLETE":
+                    # Verify with checkbox check
+                    if completion_status == "COMPLETE":
+                        state.log_progress(workspace, f"**Session {iteration} ended** - ✅ TASK COMPLETE (agent signaled)")
+                        live_display.stop()
+                        console.print(f"\n[bold green]🎉 RALPH COMPLETE![/] Agent signaled completion and all criteria verified.")
+                        console.print(f"Completed in {iteration} iteration(s).")
+                        
+                        # Archive completed task
+                        archive_path = archive_completed_task(workspace)
+                        if archive_path:
+                            console.print(f"[dim]📁 Task archived to: {archive_path.relative_to(workspace)}[/]")
+                            state.log_progress(workspace, f"**Task archived** to {archive_path.name}")
+                        
+                        if open_pr and branch:
+                            git_utils.push_branch(workspace, branch)
+                            git_utils.open_pr(workspace, branch)
+                        
+                        return
+                    else:
+                        # Agent said complete but checkboxes say otherwise
+                        state.log_progress(workspace, f"**Session {iteration} ended** - Agent signaled complete but criteria remain")
+                        iteration += 1
+                        
+                elif signal == "ROTATE":
+                    debug_log(
+                        "loop.py:run_ralph_loop",
+                        "ROTATE signal received",
+                        {
+                            "iteration": iteration,
+                            "current_provider": provider_name,
+                            "current_index_before": provider_rotation.current_index,
+                            "will_rotate_provider": False
+                        },
+                        "A"
+                    )
                     
-            elif signal == "ROTATE":
+                    state.log_progress(workspace, f"**Session {iteration} ended** - 🔄 Context rotation (token limit reached)")
+                    iteration += 1
+                    debug_log(
+                        "loop.py:run_ralph_loop",
+                        "After ROTATE - iteration incremented",
+                        {
+                            "new_iteration": iteration,
+                            "provider_unchanged": provider_name,
+                            "current_index_after": provider_rotation.current_index
+                        },
+                        "A"
+                    )
+                    
+                elif signal == "GUTTER":
+                    debug_log(
+                        "loop.py:run_ralph_loop",
+                        "GUTTER signal received",
+                        {
+                            "iteration": iteration,
+                            "current_provider": provider_name,
+                            "current_index_before": provider_rotation.current_index
+                        },
+                        "B"
+                    )
+                    
+                    state.log_progress(workspace, f"**Session {iteration} ended** - 🚨 GUTTER (agent stuck) - {provider_name}")
+                    
+                    # Rotate to next provider
+                    next_provider = provider_rotation.rotate()
+                    
+                    next_name = provider_rotation.get_provider_name() if next_provider else None
+                    debug_log(
+                        "loop.py:run_ralph_loop",
+                        "After GUTTER rotation",
+                        {
+                            "iteration": iteration,
+                            "old_provider": provider_name,
+                            "new_provider": next_name,
+                            "current_index_after": provider_rotation.current_index,
+                            "next_provider_returned": next_provider is not None,
+                            "has_next": provider_rotation.has_next()
+                        },
+                        "B"
+                    )
+                    
+                    if next_provider and provider_rotation.has_next():
+                        state.log_progress(workspace, f"**Provider rotation** - {provider_name} → {next_name} (gutter)")
+                        # Retry same iteration with new provider
+                        continue
+                    else:
+                        # No more providers - continue to next iteration
+                        iteration += 1
+                        continue
+                    
+                else:
+                    # Agent finished naturally
+                    if completion_status.startswith("INCOMPLETE:"):
+                        remaining = completion_status.split(":")[1]
+                        state.log_progress(workspace, f"**Session {iteration} ended** - Agent finished naturally ({remaining} criteria remaining)")
+                        iteration += 1
+                        
+            except Exception as e:
                 debug_log(
                     "loop.py:run_ralph_loop",
-                    "ROTATE signal received",
+                    "Exception caught - rotating provider",
                     {
                         "iteration": iteration,
                         "current_provider": provider_name,
                         "current_index_before": provider_rotation.current_index,
-                        "will_rotate_provider": False
+                        "error": str(e)
                     },
-                    "A"
+                    "C"
                 )
                 
-                state.log_progress(workspace, f"**Session {iteration} ended** - 🔄 Context rotation (token limit reached)")
-                print(f"\n🔄 Rotating to fresh context...")
-                
-                iteration += 1
-                debug_log(
-                    "loop.py:run_ralph_loop",
-                    "After ROTATE - iteration incremented",
-                    {
-                        "new_iteration": iteration,
-                        "provider_unchanged": provider_name,
-                        "current_index_after": provider_rotation.current_index
-                    },
-                    "A"
-                )
-                
-            elif signal == "GUTTER":
-                debug_log(
-                    "loop.py:run_ralph_loop",
-                    "GUTTER signal received",
-                    {
-                        "iteration": iteration,
-                        "current_provider": provider_name,
-                        "current_index_before": provider_rotation.current_index
-                    },
-                    "B"
-                )
-                
-                state.log_progress(workspace, f"**Session {iteration} ended** - 🚨 GUTTER (agent stuck) - {provider_name}")
-                print(f"\n🚨 Gutter detected with {provider_name}. Rotating to next provider...")
+                # Provider error - rotate to next provider
+                state.log_progress(workspace, f"**Session {iteration} failed** - Provider error: {provider_name} - {e}")
                 
                 # Rotate to next provider
                 next_provider = provider_rotation.rotate()
@@ -397,7 +477,7 @@ def run_ralph_loop(
                 next_name = provider_rotation.get_provider_name() if next_provider else None
                 debug_log(
                     "loop.py:run_ralph_loop",
-                    "After GUTTER rotation",
+                    "After exception rotation",
                     {
                         "iteration": iteration,
                         "old_provider": provider_name,
@@ -406,79 +486,23 @@ def run_ralph_loop(
                         "next_provider_returned": next_provider is not None,
                         "has_next": provider_rotation.has_next()
                     },
-                    "B"
+                    "C"
                 )
                 
                 if next_provider and provider_rotation.has_next():
-                    print(f"🔄 Rotating to provider: {next_name}")
-                    state.log_progress(workspace, f"**Provider rotation** - {provider_name} → {next_name} (gutter)")
+                    state.log_progress(workspace, f"**Provider rotation** - {provider_name} → {next_name}")
                     # Retry same iteration with new provider
                     continue
                 else:
-                    # No more providers - continue to next iteration
-                    print(f"⚠️  No more providers to try. Continuing to next iteration.")
+                    # No more providers or only one provider
                     iteration += 1
                     continue
-                
-            else:
-                # Agent finished naturally
-                if completion_status.startswith("INCOMPLETE:"):
-                    remaining = completion_status.split(":")[1]
-                    state.log_progress(workspace, f"**Session {iteration} ended** - Agent finished naturally ({remaining} criteria remaining)")
-                    print(f"\n📋 Agent finished but {remaining} criteria remaining.")
-                    iteration += 1
-                    
-        except Exception as e:
-            debug_log(
-                "loop.py:run_ralph_loop",
-                "Exception caught - rotating provider",
-                {
-                    "iteration": iteration,
-                    "current_provider": provider_name,
-                    "current_index_before": provider_rotation.current_index,
-                    "error": str(e)
-                },
-                "C"
-            )
             
-            # Provider error - rotate to next provider
-            state.log_progress(workspace, f"**Session {iteration} failed** - Provider error: {provider_name} - {e}")
-            print(f"\n⚠️  Provider {provider_name} failed: {e}")
-            
-            # Rotate to next provider
-            next_provider = provider_rotation.rotate()
-            
-            next_name = provider_rotation.get_provider_name() if next_provider else None
-            debug_log(
-                "loop.py:run_ralph_loop",
-                "After exception rotation",
-                {
-                    "iteration": iteration,
-                    "old_provider": provider_name,
-                    "new_provider": next_name,
-                    "current_index_after": provider_rotation.current_index,
-                    "next_provider_returned": next_provider is not None,
-                    "has_next": provider_rotation.has_next()
-                },
-                "C"
-            )
-            
-            if next_provider and provider_rotation.has_next():
-                print(f"🔄 Rotating to provider: {next_name}")
-                state.log_progress(workspace, f"**Provider rotation** - {provider_name} → {next_name}")
-                # Retry same iteration with new provider
-                continue
-            else:
-                # No more providers or only one provider
-                print(f"\n❌ All providers exhausted for iteration {iteration}.")
-                iteration += 1
-                continue
-        
-        # Brief pause between iterations
-        time.sleep(2)
+            # Brief pause between iterations
+            time.sleep(2)
     
     # Max iterations reached
     state.log_progress(workspace, f"**Loop ended** - ⚠️ Max iterations ({max_iterations}) reached")
-    print(f"\n⚠️  Max iterations ({max_iterations}) reached.")
-    print("   Task may not be complete. Check progress manually.")
+    console.print(f"\n[yellow]⚠️  Max iterations ({max_iterations}) reached.[/]")
+    console.print("   Task may not be complete. Check progress manually.")
     raise Exception(f"Max iterations ({max_iterations}) reached")

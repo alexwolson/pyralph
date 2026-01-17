@@ -3,7 +3,7 @@
 import subprocess
 import time
 from pathlib import Path
-from typing import Iterator, Optional
+from typing import Callable, Iterator, Optional
 
 from rich.console import Console
 
@@ -19,8 +19,17 @@ def parse_stream(
     token_tracker: tokens.TokenTracker,
     gutter_detector: gutter.GutterDetector,
     provider: BaseProvider,
+    on_token_update: Optional[Callable[[tokens.TokenTracker], None]] = None,
 ) -> Iterator[str]:
     """Parse cursor-agent stream-json output and emit signals.
+    
+    Args:
+        workspace: Project directory path
+        agent_process: The running agent subprocess
+        token_tracker: Token usage tracker
+        gutter_detector: Gutter (stuck agent) detector
+        provider: LLM provider instance
+        on_token_update: Optional callback for token tracker updates
     
     Yields: "ROTATE", "WARN", "GUTTER", "COMPLETE"
     """
@@ -51,6 +60,10 @@ def parse_stream(
         signal = process_line(workspace, data, token_tracker, gutter_detector)
         if signal:
             yield signal
+
+        # Call token update callback if provided
+        if on_token_update:
+            on_token_update(token_tracker)
 
         # Check thresholds
         if token_tracker.should_rotate():
