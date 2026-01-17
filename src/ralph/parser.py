@@ -9,6 +9,7 @@ from rich.console import Console
 
 from ralph import gutter, state, tokens
 from ralph.providers.base import BaseProvider
+from ralph.signals import Signal, TAG_COMPLETE, TAG_GUTTER, TAG_QUESTION, TAG_VERIFY_PASS, TAG_VERIFY_FAIL
 
 # Default console for standalone usage (not within Live context)
 _default_console = Console()
@@ -35,7 +36,7 @@ def parse_stream(
         on_token_update: Optional callback for token tracker updates
         console: Optional Rich Console for output (use Live.console when within Live context)
     
-    Yields: "ROTATE", "WARN", "GUTTER", "COMPLETE", "QUESTION", "VERIFY_PASS", "VERIFY_FAIL"
+    Yields: Signal values - ROTATE, WARN, GUTTER, COMPLETE, QUESTION, VERIFY_PASS, VERIFY_FAIL
     """
     # Use provided console or default
     output_console = console or _default_console
@@ -81,13 +82,13 @@ def parse_stream(
             tokens_count = token_tracker.calculate_tokens()
             state.log_activity(workspace, f"ROTATE: Token threshold reached ({tokens_count} >= {tokens.ROTATE_THRESHOLD})")
             output_console.print(f"[yellow]↻ Token limit reached ({tokens_count} tokens) - rotating...[/yellow]")
-            yield "ROTATE"
+            yield Signal.ROTATE
         
         if token_tracker.should_warn():
             tokens_count = token_tracker.calculate_tokens()
             state.log_activity(workspace, f"WARN: Approaching token limit ({tokens_count} >= {tokens.WARN_THRESHOLD})")
             output_console.print(f"[yellow]⚠ Approaching token limit: {tokens_count}/{tokens.ROTATE_THRESHOLD} tokens[/yellow]")
-            yield "WARN"
+            yield Signal.WARN
 
         # Log token status every 30 seconds
         now = int(time.time())
@@ -142,34 +143,34 @@ def process_line(
                     token_tracker.add_assistant(len(text))
                     
                     # Check for completion sigil
-                    if "<ralph>COMPLETE</ralph>" in text:
+                    if TAG_COMPLETE in text:
                         state.log_activity(workspace, "✓ Agent signaled COMPLETE")
                         output_console.print("[green]✓ Agent signaled COMPLETE[/green]")
-                        return "COMPLETE"
+                        return Signal.COMPLETE
                     
                     # Check for gutter sigil
-                    if "<ralph>GUTTER</ralph>" in text:
+                    if TAG_GUTTER in text:
                         state.log_activity(workspace, "⚠ Agent signaled GUTTER (stuck)")
                         output_console.print("[yellow]⚠ Agent signaled GUTTER (stuck)[/yellow]")
-                        return "GUTTER"
+                        return Signal.GUTTER
                     
                     # Check for question sigil
-                    if "<ralph>QUESTION</ralph>" in text:
+                    if TAG_QUESTION in text:
                         state.log_activity(workspace, "? Agent has a question for user")
                         output_console.print("[cyan]? Agent has a question for user[/cyan]")
-                        return "QUESTION"
+                        return Signal.QUESTION
                     
                     # Check for verification pass sigil
-                    if "<ralph>VERIFY_PASS</ralph>" in text:
+                    if TAG_VERIFY_PASS in text:
                         state.log_activity(workspace, "✓ Verification PASSED")
                         output_console.print("[green]✓ Verification PASSED[/green]")
-                        return "VERIFY_PASS"
+                        return Signal.VERIFY_PASS
                     
                     # Check for verification fail sigil
-                    if "<ralph>VERIFY_FAIL</ralph>" in text:
+                    if TAG_VERIFY_FAIL in text:
                         state.log_activity(workspace, "✗ Verification FAILED")
                         output_console.print("[red]✗ Verification FAILED[/red]")
-                        return "VERIFY_FAIL"
+                        return Signal.VERIFY_FAIL
 
     elif msg_type == "tool_call":
         if subtype == "started":
@@ -231,7 +232,7 @@ def process_line(
                     # Track for thrashing detection
                     if gutter_detector.track_write(path):
                         state.log_error(workspace, f"⚠ THRASHING: {path} written 5x in 10 min")
-                        return "GUTTER"
+                        return Signal.GUTTER
 
             # Shell tool
             shell_tool = tool_call.get("shellToolCall")
@@ -263,7 +264,7 @@ def process_line(
                     # Track for failure detection
                     if gutter_detector.track_failure(cmd, exit_code):
                         state.log_error(workspace, f"⚠ GUTTER: same command failed 3x")
-                        return "GUTTER"
+                        return Signal.GUTTER
 
     return None
 

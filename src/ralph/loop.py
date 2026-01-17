@@ -9,6 +9,7 @@ from typing import Callable, Optional, TYPE_CHECKING
 from ralph import git_utils, gutter, parser, state, task, tokens
 from ralph.debug import debug_log
 from ralph.providers import ProviderRotation
+from ralph.signals import Signal, CRITICAL_SIGNALS, VERIFICATION_SIGNALS
 from ralph.ui import RalphLiveDisplay, get_criteria_list, display_question_panel
 
 if TYPE_CHECKING:
@@ -376,7 +377,7 @@ def run_single_iteration(
             console=console,
         ):
             signal = sig
-            if signal in ("ROTATE", "GUTTER", "COMPLETE", "QUESTION", "VERIFY_PASS", "VERIFY_FAIL"):
+            if signal in CRITICAL_SIGNALS:
                 # Stop early if critical signal
                 agent_process.terminate()
                 break
@@ -390,7 +391,7 @@ def run_single_iteration(
                     {"timeout": timeout, "elapsed": elapsed, "provider": provider_cli},
                 )
                 agent_process.terminate()
-                signal = "ROTATE"
+                signal = Signal.ROTATE
                 break
     except Exception as e:
         debug_log(
@@ -488,7 +489,7 @@ def run_verification_iteration(
             console=console,
         ):
             signal = sig
-            if signal in ("VERIFY_PASS", "VERIFY_FAIL", "ROTATE", "GUTTER"):
+            if signal in VERIFICATION_SIGNALS:
                 # Stop early if critical signal
                 agent_process.terminate()
                 break
@@ -502,7 +503,7 @@ def run_verification_iteration(
                     {"timeout": timeout, "elapsed": elapsed},
                 )
                 agent_process.terminate()
-                signal = "VERIFY_FAIL"
+                signal = Signal.VERIFY_FAIL
                 break
     except Exception as e:
         debug_log(
@@ -511,7 +512,7 @@ def run_verification_iteration(
             {"error": str(e), "error_type": type(e).__name__},
         )
         agent_process.terminate()
-        signal = "VERIFY_FAIL"
+        signal = Signal.VERIFY_FAIL
     finally:
         # Cancel timeout timer if it's still running
         if timeout_timer:
@@ -519,7 +520,7 @@ def run_verification_iteration(
     
     # Check if timeout was the reason for termination
     if not signal and timeout and (time.time() - start_time) >= timeout:
-        signal = "VERIFY_FAIL"
+        signal = Signal.VERIFY_FAIL
     
     # Wait for process to finish with timeout
     try:
@@ -661,11 +662,11 @@ def run_ralph_loop(
                     should_verify = True
                     state.log_progress(workspace, f"**Session {iteration} ended** - All criteria checked, starting verification")
                 
-                if signal == "COMPLETE" and completion_status == "COMPLETE":
+                if signal == Signal.COMPLETE and completion_status == "COMPLETE":
                     # Agent signaled COMPLETE and all checkboxes checked
                     should_verify = True
                     state.log_progress(workspace, f"**Session {iteration} ended** - Agent signaled COMPLETE, starting verification")
-                elif signal == "COMPLETE" and completion_status != "COMPLETE":
+                elif signal == Signal.COMPLETE and completion_status != "COMPLETE":
                     # Agent said complete but checkboxes say otherwise
                     state.log_progress(workspace, f"**Session {iteration} ended** - Agent signaled complete but criteria remain")
                     iteration += 1
@@ -720,7 +721,7 @@ def run_ralph_loop(
                         console=live_display.console,
                     )
                     
-                    if verify_signal == "VERIFY_PASS":
+                    if verify_signal == Signal.VERIFY_PASS:
                         # Verification passed - archive and exit
                         state.log_progress(workspace, f"**Verification PASSED** - Task complete")
                         live_display.stop()
@@ -739,7 +740,7 @@ def run_ralph_loop(
                         
                         return
                     
-                    elif verify_signal == "VERIFY_FAIL":
+                    elif verify_signal == Signal.VERIFY_FAIL:
                         # Verification failed - continue loop
                         verification_failures += 1
                         state.log_progress(workspace, f"**Verification FAILED** ({verification_failures}/{max_verification_failures}) - Continuing loop")
@@ -760,7 +761,7 @@ def run_ralph_loop(
                         iteration += 1
                         continue
                         
-                elif signal == "ROTATE":
+                elif signal == Signal.ROTATE:
                     debug_log(
                         "loop.py:run_ralph_loop",
                         "ROTATE signal received",
@@ -786,7 +787,7 @@ def run_ralph_loop(
                         "A"
                     )
                     
-                elif signal == "GUTTER":
+                elif signal == Signal.GUTTER:
                     debug_log(
                         "loop.py:run_ralph_loop",
                         "GUTTER signal received",
@@ -827,7 +828,7 @@ def run_ralph_loop(
                         iteration += 1
                         continue
                 
-                elif signal == "QUESTION":
+                elif signal == Signal.QUESTION:
                     # Handle agent question - pause, display, prompt user
                     from ralph.interview_turns import wait_for_user_input_with_timeout
                     

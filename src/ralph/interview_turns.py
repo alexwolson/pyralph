@@ -10,6 +10,7 @@ from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.prompt import Prompt
 
+from ralph.signals import TAG_DONE
 from ralph.ui import THEME
 
 console = Console()
@@ -90,7 +91,7 @@ def run_single_turn(
                         last_ai_message = text
                         
                         # Check for completion sigil
-                        if "<ralph>DONE</ralph>" in text:
+                        if TAG_DONE in text:
                             task_file_created = True
                             console.print("[green]✓[/green] Interview complete! Task file generated.\n")
         

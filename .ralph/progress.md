@@ -111,3 +111,27 @@ All three test criteria completed successfully.
 
 ### 2026-01-17 14:47:18
 **Task archived** to RALPH_TASK_20260117_144718.md
+
+### 2026-01-17 14:55:48
+**Session 1 started** (provider: cursor)
+
+### Signals Module Extraction - Complete
+
+**Changes made:**
+
+1. **signals.py (new)**: Created `src/ralph/signals.py` with:
+   - `Signal` enum (str, Enum) with values: COMPLETE, ROTATE, GUTTER, QUESTION, VERIFY_PASS, VERIFY_FAIL, WARN, DONE
+   - `make_tag()` helper to create signal tags (e.g., `<ralph>COMPLETE</ralph>`)
+   - `detect_signal()` helper to detect signals in text
+   - Pre-built TAG_* constants for common signals
+   - Signal sets: CRITICAL_SIGNALS, VERIFICATION_SIGNALS
+
+2. **parser.py**: Updated signal detection to use Signal enum and TAG_* constants instead of hardcoded strings
+
+3. **loop.py**: Updated all signal comparisons and assignments to use Signal enum and signal sets
+
+4. **interview_turns.py**: Updated to use TAG_DONE constant for signal detection
+
+5. **interview.py**: Added import for TAG_DONE (note: prompt text uses literal tags as documentation for AI)
+
+**Test results:** 104 passed, 10 failed (pre-existing failures unrelated to this change)

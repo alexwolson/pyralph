@@ -13,6 +13,7 @@ from rich.markdown import Markdown
 from rich.rule import Rule
 
 from ralph.providers import get_provider_rotation
+from ralph.signals import TAG_DONE
 from ralph.ui import THEME
 
 console = Console()
