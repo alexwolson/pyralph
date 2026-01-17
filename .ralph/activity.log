@@ -65,3 +65,49 @@ EOF
 [14:22:54] ● TOKENS: 29842 / 80000 (37%) [read:112KB write:0KB assist:0KB shell:0KB]
 [14:23:00] ● SHELL uv run pytest -v → exit 0
 [14:23:28] ● TOKENS: 30020 / 80000 (37%) [read:112KB write:0KB assist:1KB shell:0KB]
+[14:23:44] ● SHELL git add -A && git commit -m "$(cat <<'EOF'
+ralph: archive state files on task completion
+
+Extends archive_completed_task() to also archive progress.md, activity.log,
+and errors.log to .ralph/completed/ with matching timestamps. Original files
+are reset to their initial state after archiving. guardrails.md is not touched
+as it contains cross-task learnings.
+EOF
+)" → exit 0
+[14:23:49] ● SHELL git push → exit 0
+[14:23:57] ✓ Agent signaled COMPLETE
+[14:23:57] ═══════════════════════════════════════════════════════════════
+[14:23:57] Ralph Session Started: 2026-01-17 14:23:57.091868
+[14:23:57] SESSION START: provider=claude
+[14:24:27] ● TOKENS: 821 / 80000 (1%) [read:0KB write:0KB assist:0KB shell:0KB]
+[14:24:57] ● TOKENS: 1183 / 80000 (1%) [read:0KB write:0KB assist:1KB shell:0KB]
+[14:25:27] ● TOKENS: 1204 / 80000 (1%) [read:0KB write:0KB assist:1KB shell:0KB]
+[14:25:57] ● TOKENS: 1233 / 80000 (1%) [read:0KB write:0KB assist:1KB shell:0KB]
+[14:26:27] ● TOKENS: 1256 / 80000 (1%) [read:0KB write:0KB assist:1KB shell:0KB]
+[14:26:57] ● TOKENS: 1256 / 80000 (1%) [read:0KB write:0KB assist:1KB shell:0KB]
+[14:27:28] ● TOKENS: 1256 / 80000 (1%) [read:0KB write:0KB assist:1KB shell:0KB]
+[14:27:59] ● TOKENS: 1256 / 80000 (1%) [read:0KB write:0KB assist:1KB shell:0KB]
+[14:28:29] ● TOKENS: 1256 / 80000 (1%) [read:0KB write:0KB assist:1KB shell:0KB]
+[14:29:00] ● TOKENS: 1256 / 80000 (1%) [read:0KB write:0KB assist:1KB shell:0KB]
+[14:29:32] ● TOKENS: 1256 / 80000 (1%) [read:0KB write:0KB assist:1KB shell:0KB]
+[14:30:02] ● TOKENS: 1256 / 80000 (1%) [read:0KB write:0KB assist:1KB shell:0KB]
+[14:30:32] ● TOKENS: 1256 / 80000 (1%) [read:0KB write:0KB assist:1KB shell:0KB]
+[14:31:04] ● TOKENS: 1256 / 80000 (1%) [read:0KB write:0KB assist:1KB shell:0KB]
+[14:31:34] ● TOKENS: 1256 / 80000 (1%) [read:0KB write:0KB assist:1KB shell:0KB]
+[14:32:06] ● TOKENS: 1256 / 80000 (1%) [read:0KB write:0KB assist:1KB shell:0KB]
+[14:32:38] ● TOKENS: 1256 / 80000 (1%) [read:0KB write:0KB assist:1KB shell:0KB]
+[14:33:09] ● TOKENS: 1256 / 80000 (1%) [read:0KB write:0KB assist:1KB shell:0KB]
+[14:33:39] ● TOKENS: 1256 / 80000 (1%) [read:0KB write:0KB assist:1KB shell:0KB]
+[14:34:09] ● TOKENS: 1256 / 80000 (1%) [read:0KB write:0KB assist:1KB shell:0KB]
+[14:34:41] ● TOKENS: 1256 / 80000 (1%) [read:0KB write:0KB assist:1KB shell:0KB]
+[14:35:11] ● TOKENS: 1256 / 80000 (1%) [read:0KB write:0KB assist:1KB shell:0KB]
+[14:35:41] ● TOKENS: 1256 / 80000 (1%) [read:0KB write:0KB assist:1KB shell:0KB]
+[14:36:11] ● TOKENS: 1256 / 80000 (1%) [read:0KB write:0KB assist:1KB shell:0KB]
+[14:36:42] ● TOKENS: 1256 / 80000 (1%) [read:0KB write:0KB assist:1KB shell:0KB]
+[14:37:12] ● TOKENS: 1256 / 80000 (1%) [read:0KB write:0KB assist:1KB shell:0KB]
+[14:37:43] ● TOKENS: 1256 / 80000 (1%) [read:0KB write:0KB assist:1KB shell:0KB]
+[14:38:13] ● TOKENS: 1256 / 80000 (1%) [read:0KB write:0KB assist:1KB shell:0KB]
+[14:38:45] ● TOKENS: 1256 / 80000 (1%) [read:0KB write:0KB assist:1KB shell:0KB]
+[14:39:16] ● TOKENS: 1256 / 80000 (1%) [read:0KB write:0KB assist:1KB shell:0KB]
+[14:39:48] ● TOKENS: 1256 / 80000 (1%) [read:0KB write:0KB assist:1KB shell:0KB]
+[14:40:19] ● TOKENS: 1256 / 80000 (1%) [read:0KB write:0KB assist:1KB shell:0KB]
