@@ -318,12 +318,51 @@ def run_ralph_loop(
     from rich.console import Console
     console = Console()
     
+    # #region agent log
+    try:
+        with open(debug_log_path, "a") as f:
+            log_entry = {
+                "id": f"log_{int(time.time() * 1000)}",
+                "timestamp": int(time.time() * 1000),
+                "location": "loop.py:322",
+                "message": "about to create live display",
+                "data": {},
+                "sessionId": "debug-session",
+                "runId": "ralph-loop",
+                "hypothesisId": "C"
+            }
+            f.write(json.dumps(log_entry) + "\n")
+    except Exception:
+        pass
+    # #endregion
+    
     # Create live display
-    live_display = RalphLiveDisplay(
-        max_iterations=max_iterations,
-        rotate_threshold=rotate_threshold,
-        console=console,
-    )
+    try:
+        live_display = RalphLiveDisplay(
+            max_iterations=max_iterations,
+            rotate_threshold=rotate_threshold,
+            console=console,
+        )
+    except Exception as e:
+        # #region agent log
+        import traceback
+        try:
+            with open(debug_log_path, "a") as f:
+                log_entry = {
+                    "id": f"log_{int(time.time() * 1000)}",
+                    "timestamp": int(time.time() * 1000),
+                    "location": "loop.py:336",
+                    "message": "Exception creating live display",
+                    "data": {"error": str(e), "error_type": type(e).__name__, "traceback": traceback.format_exc()},
+                    "sessionId": "debug-session",
+                    "runId": "ralph-loop",
+                    "hypothesisId": "C"
+                }
+                f.write(json.dumps(log_entry) + "\n")
+        except Exception:
+            pass
+        # #endregion
+        raise
     
     # Callback to update live display with token tracker
     def on_token_update(tracker: tokens.TokenTracker) -> None:

@@ -57,11 +57,14 @@ class RalphLiveDisplay:
         self.criteria: List[Tuple[str, bool]] = []  # (text, is_checked)
         
         # Create progress display
+        # Format theme colors but preserve {task.fields[...]} for Rich to handle
+        primary_color = THEME["primary"]
+        accent_color = THEME["accent"]
         self.progress = Progress(
             SpinnerColumn(),
-            TextColumn("[bold {primary}]Iteration {task.fields[iteration]}/{task.fields[max_iter]}[/]".format(**THEME)),
+            TextColumn(f"[bold {primary_color}]Iteration {{task.fields[iteration]}}/{{task.fields[max_iter]}}[/]"),
             TextColumn("•"),
-            TextColumn("[{accent}]{task.fields[provider]}[/]".format(**THEME)),
+            TextColumn(f"[{accent_color}]{{task.fields[provider]}}[/]"),
             TextColumn("•"),
             TextColumn("{task.fields[tokens]}"),
             TextColumn("•"),
