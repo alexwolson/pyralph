@@ -328,9 +328,7 @@ def create_task_file(project_dir: Path, initial_instruction: Optional[str] = Non
             # Provider error - rotate to next provider
             console.print(f"[{THEME['warning']}]⚠️[/] Provider {provider_display} failed: {e}. Rotating...")
             
-            # Clean up conversation file on error
-            if conversation_file.exists():
-                conversation_file.unlink()
+            # Don't delete conversation file - keep it for next provider
         
         # Rotate to next provider
         next_provider = provider_rotation.rotate()

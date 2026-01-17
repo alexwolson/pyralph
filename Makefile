@@ -21,7 +21,7 @@ update:
 	uv sync
 	@echo "Reinstalling tool..."
 	uv tool uninstall pyralph 2>/dev/null || true
-	uv tool install . --force
+	uv tool install . --force --no-cache
 	@echo ""
 	@echo "Done! ralph has been updated."
 

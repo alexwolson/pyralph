@@ -16,6 +16,7 @@ class ClaudeProvider(BaseProvider):
 
     def get_command(self, prompt: str, workspace: Path) -> list[str]:
         """Return command to run Claude CLI."""
+        # Workspace is handled via subprocess cwd parameter, not command flag
         # --verbose is required for stream-json
         return [
             "claude",
@@ -23,8 +24,6 @@ class ClaudeProvider(BaseProvider):
             "--output-format",
             "stream-json",
             "--verbose",
-            "--directory",
-            str(workspace),
         ]
 
     def parse_stream_line(self, line: str) -> Optional[dict]:

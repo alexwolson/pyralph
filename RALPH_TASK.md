@@ -1,134 +1,85 @@
 ---
-task: Enhance CLI with comprehensive Rich features
+task: Implement agent-to-user question mechanism via file-based communication
 completion_criteria:
-  - Live progress display for ralph run command with spinner, iteration count, provider, token usage, elapsed time
-  - Live-updating criteria checklist during ralph run
-  - Status command shows Rich table for completion criteria with checkmarks/crosses
-  - Status command shows progress bar with percentage
-  - Status command shows panel with task summary and metadata
-  - Interview experience uses styled panels for AI questions
-  - Interview renders markdown in responses
-  - Interview uses rich.prompt with history support
-  - Log viewing has syntax-highlighted code blocks
-  - Log viewing has colored log levels
-  - Log viewing has paginated output for long logs
-  - Provider display shows table of available providers and status
-  - Provider display shows visual indicator for current/next provider in rotation
-  - Error handling uses Rich tracebacks
-  - Error handling shows styled error panels with helpful messages
-  - Visual polish with rule separators between sections
-  - Consistent color theme across all commands
-  - All existing tests pass
-max_iterations: 30
+  - Agent can write questions to .ralph/question.md and emit <ralph>QUESTION</ralph> signal
+  - Loop detects QUESTION signal and pauses execution
+  - Loop reads and displays question from .ralph/question.md using Rich panel
+  - Loop prompts user for answer using wait_for_user_input() with timeout
+  - User's answer is written to .ralph/answer.md
+  - On timeout, loop continues without answer (agent proceeds with best guess)
+  - Agent prompt includes instructions about question mechanism and using it sparingly
+  - Question/answer files are cleaned up appropriately between iterations
+  - All new code has corresponding tests
+max_iterations: 20
 test_command: "make test"
 ---
 
-# Task: Enhance CLI with Comprehensive Rich Features
+# Task: Agent-to-User Question Mechanism
 
-Transform the pyralph CLI from functional to polished using Rich library features. The goal is to create a beautiful, informative, and professional command-line experience.
+Implement a file-based mechanism that allows the agent to ask questions of the user during execution. This reuses the interview infrastructure but operates during agent runs rather than before them.
 
 ## Success Criteria
 
 The task is complete when ALL of the following are true:
 
-### Live Progress Display (`ralph run`)
-- [x] Live progress display for ralph run command with spinner, iteration count, provider, token usage, elapsed time
-- [x] Live-updating criteria checklist during ralph run
+- [ ] Agent can write questions to `.ralph/question.md` and emit `<ralph>QUESTION</ralph>` signal
+- [ ] Loop detects QUESTION signal in agent output and pauses execution
+- [ ] Loop reads and displays question from `.ralph/question.md` using Rich panel (similar to interview display)
+- [ ] Loop prompts user for answer using `wait_for_user_input()` with timeout
+- [ ] User's answer is written to `.ralph/answer.md` for the agent to read
+- [ ] On timeout without user answer, loop continues (agent proceeds with best guess - no failure/rotation)
+- [ ] Agent prompt in `loop.py:build_prompt()` includes instructions about the question mechanism and emphasizes using it sparingly
+- [ ] Question/answer files are cleaned up appropriately (e.g., question.md removed after answer written, or both cleaned at iteration start)
+- [ ] All new code has corresponding tests
 
-### Status Command Upgrade
-- [x] Status command shows Rich table for completion criteria with checkmarks/crosses
-- [x] Status command shows progress bar with percentage
-- [x] Status command shows panel with task summary and metadata
+## Implementation Notes
 
-### Interview Experience
-- [x] Interview experience uses styled panels for AI questions
-- [x] Interview renders markdown in responses
-- [x] Interview uses rich.prompt with history support
+### Signal Flow
+1. Agent writes question to `.ralph/question.md`
+2. Agent outputs `<ralph>QUESTION</ralph>` signal
+3. `loop.py` detects signal (similar to existing `<ralph>DONE</ralph>` detection)
+4. Loop pauses, reads `.ralph/question.md`, displays with Rich
+5. Loop calls `wait_for_user_input()` (from `interview_turns.py`) with timeout
+6. Answer written to `.ralph/answer.md`
+7. Agent continues and can read answer file
 
-### Log Viewing
-- [x] Log viewing has syntax-highlighted code blocks
-- [x] Log viewing has colored log levels
-- [x] Log viewing has paginated output for long logs
+### Key Files to Modify
+- `src/ralph/loop.py` - Add QUESTION signal detection and handling
+- `src/ralph/parser.py` - May need to parse QUESTION signal (check existing signal parsing)
+- `src/ralph/ui.py` - May need new display function for questions (or reuse interview panels)
+- `src/ralph/interview_turns.py` - Reuse `wait_for_user_input()` 
 
-### Provider Display
-- [x] Provider display shows table of available providers and status
-- [x] Provider display shows visual indicator for current/next provider in rotation
-
-### Error Handling
-- [x] Error handling uses Rich tracebacks
-- [x] Error handling shows styled error panels with helpful messages
-
-### Visual Polish
-- [x] Visual polish with rule separators between sections
-- [x] Consistent color theme across all commands
-
-### Tests
-- [x] All existing tests pass
+### Reuse from Interview
+- `wait_for_user_input()` for prompting
+- Rich panel styling for display
+- Timeout handling patterns
 
 ## Constraints
 
-- Do NOT add typing animation effects for AI responses
-- Use Rich library features already available (Rich is already a dependency)
-- Maintain backward compatibility with existing CLI commands
-- Keep the code clean and well-organized - consider creating a `ui.py` or `display.py` module for Rich components
-- Ensure the UI degrades gracefully if terminal doesn't support Rich features
-
-## Key Files to Modify
-
-- `src/ralph/cli.py` - Main CLI commands
-- `src/ralph/loop.py` - Main execution loop (for live display)
-- `src/ralph/interview.py` - Interview flow
-- `src/ralph/interview_turns.py` - Interview turn handling
-- `src/ralph/providers/` - Provider display enhancements
-
-## Rich Features to Use
-
-- `rich.progress.Progress` - For progress bars and spinners
-- `rich.live.Live` - For live-updating displays
-- `rich.table.Table` - For tabular data
-- `rich.panel.Panel` - For boxed content
-- `rich.prompt.Prompt` - For styled prompts with history
-- `rich.syntax.Syntax` - For syntax-highlighted code
-- `rich.traceback` - For beautiful tracebacks
-- `rich.rule.Rule` - For visual separators
-- `rich.markdown.Markdown` - For markdown rendering (already imported)
-- `rich.console.Console` - Central console instance (already used)
+- Do NOT use stdin/stdout for the question content - only for the answer prompt
+- Question mechanism should be non-blocking on timeout (continue, don't fail)
+- Keep the interface simple - single question/answer, not multi-turn conversation
+- Prompt instructions should emphasize sparingly (e.g., "only ask when genuinely stuck and human input would significantly help")
 
 ---
-
 ## Ralph Instructions
 
-### Before Starting Work
+Read these files at the start of each iteration:
+- `RALPH_TASK.md` (this file) - for task definition and unchecked criteria
+- `.ralph/progress.md` - for what was accomplished in previous iterations
+- `.ralph/guardrails.md` - for mistakes to avoid
 
-1. Read `.ralph/guardrails.md` for rules and constraints
-2. Read `.ralph/progress.md` for what's been done
-3. Check this file for the next unchecked criterion
+### Git Protocol
+1. Make small, focused commits as you work
+2. Commit message should describe what was done
+3. Update `.ralph/progress.md` with what you accomplished
+4. Check off completed criteria in this file
 
-### Working Protocol
+### Working Style
+1. Focus on ONE unchecked criterion at a time
+2. Write tests for new functionality
+3. Run `make test` to verify changes
+4. If stuck for more than 2-3 attempts on the same issue, note it in progress.md
 
-1. Work on ONE criterion at a time (the first unchecked one)
-2. Make changes, test them, and verify they work
-3. Run the test command: `make test`
-4. Commit your changes with a descriptive message
-5. Update `.ralph/progress.md` with what you did
-6. Check off the completed criterion in this file
-7. Commit the progress update
-
-### Git Commit Protocol
-
-- Commit after completing each criterion
-- Use descriptive commit messages that explain what was done
-- Include the criterion text in the commit message
-
-### If You Get Stuck
-
-- Document the issue in `.ralph/progress.md`
-- Add any learnings to `.ralph/guardrails.md`
-- The next agent (or provider rotation) will pick up from your commits
-
-### Important Notes
-
-- State is stored in git, not in your memory
-- Each iteration should make incremental progress
-- If tests fail, fix them before moving on
-- Keep changes focused on the current criterion
+### Completion
+When all criteria are checked, output: `<ralph>DONE</ralph>`

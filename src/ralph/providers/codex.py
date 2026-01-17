@@ -16,12 +16,11 @@ class CodexProvider(BaseProvider):
 
     def get_command(self, prompt: str, workspace: Path) -> list[str]:
         """Return command to run Codex CLI."""
+        # Workspace is handled via subprocess cwd parameter, not command flag
         return [
             "codex",
             "exec",
             "--json",
-            "--cwd",
-            str(workspace),
         ]
 
     def parse_stream_line(self, line: str) -> Optional[dict]:

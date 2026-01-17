@@ -20,14 +20,13 @@ class CursorProvider(BaseProvider):
 
     def get_command(self, prompt: str, workspace: Path) -> list[str]:
         """Return command to run agent CLI."""
+        # Workspace is handled via subprocess cwd parameter, not command flag
         return [
             "agent",
             "-p",
             "--force",
             "--output-format",
             "stream-json",
-            "--directory",
-            str(workspace),
         ]
 
     def parse_stream_line(self, line: str) -> Optional[dict]:
