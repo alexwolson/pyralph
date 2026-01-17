@@ -1,0 +1,21 @@
+[project]
+name = "pyralph"
+version = "0.1.0"
+description = "Python implementation of Ralph Wiggum autonomous development loop"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "click>=8.1.0",
+    "rich>=13.0.0",
+    "pyyaml>=6.0",
+]
+
+[project.scripts]
+ralph = "ralph.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ralph"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
