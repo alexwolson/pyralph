@@ -92,6 +92,8 @@ class RalphLiveDisplay:
 
     def _build_criteria_table(self) -> Table:
         """Build the criteria checklist table."""
+        from rich.markup import escape as escape_markup
+        
         table = Table(show_header=False, box=None, padding=(0, 1))
         table.add_column("Status", width=3)
         table.add_column("Criterion")
@@ -104,11 +106,12 @@ class RalphLiveDisplay:
                 status = f"[{THEME['muted']}]○[/]"
                 style = ""
             
-            # Escape brackets in criteria text to prevent Rich from parsing them as markup
-            # Replace [ with \[ and ] with \] to escape Rich markup syntax
-            escaped_text = text.replace("[", "\\[").replace("]", "\\]")
+            # Escape markup in criteria text using Rich's escape function
+            # This properly escapes brackets and other markup characters
+            escaped_text = escape_markup(text)
             
             # Apply style using Text class to ensure proper rendering
+            # Text objects are safe from markup parsing during measurement
             if style:
                 criterion_text = Text(escaped_text, style=style)
             else:
