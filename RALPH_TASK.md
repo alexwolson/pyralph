@@ -31,10 +31,10 @@ The task is complete when ALL of the following are true:
 - [x] Add `get_display_name()` method to `BaseProvider` class with default implementation, remove hasattr checks throughout codebase
 - [x] Consolidate YAML frontmatter parsing into a single utility function in `parser.py`, update all call sites
 - [x] Consolidate initial state file content (progress.md, guardrails.md templates) into `state.py` only, remove duplication in `loop.py`
-- [ ] Add comprehensive type hints to all public functions in extracted modules
-- [ ] Update all imports and usages throughout codebase after module extractions
-- [ ] All existing tests pass after refactoring (`uv run pytest -v`)
-- [ ] No regressions in CLI functionality (ralph commands still work)
+- [x] Add comprehensive type hints to all public functions in extracted modules
+- [x] Update all imports and usages throughout codebase after module extractions
+- [x] All existing tests pass after refactoring (`uv run pytest -v`)
+- [x] No regressions in CLI functionality (ralph commands still work)
 
 ## Constraints
 

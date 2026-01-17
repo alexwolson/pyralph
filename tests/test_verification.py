@@ -7,6 +7,14 @@ import pytest
 
 from ralph import parser, tokens, gutter, state
 from ralph.loop import build_verification_prompt, run_verification_iteration
+from ralph.signals import Signal
+
+
+def _make_mock_provider() -> MagicMock:
+    """Create a mock provider for testing."""
+    mock_provider = MagicMock()
+    mock_provider.get_display_name.return_value = "test-provider"
+    return mock_provider
 
 
 class TestVerifyPassSignalDetection:
@@ -16,6 +24,7 @@ class TestVerifyPassSignalDetection:
         """Test parser detects <ralph>VERIFY_PASS</ralph> signal."""
         token_tracker = tokens.TokenTracker()
         gutter_detector = gutter.GutterDetector()
+        mock_provider = _make_mock_provider()
         
         data = {
             "type": "assistant",
@@ -29,14 +38,15 @@ class TestVerifyPassSignalDetection:
         workspace = Path("/tmp/test_workspace")
         
         with patch.object(state, "log_activity"):
-            result = parser.process_line(workspace, data, token_tracker, gutter_detector)
+            result = parser.process_line(workspace, data, token_tracker, gutter_detector, mock_provider)
         
-        assert result == "VERIFY_PASS"
+        assert result == Signal.VERIFY_PASS
 
     def test_verify_pass_signal_not_detected_without_sigil(self) -> None:
         """Test parser doesn't detect VERIFY_PASS without sigil."""
         token_tracker = tokens.TokenTracker()
         gutter_detector = gutter.GutterDetector()
+        mock_provider = _make_mock_provider()
         
         data = {
             "type": "assistant",
@@ -50,7 +60,7 @@ class TestVerifyPassSignalDetection:
         workspace = Path("/tmp/test_workspace")
         
         with patch.object(state, "log_activity"):
-            result = parser.process_line(workspace, data, token_tracker, gutter_detector)
+            result = parser.process_line(workspace, data, token_tracker, gutter_detector, mock_provider)
         
         assert result is None
 
@@ -62,6 +72,7 @@ class TestVerifyFailSignalDetection:
         """Test parser detects <ralph>VERIFY_FAIL</ralph> signal."""
         token_tracker = tokens.TokenTracker()
         gutter_detector = gutter.GutterDetector()
+        mock_provider = _make_mock_provider()
         
         data = {
             "type": "assistant",
@@ -75,14 +86,15 @@ class TestVerifyFailSignalDetection:
         workspace = Path("/tmp/test_workspace")
         
         with patch.object(state, "log_activity"):
-            result = parser.process_line(workspace, data, token_tracker, gutter_detector)
+            result = parser.process_line(workspace, data, token_tracker, gutter_detector, mock_provider)
         
-        assert result == "VERIFY_FAIL"
+        assert result == Signal.VERIFY_FAIL
 
     def test_verify_fail_signal_not_detected_without_sigil(self) -> None:
         """Test parser doesn't detect VERIFY_FAIL without sigil."""
         token_tracker = tokens.TokenTracker()
         gutter_detector = gutter.GutterDetector()
+        mock_provider = _make_mock_provider()
         
         data = {
             "type": "assistant",
@@ -96,7 +108,7 @@ class TestVerifyFailSignalDetection:
         workspace = Path("/tmp/test_workspace")
         
         with patch.object(state, "log_activity"):
-            result = parser.process_line(workspace, data, token_tracker, gutter_detector)
+            result = parser.process_line(workspace, data, token_tracker, gutter_detector, mock_provider)
         
         assert result is None
 

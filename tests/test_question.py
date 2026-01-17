@@ -18,10 +18,16 @@ class TestQuestionSignalDetection:
     def test_question_signal_detected_in_text(self) -> None:
         """Test parser detects <ralph>QUESTION</ralph> signal."""
         from ralph import parser, tokens, gutter, state
+        from ralph.signals import Signal
+        from unittest.mock import MagicMock
         
         # Create a mock token tracker and gutter detector
         token_tracker = tokens.TokenTracker()
         gutter_detector = gutter.GutterDetector()
+        
+        # Create mock provider
+        mock_provider = MagicMock()
+        mock_provider.get_display_name.return_value = "test-provider"
         
         # Create test data with QUESTION signal
         data = {
@@ -38,16 +44,21 @@ class TestQuestionSignalDetection:
         
         # Patch state functions to avoid file writes
         with patch.object(state, "log_activity"):
-            result = parser.process_line(workspace, data, token_tracker, gutter_detector)
+            result = parser.process_line(workspace, data, token_tracker, gutter_detector, mock_provider)
         
-        assert result == "QUESTION"
+        assert result == Signal.QUESTION
 
     def test_question_signal_not_detected_without_sigil(self) -> None:
         """Test parser doesn't detect QUESTION without sigil."""
         from ralph import parser, tokens, gutter, state
+        from unittest.mock import MagicMock
         
         token_tracker = tokens.TokenTracker()
         gutter_detector = gutter.GutterDetector()
+        
+        # Create mock provider
+        mock_provider = MagicMock()
+        mock_provider.get_display_name.return_value = "test-provider"
         
         data = {
             "type": "assistant",
@@ -61,7 +72,7 @@ class TestQuestionSignalDetection:
         workspace = Path("/tmp/test_workspace")
         
         with patch.object(state, "log_activity"):
-            result = parser.process_line(workspace, data, token_tracker, gutter_detector)
+            result = parser.process_line(workspace, data, token_tracker, gutter_detector, mock_provider)
         
         assert result is None
 

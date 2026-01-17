@@ -86,13 +86,13 @@ class TestHealthEmoji:
     def test_green_emoji_under_60_percent(self) -> None:
         """Test green emoji when under 60% of rotate threshold."""
         tracker = TokenTracker()
-        # ROTATE_THRESHOLD = 200_000
-        # 60% of that = 120_000 tokens = 480_000 bytes
+        # ROTATE_THRESHOLD = 80_000
+        # 60% of that = 48_000 tokens = 192_000 bytes
         # We start with 3000 (750 tokens), so add minimal to stay under
 
         emoji = tracker.get_health_emoji()
 
-        assert emoji == "🟢"
+        assert emoji == "[green]●[/]"
 
     def test_yellow_emoji_between_60_and_80_percent(self) -> None:
         """Test yellow emoji when between 60-80% of rotate threshold."""
@@ -104,19 +104,19 @@ class TestHealthEmoji:
 
         emoji = tracker.get_health_emoji()
 
-        assert emoji == "🟡"
+        assert emoji == "[yellow]●[/]"
 
     def test_red_emoji_over_80_percent(self) -> None:
         """Test red emoji when over 80% of rotate threshold."""
         tracker = TokenTracker()
-        # Need 80%+ of 200_000 = 160_000+ tokens
-        # 180_000 tokens = 720_000 bytes
-        # Subtract prompt (3000), need 717_000 more bytes
-        tracker.add_read(717_000)
+        # Need 80%+ of 80_000 = 64_000+ tokens
+        # 70_000 tokens (87.5%) = 280_000 bytes
+        # Subtract prompt (3000), need 277_000 more bytes
+        tracker.add_read(277_000)
 
         emoji = tracker.get_health_emoji()
 
-        assert emoji == "🔴"
+        assert emoji == "[red]●[/]"
 
 
 class TestThresholdWarnings:
@@ -225,7 +225,7 @@ class TestConfigurableThresholds:
 
         emoji = tracker.get_health_emoji()
 
-        assert emoji == "🔴"
+        assert emoji == "[red]●[/]"
 
     def test_defaults_match_constants(self) -> None:
         """Test default thresholds match module constants."""

@@ -255,3 +255,90 @@ EOF
 [15:07:18] ● TOKENS: 75177 / 80000 (93%) - rotation imminent [read:288KB write:0KB assist:1KB shell:0KB]
 [15:07:37] ● SHELL uv run pytest -v → exit 0
 [15:07:49] ● TOKENS: 75218 / 80000 (94%) - rotation imminent [read:288KB write:0KB assist:2KB shell:0KB]
+[15:07:49] ● SHELL git add -A && git commit -m "$(cat <<'EOF'
+ralph: consolidate state file templates into state.py
+
+Extracted DEFAULT_*_CONTENT constants in state.py for progress.md,
+guardrails.md, errors.log, and activity.log. Updated archive.py
+to import and use these constants instead of duplicating the strings.
+EOF
+)" → exit 0
+[15:07:57] ● READ /Users/alex/repos/pyralph/src/ralph/signals.py (96 lines, ~9.4KB)
+[15:08:00] ● READ /Users/alex/repos/pyralph/src/ralph/prompts.py (188 lines, ~18.4KB)
+[15:08:00] ROTATE: Token threshold reached (82402 >= 80000)
+[15:08:02] ═══════════════════════════════════════════════════════════════
+[15:08:02] Ralph Session Started: 2026-01-17 15:08:02.717463
+[15:08:04] SESSION START: provider=cursor
+[15:08:08] ● READ /Users/alex/repos/pyralph/RALPH_TASK.md (116 lines, ~11.3KB)
+[15:08:08] ● READ /Users/alex/repos/pyralph/.ralph/guardrails.md (26 lines, ~2.5KB)
+[15:08:08] ● READ /Users/alex/repos/pyralph/.ralph/progress.md (156 lines, ~15.2KB)
+[15:08:09] ● READ /Users/alex/repos/pyralph/.ralph/errors.log (5 lines, ~0.5KB)
+[15:08:19] ● READ /Users/alex/repos/pyralph/src/ralph/signals.py (96 lines, ~9.4KB)
+[15:08:20] ● READ /Users/alex/repos/pyralph/src/ralph/prompts.py (188 lines, ~18.4KB)
+[15:08:20] ● READ /Users/alex/repos/pyralph/src/ralph/archive.py (121 lines, ~11.8KB)
+[15:08:25] ● SHELL uv run pytest -v 2>&1 | head -100 → exit 0
+[15:08:30] ● READ /Users/alex/repos/pyralph/src/ralph/parser.py (352 lines, ~34.4KB)
+[15:08:31] ● READ /Users/alex/repos/pyralph/src/ralph/state.py (119 lines, ~11.6KB)
+[15:08:37] ● SHELL uv run pytest -v 2>&1 | tail -50 → exit 0
+[15:08:37] ● TOKENS: 30380 / 80000 (37%) [read:115KB write:0KB assist:0KB shell:0KB]
+[15:08:43] ● READ /Users/alex/repos/pyralph/tests/test_verification.py (238 lines, ~23.2KB)
+[15:08:43] ● READ /Users/alex/repos/pyralph/tests/test_question.py (223 lines, ~21.8KB)
+[15:08:44] ● READ /Users/alex/repos/pyralph/tests/test_tokens.py (236 lines, ~23.0KB)
+[15:08:52] ● READ /Users/alex/repos/pyralph/src/ralph/tokens.py (99 lines, ~9.7KB)
+[15:09:16] ● TOKENS: 50472 / 80000 (63%) [read:192KB write:0KB assist:1KB shell:0KB]
+[15:09:49] ● SHELL uv run pytest -v 2>&1 | tail -60 → exit 0
+[15:09:49] ● TOKENS: 50483 / 80000 (63%) [read:192KB write:0KB assist:1KB shell:0KB]
+[15:09:56] ● SHELL uv run ralph --help → exit 0
+[15:09:56] ● SHELL uv run ralph --version → exit 0
+[15:10:01] ● READ /Users/alex/repos/pyralph/src/ralph/loop.py (648 lines, ~63.3KB)
+[15:10:08] ● READ /Users/alex/repos/pyralph/src/ralph/providers/base.py (55 lines, ~5.4KB)
+[15:10:22] ● TOKENS: 68217 / 80000 (85%) - approaching limit [read:261KB write:0KB assist:2KB shell:0KB]
+[15:10:22] ● SHELL uv run python -c "
+import ast
+import sys
+from pathlib import Path
+
+def check_type_hints(file_path):
+    with open(file_path) as f:
+        tree = ast.parse(f.read())
+    
+    issues = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef):
+            # Skip private functions and __init__
+            if node.name.startswith('_') and not node.name == '__init__':
+                continue
+            
+            # Check return annotation
+            if node.returns is None and node.name != '__init__':
+                issues.append(f'{node.name}: missing return type')
+            
+            # Check arguments (skip self)
+            for arg in node.args.args:
+                if arg.arg == 'self':
+                    continue
+                if arg.annotation is None:
+                    issues.append(f'{node.name}: argument {arg.arg} missing type')
+    
+    return issues
+
+files = [
+    'src/ralph/signals.py',
+    'src/ralph/prompts.py', 
+    'src/ralph/archive.py',
+    'src/ralph/state.py',
+    'src/ralph/parser.py',
+]
+
+for f in files:
+    issues = check_type_hints(f)
+    if issues:
+        print(f'{f}:')
+        for i in issues:
+            print(f'  - {i}')
+    else:
+        print(f'{f}: OK')
+"
+ → exit 0
+[15:10:49] ● SHELL uv run pytest -v 2>&1 | tail -20 → exit 0
+[15:10:54] ● TOKENS: 68256 / 80000 (85%) - approaching limit [read:261KB write:0KB assist:2KB shell:0KB]
