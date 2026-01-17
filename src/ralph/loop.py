@@ -68,15 +68,70 @@ def _run_iteration_core(
     # Build provider command with workspace directory
     cmd = provider.get_command(prompt, workspace)
     
+    # #region agent log
+    import json
+    import time
+    import os
+    try:
+        log_dir = "/Users/alex/repos/pyralph/.cursor"
+        os.makedirs(log_dir, exist_ok=True)
+        log_path = f"{log_dir}/debug.log"
+        provider_cli = provider.get_cli_tool_name() if hasattr(provider, 'get_cli_tool_name') else str(type(provider).__name__)
+        entry_log = {
+            "id": f"log_{int(time.time())}_entry",
+            "timestamp": int(time.time() * 1000),
+            "location": "loop.py:_run_iteration_core:69",
+            "message": "About to start subprocess",
+            "data": {"log_message": log_message, "provider": provider_cli, "cmd": cmd},
+            "sessionId": "debug-session",
+            "runId": "run1",
+            "hypothesisId": "A"
+        }
+        with open(log_path, "a") as f:
+            f.write(json.dumps(entry_log) + "\n")
+    except Exception:
+        pass
+    # #endregion
+    
     # Start agent process
-    agent_process = subprocess.Popen(
-        cmd,
-        stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        cwd=str(workspace),
-        text=False,
-    )
+    agent_process = None
+    try:
+        agent_process = subprocess.Popen(
+            cmd,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=str(workspace),
+            text=False,
+        )
+    except Exception as e:
+        # #region agent log
+        import json
+        import time
+        import os
+        try:
+            log_dir = "/Users/alex/repos/pyralph/.cursor"
+            os.makedirs(log_dir, exist_ok=True)
+            log_path = f"{log_dir}/debug.log"
+            provider_cli = provider.get_cli_tool_name() if hasattr(provider, 'get_cli_tool_name') else str(type(provider).__name__)
+            error_log = {
+                "id": f"log_{int(time.time())}_popen_error",
+                "timestamp": int(time.time() * 1000),
+                "location": "loop.py:_run_iteration_core:72",
+                "message": "Subprocess.Popen failed",
+                "data": {"error": str(e), "error_type": type(e).__name__, "cmd": cmd, "provider": provider_cli},
+                "sessionId": "debug-session",
+                "runId": "run1",
+                "hypothesisId": "A"
+            }
+            with open(log_path, "a") as f:
+                f.write(json.dumps(error_log) + "\n")
+        except Exception:
+            pass
+        # #endregion
+        if reraise_exceptions:
+            raise
+        return timeout_signal
     
     # Send prompt
     agent_process.stdin.write(prompt.encode("utf-8"))
@@ -89,60 +144,16 @@ def _run_iteration_core(
     timeout_timer = None
     if timeout:
         def timeout_handler():
-            # #region agent log
-            import json
-            elapsed = time.time() - start_time
-            log_entry = {"location": "loop.py:_run_iteration_core", "message": "Timeout timer fired - terminating process", "data": {"timeout": timeout, "elapsed": elapsed, "pid": agent_process.pid, "returncode_before": agent_process.poll()}, "timestamp": int(time.time() * 1000), "sessionId": "debug-session", "runId": "run1", "hypothesisId": "TIMEOUT_TIMER"}
-            try:
-                with open("/Users/alex/repos/pyralph/.cursor/debug.log", "a") as f:
-                    f.write(json.dumps(log_entry) + "\n")
-            except Exception:
-                pass
-            # #endregion
             try:
                 agent_process.terminate()
-                # #region agent log
-                log_entry2 = {"location": "loop.py:_run_iteration_core", "message": "Process terminate() called from timer", "data": {"pid": agent_process.pid, "returncode_after": agent_process.poll()}, "timestamp": int(time.time() * 1000), "sessionId": "debug-session", "runId": "run1", "hypothesisId": "TIMEOUT_TIMER"}
-                try:
-                    with open("/Users/alex/repos/pyralph/.cursor/debug.log", "a") as f:
-                        f.write(json.dumps(log_entry2) + "\n")
-                except Exception:
-                    pass
-                # #endregion
-            except Exception as e:
-                # #region agent log
-                log_entry3 = {"location": "loop.py:_run_iteration_core", "message": "Exception in timeout handler", "data": {"error": str(e)}, "timestamp": int(time.time() * 1000), "sessionId": "debug-session", "runId": "run1", "hypothesisId": "TIMEOUT_TIMER"}
-                try:
-                    with open("/Users/alex/repos/pyralph/.cursor/debug.log", "a") as f:
-                        f.write(json.dumps(log_entry3) + "\n")
-                except Exception:
-                    pass
-                # #endregion
+            except Exception:
                 pass
         timeout_timer = threading.Timer(timeout, timeout_handler)
         timeout_timer.start()
-        # #region agent log
-        import json
-        log_entry = {"location": "loop.py:_run_iteration_core", "message": "Timeout timer started", "data": {"timeout": timeout, "pid": agent_process.pid}, "timestamp": int(time.time() * 1000), "sessionId": "debug-session", "runId": "run1", "hypothesisId": "TIMEOUT_SETUP"}
-        try:
-            with open("/Users/alex/repos/pyralph/.cursor/debug.log", "a") as f:
-                f.write(json.dumps(log_entry) + "\n")
-        except Exception:
-            pass
-        # #endregion
     
     # Parse stream with timeout checking
     signal = ""
     try:
-        # #region agent log
-        import json
-        log_entry = {"location": "loop.py:_run_iteration_core", "message": "Starting parse_stream iteration", "data": {"timeout": timeout, "stop_signals": [str(s) for s in stop_signals]}, "timestamp": int(time.time() * 1000), "sessionId": "debug-session", "runId": "run1", "hypothesisId": "PARSE_START"}
-        try:
-            with open("/Users/alex/repos/pyralph/.cursor/debug.log", "a") as f:
-                f.write(json.dumps(log_entry) + "\n")
-        except Exception:
-            pass
-        # #endregion
         for sig in parser.parse_stream(
             workspace, agent_process, token_tracker, gutter_detector, provider,
             on_token_update=on_token_update,
@@ -150,14 +161,6 @@ def _run_iteration_core(
             console=console,
         ):
             signal = sig
-            # #region agent log
-            log_entry2 = {"location": "loop.py:_run_iteration_core", "message": "Received signal from parse_stream", "data": {"signal": str(signal), "signal_type": type(signal).__name__, "in_stop_signals": signal in stop_signals, "stop_signals": [str(s) for s in stop_signals]}, "timestamp": int(time.time() * 1000), "sessionId": "debug-session", "runId": "run1", "hypothesisId": "SIGNAL_RECEIVED"}
-            try:
-                with open("/Users/alex/repos/pyralph/.cursor/debug.log", "a") as f:
-                    f.write(json.dumps(log_entry2) + "\n")
-            except Exception:
-                pass
-            # #endregion
             if signal in stop_signals:
                 # Stop early if critical signal
                 agent_process.terminate()
@@ -175,6 +178,36 @@ def _run_iteration_core(
                 signal = timeout_signal
                 break
     except Exception as e:
+        # #region agent log
+        import json
+        import time
+        import os
+        import traceback
+        try:
+            log_dir = "/Users/alex/repos/pyralph/.cursor"
+            os.makedirs(log_dir, exist_ok=True)
+            log_path = f"{log_dir}/debug.log"
+            provider_cli = provider.get_cli_tool_name() if hasattr(provider, 'get_cli_tool_name') else str(type(provider).__name__)
+            error_log = {
+                "id": f"log_{int(time.time())}_parse_exception",
+                "timestamp": int(time.time() * 1000),
+                "location": "loop.py:_run_iteration_core:180",
+                "message": "Exception during stream parsing",
+                "data": {
+                    "error": str(e),
+                    "error_type": type(e).__name__,
+                    "traceback": traceback.format_exc(),
+                    "provider": provider_cli,
+                },
+                "sessionId": "debug-session",
+                "runId": "run1",
+                "hypothesisId": "A"
+            }
+            with open(log_path, "a") as f:
+                f.write(json.dumps(error_log) + "\n")
+        except Exception:
+            pass
+        # #endregion
         debug_log(
             "loop.py:_run_iteration_core",
             "Exception during stream parsing",
@@ -188,37 +221,10 @@ def _run_iteration_core(
         # Cancel timeout timer if it's still running
         if timeout_timer:
             timeout_timer.cancel()
-            # #region agent log
-            import json
-            log_entry = {"location": "loop.py:_run_iteration_core", "message": "Timeout timer cancelled", "timestamp": int(time.time() * 1000), "sessionId": "debug-session", "runId": "run1", "hypothesisId": "TIMER_CANCELLED"}
-            try:
-                with open("/Users/alex/repos/pyralph/.cursor/debug.log", "a") as f:
-                    f.write(json.dumps(log_entry) + "\n")
-            except Exception:
-                pass
-            # #endregion
     
     # Check if timeout was the reason for termination (no signal received)
-    elapsed = time.time() - start_time
-    # #region agent log
-    import json
-    log_entry = {"location": "loop.py:_run_iteration_core", "message": "parse_stream loop completed", "data": {"final_signal": str(signal) if signal else "empty", "elapsed": elapsed, "timeout": timeout, "timeout_reached": timeout and elapsed >= timeout}, "timestamp": int(time.time() * 1000), "sessionId": "debug-session", "runId": "run1", "hypothesisId": "LOOP_COMPLETE"}
-    try:
-        with open("/Users/alex/repos/pyralph/.cursor/debug.log", "a") as f:
-            f.write(json.dumps(log_entry) + "\n")
-    except Exception:
-        pass
-    # #endregion
-    if not signal and timeout and elapsed >= timeout:
+    if not signal and timeout and (time.time() - start_time) >= timeout:
         signal = timeout_signal
-        # #region agent log
-        log_entry2 = {"location": "loop.py:_run_iteration_core", "message": "Setting timeout signal after loop", "data": {"signal": str(signal)}, "timestamp": int(time.time() * 1000), "sessionId": "debug-session", "runId": "run1", "hypothesisId": "TIMEOUT_SIGNAL"}
-        try:
-            with open("/Users/alex/repos/pyralph/.cursor/debug.log", "a") as f:
-                f.write(json.dumps(log_entry2) + "\n")
-        except Exception:
-            pass
-        # #endregion
     
     # Wait for process to finish with timeout
     try:
@@ -226,6 +232,91 @@ def _run_iteration_core(
     except subprocess.TimeoutExpired:
         agent_process.kill()
         agent_process.wait()
+    
+    # #region agent log
+    import json
+    import os
+    try:
+        log_dir = "/Users/alex/repos/pyralph/.cursor"
+        os.makedirs(log_dir, exist_ok=True)
+        log_path = f"{log_dir}/debug.log"
+        returncode = agent_process.returncode
+        
+        # Read stderr - this may have been partially consumed, try to read what's left
+        stderr_bytes = b""
+        try:
+            if agent_process.stderr:
+                remaining_stderr = agent_process.stderr.read()
+                if remaining_stderr:
+                    stderr_bytes = remaining_stderr
+        except Exception:
+            pass  # stderr may already be closed
+        
+        stderr_text = stderr_bytes.decode("utf-8", errors="replace") if stderr_bytes else ""
+        
+        # Also try to read any remaining stdout that wasn't consumed by parse_stream
+        stdout_bytes = b""
+        try:
+            if agent_process.stdout:
+                # Try to peek/read any remaining data (though parse_stream should have consumed it)
+                pass  # stdout is typically consumed by parse_stream, but log if there's anything
+        except Exception:
+            pass
+        
+        log_entry = {
+            "id": f"log_{int(time.time())}_{id(agent_process)}",
+            "timestamp": int(time.time() * 1000),
+            "location": "loop.py:_run_iteration_core:229",
+            "message": "Process completed - checking returncode and stderr",
+            "data": {
+                "returncode": returncode,
+                "signal": signal,
+                "stderr_length": len(stderr_text),
+                "stderr_full": stderr_text,  # Log full stderr, not just preview
+                "provider": provider_cli,
+            },
+            "sessionId": "debug-session",
+            "runId": "run1",
+            "hypothesisId": "A"
+        }
+        with open(log_path, "a") as f:
+            f.write(json.dumps(log_entry) + "\n")
+    except Exception as e:
+        # #region agent log
+        import json
+        import time
+        import os
+        try:
+            log_dir = "/Users/alex/repos/pyralph/.cursor"
+            os.makedirs(log_dir, exist_ok=True)
+            log_path = f"{log_dir}/debug.log"
+            error_log = {
+                "id": f"log_{int(time.time())}_error",
+                "timestamp": int(time.time() * 1000),
+                "location": "loop.py:_run_iteration_core:151",
+                "message": "Exception in instrumentation",
+                "data": {"error": str(e), "error_type": type(e).__name__},
+                "sessionId": "debug-session",
+                "runId": "run1",
+                "hypothesisId": "A"
+            }
+            with open(log_path, "a") as f:
+                f.write(json.dumps(error_log) + "\n")
+        except Exception:
+            pass
+        # #endregion
+    # #endregion
+    
+    # Check process returncode - if non-zero and no signal received, treat as failure
+    returncode = agent_process.returncode
+    if returncode is not None and returncode != 0 and not signal:
+        # Process exited with error but no signal was emitted - treat as failure
+        # For verification iterations, use VERIFY_FAIL; for regular, use timeout_signal
+        state.log_activity(workspace, f"⚠ Process exited with returncode {returncode} but no signal received")
+        if timeout_signal == Signal.VERIFY_FAIL:
+            signal = Signal.VERIFY_FAIL
+        else:
+            signal = timeout_signal
     
     return signal
 

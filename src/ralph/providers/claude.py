@@ -33,7 +33,28 @@ class ClaudeProvider(BaseProvider):
         
         try:
             data = json.loads(line)
-        except json.JSONDecodeError:
+        except json.JSONDecodeError as e:
+            # #region agent log
+            import time
+            try:
+                log_entry = {
+                    "id": f"log_{int(time.time())}_{hash(line)}",
+                    "timestamp": int(time.time() * 1000),
+                    "location": "providers/claude.py:parse_stream_line:36",
+                    "message": "JSON decode error in parse_stream_line",
+                    "data": {
+                        "line_preview": line[:200],
+                        "error": str(e),
+                    },
+                    "sessionId": "debug-session",
+                    "runId": "run1",
+                    "hypothesisId": "B"
+                }
+                with open("/Users/alex/repos/pyralph/.cursor/debug.log", "a") as f:
+                    f.write(json.dumps(log_entry) + "\n")
+            except Exception:
+                pass
+            # #endregion
             return None
         
         # Claude format is very similar to cursor-agent, but tool calls are nested differently

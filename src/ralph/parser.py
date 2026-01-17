@@ -83,54 +83,50 @@ def parse_stream(
 
     last_token_log = int(time.time())
 
+    # Collect all stdout lines for logging
+    stdout_lines = []
+
     # Read line by line from agent stdout
-    lines_read = 0
-    last_read_time = time.time()
     while True:
-        # #region agent log
-        import json
-        read_start = time.time()
-        log_entry = {"location": "parser.py:parse_stream", "message": "About to call readline()", "data": {"lines_read": lines_read, "time_since_last_read": read_start - last_read_time, "process_returncode": agent_process.poll()}, "timestamp": int(time.time() * 1000), "sessionId": "debug-session", "runId": "run1", "hypothesisId": "READLINE_START"}
-        try:
-            with open("/Users/alex/repos/pyralph/.cursor/debug.log", "a") as f:
-                f.write(json.dumps(log_entry) + "\n")
-        except Exception:
-            pass
-        # #endregion
         line = agent_process.stdout.readline()
-        read_end = time.time()
-        read_duration = read_end - read_start
-        last_read_time = read_end
-        # #region agent log
-        log_entry2 = {"location": "parser.py:parse_stream", "message": "readline() returned", "data": {"lines_read": lines_read, "read_duration": read_duration, "has_line": bool(line), "line_length": len(line) if line else 0, "process_returncode": agent_process.poll()}, "timestamp": int(time.time() * 1000), "sessionId": "debug-session", "runId": "run1", "hypothesisId": "READLINE_RETURN"}
-        try:
-            with open("/Users/alex/repos/pyralph/.cursor/debug.log", "a") as f:
-                f.write(json.dumps(log_entry2) + "\n")
-        except Exception:
-            pass
-        # #endregion
         if not line:
-            # #region agent log
-            log_entry3 = {"location": "parser.py:parse_stream", "message": "Process ended - no more output", "data": {"lines_read": lines_read, "process_returncode": agent_process.poll()}, "timestamp": int(time.time() * 1000), "sessionId": "debug-session", "runId": "run1", "hypothesisId": "PROCESS_END"}
-            try:
-                with open("/Users/alex/repos/pyralph/.cursor/debug.log", "a") as f:
-                    f.write(json.dumps(log_entry3) + "\n")
-            except Exception:
-                pass
-            # #endregion
             # Process ended
             break
-        
-        lines_read += 1
 
-        line = line.decode("utf-8", errors="ignore").strip()
-        if not line:
+        line_text = line.decode("utf-8", errors="ignore").strip()
+        stdout_lines.append(line_text)  # Store for logging
+        
+        if not line_text:
             continue
+
+        line = line_text
 
         # Parse line using provider adapter
         data = provider.parse_stream_line(line)
+        # #region agent log
         if data is None:
+            import json
+            try:
+                log_entry = {
+                    "id": f"log_{int(time.time())}_{hash(line)}",
+                    "timestamp": int(time.time() * 1000),
+                    "location": "parser.py:parse_stream:99",
+                    "message": "parse_stream_line returned None - dropped line",
+                    "data": {
+                        "line_preview": line[:200],
+                        "line_length": len(line),
+                        "provider": provider.get_cli_tool_name() if hasattr(provider, "get_cli_tool_name") else "unknown",
+                    },
+                    "sessionId": "debug-session",
+                    "runId": "run1",
+                    "hypothesisId": "B"
+                }
+                with open("/Users/alex/repos/pyralph/.cursor/debug.log", "a") as f:
+                    f.write(json.dumps(log_entry) + "\n")
+            except Exception:
+                pass
             continue
+        # #endregion
 
         signal = process_line(
             workspace, data, token_tracker, gutter_detector, provider,
@@ -169,6 +165,35 @@ def parse_stream(
     # Log session end
     tokens_used = token_tracker.calculate_tokens()
     state.log_activity(workspace, f"SESSION END: ~{tokens_used} tokens used")
+    
+    # #region agent log
+    # Log all stdout output from the process for debugging
+    import json
+    import os
+    try:
+        log_dir = "/Users/alex/repos/pyralph/.cursor"
+        os.makedirs(log_dir, exist_ok=True)
+        log_path = f"{log_dir}/debug.log"
+        stdout_full = "\n".join(stdout_lines)
+        log_entry = {
+            "id": f"log_{int(time.time())}_stdout",
+            "timestamp": int(time.time() * 1000),
+            "location": "parser.py:parse_stream:162",
+            "message": "Process stdout captured",
+            "data": {
+                "stdout_lines": len(stdout_lines),
+                "stdout_full": stdout_full,
+                "provider": provider.get_cli_tool_name() if hasattr(provider, "get_cli_tool_name") else "unknown",
+            },
+            "sessionId": "debug-session",
+            "runId": "run1",
+            "hypothesisId": "A"
+        }
+        with open(log_path, "a") as f:
+            f.write(json.dumps(log_entry) + "\n")
+    except Exception:
+        pass
+    # #endregion
 
 
 def process_line(
@@ -194,6 +219,31 @@ def process_line(
     
     msg_type = data.get("type", "")
     subtype = data.get("subtype", "")
+
+    # #region agent log
+    # Check for error types in data
+    if msg_type == "error" or subtype == "error" or data.get("error"):
+        import json
+        try:
+            log_entry = {
+                "id": f"log_{int(time.time())}_{hash(str(data))}",
+                "timestamp": int(time.time() * 1000),
+                "location": "parser.py:process_line:162",
+                "message": "Error type detected in parsed data",
+                "data": {
+                    "msg_type": msg_type,
+                    "subtype": subtype,
+                    "data_preview": str(data)[:300],
+                },
+                "sessionId": "debug-session",
+                "runId": "run1",
+                "hypothesisId": "C"
+            }
+            with open("/Users/alex/repos/pyralph/.cursor/debug.log", "a") as f:
+                f.write(json.dumps(log_entry) + "\n")
+        except Exception:
+            pass
+    # #endregion
 
     if msg_type == "system" and subtype == "init":
         provider_name = provider.get_display_name()

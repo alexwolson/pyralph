@@ -3,6 +3,7 @@
 from pathlib import Path
 from typing import Optional
 
+from ralph import state
 from ralph.parser import parse_frontmatter
 
 
@@ -92,6 +93,9 @@ def build_prompt(workspace: Path, iteration: int) -> str:
     guardrails_file = workspace / ".ralph" / "guardrails.md"
     progress_file = workspace / ".ralph" / "progress.md"
     errors_file = workspace / ".ralph" / "errors.log"
+
+    # Compress progress.md if it's too large (before reading)
+    state.compress_progress_file(workspace)
 
     # Read state files with explicit UTF-8 encoding
     task_content = task_file.read_text(encoding="utf-8") if task_file.exists() else ""

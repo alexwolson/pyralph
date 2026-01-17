@@ -116,3 +116,131 @@ def log_activity(workspace: Path, message: str) -> None:
     timestamp = datetime.now().strftime("%H:%M:%S")
     with activity_file.open("a", encoding="utf-8") as f:
         f.write(f"[{timestamp}] {message}\n")
+
+
+def compress_progress_file(
+    workspace: Path, 
+    max_lines: int = 2000, 
+    keep_recent_lines: int = 500
+) -> bool:
+    """Compress progress.md if it exceeds size limits.
+    
+    If the file is too large, keeps the header and recent entries,
+    removing older entries to reduce file size.
+    
+    Args:
+        workspace: Project directory path
+        max_lines: Maximum lines before compression triggers (default 2000)
+        keep_recent_lines: Number of recent lines to preserve (default 500)
+    
+    Returns:
+        True if compression occurred, False otherwise
+    """
+    from datetime import datetime
+    
+    progress_file = workspace / ".ralph" / "progress.md"
+    
+    # Check if file exists
+    if not progress_file.exists():
+        return False
+    
+    # Read all lines
+    try:
+        with progress_file.open("r", encoding="utf-8") as f:
+            lines = f.readlines()
+    except Exception as e:
+        # If we can't read it, skip compression
+        log_activity(workspace, f"⚠ Failed to read progress.md for compression: {e}")
+        return False
+    
+    # Check if compression is needed
+    total_lines = len(lines)
+    
+    # Also estimate token count (bytes / 4, where bytes ≈ lines * 100)
+    # Compress if either line count or estimated tokens exceed thresholds
+    estimated_bytes = total_lines * 100
+    estimated_tokens = estimated_bytes // 4
+    max_tokens = 20000  # ~20k tokens for progress.md (leaves room for other context)
+    
+    # Compress if lines exceed threshold OR estimated tokens exceed threshold
+    if total_lines <= max_lines and estimated_tokens <= max_tokens:
+        return False
+    
+    # Log that compression will occur
+    log_activity(
+        workspace,
+        f"Compressing progress.md: {total_lines} lines (~{estimated_tokens} tokens) "
+        f"exceeds threshold ({max_lines} lines or {max_tokens} tokens)"
+    )
+    
+    # Extract header (everything before first timestamp entry)
+    # Look for first line starting with "### " followed by a date pattern
+    header_end = 0
+    for i, line in enumerate(lines):
+        # Check if this looks like a timestamp entry (### YYYY-MM-DD HH:MM:SS)
+        if line.startswith("### ") and len(line.strip()) > 10:
+            # Check if it matches timestamp pattern (rough check)
+            rest = line[4:].strip()
+            if len(rest) >= 19 and rest[4] == "-" and rest[7] == "-" and rest[10] == " ":
+                header_end = i
+                break
+    
+    # If no timestamp found, keep everything up to "## Session History" or similar
+    if header_end == 0:
+        for i, line in enumerate(lines):
+            if line.strip().startswith("## ") and "Session" in line:
+                header_end = i + 1
+                break
+    
+    # If still no header found, keep first 10 lines as header (fallback)
+    if header_end == 0:
+        header_end = min(10, total_lines)
+    
+    # Extract header lines
+    header_lines = lines[:header_end]
+    
+    # Get recent lines (last keep_recent_lines)
+    # Make sure we don't overlap with header
+    if total_lines > keep_recent_lines:
+        recent_lines = lines[-keep_recent_lines:]
+        # If header and recent lines overlap, adjust
+        if header_end > total_lines - keep_recent_lines:
+            recent_lines = lines[header_end:]
+    else:
+        # File is smaller than keep_recent_lines, but we're compressing anyway
+        # (edge case - shouldn't happen, but handle it)
+        recent_lines = lines[header_end:]
+    
+    # Build compressed content
+    compressed_lines = []
+    
+    # Add header
+    compressed_lines.extend(header_lines)
+    
+    # Add compression note
+    compression_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    compressed_lines.append(f"\n### [Compressed] {compression_timestamp}\n")
+    compressed_lines.append("> Older entries compressed to reduce file size. Recent entries preserved above.\n")
+    compressed_lines.append("\n")
+    
+    # Add recent lines
+    compressed_lines.extend(recent_lines)
+    
+    # Write compressed content back
+    try:
+        with progress_file.open("w", encoding="utf-8") as f:
+            f.writelines(compressed_lines)
+        
+        # Log compression activity
+        old_size = total_lines
+        new_size = len(compressed_lines)
+        log_activity(
+            workspace, 
+            f"Compressed progress.md: {old_size} → {new_size} lines "
+            f"(kept {keep_recent_lines} recent lines)"
+        )
+        
+        return True
+    except Exception:
+        # If write fails, return False
+        return False
