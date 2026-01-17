@@ -2,6 +2,7 @@
 name = "pyralph"
 version = "0.1.0"
 description = "Python implementation of Ralph autonomous development loop"
+authors = [{name = "Ralph Test"}]
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
