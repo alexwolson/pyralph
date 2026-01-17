@@ -16,9 +16,9 @@ This is a test run of Ralph with simple tasks to verify the loop is working corr
 
 The task is complete when ALL of the following are true:
 
-- [ ] Add a comment to `main.py` at the top (after the docstring) noting this file is the CLI entry point
-- [ ] Create a file `.ralph/test_marker.txt` containing the text "Ralph was here"
-- [ ] Ensure the `main()` function call in `main.py` has a brief inline comment explaining what it does
+- [x] Add a comment to `main.py` at the top (after the docstring) noting this file is the CLI entry point
+- [x] Create a file `.ralph/test_marker.txt` containing the text "Ralph was here"
+- [x] Ensure the `main()` function call in `main.py` has a brief inline comment explaining what it does
 
 ## Constraints
 

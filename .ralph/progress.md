@@ -80,3 +80,16 @@
 
 ### 2026-01-17 14:23:57
 **Verification started** (provider: claude)
+
+### 2026-01-17 14:46:17
+**Session 1 started** (provider: cursor)
+
+### Trivial Test Run - Complete
+
+**Changes made:**
+
+1. **main.py**: Added comment after docstring noting this file is the CLI entry point
+2. **main.py**: Added inline comment to `main()` call explaining it invokes the Ralph CLI application
+3. **.ralph/test_marker.txt**: Created file containing "Ralph was here"
+
+All three test criteria completed successfully.
