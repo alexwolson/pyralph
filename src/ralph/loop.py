@@ -257,8 +257,46 @@ def run_single_iteration(
         on_token_update: Optional callback for token tracker updates
         console: Optional Rich Console for output (use Live.console when within Live context)
     """
+    # #region agent log
+    import json
+    import time
+    debug_log_path = Path("/Users/alex/repos/pyralph/.cursor/debug.log")
+    try:
+        with open(debug_log_path, "a") as f:
+            log_entry = {
+                "id": f"log_{int(time.time() * 1000)}",
+                "timestamp": int(time.time() * 1000),
+                "location": "loop.py:run_single_iteration",
+                "message": "run_single_iteration entry",
+                "data": {"iteration": iteration},
+                "sessionId": "debug-session",
+                "runId": "ralph-loop",
+                "hypothesisId": "D"
+            }
+            f.write(json.dumps(log_entry) + "\n")
+    except Exception:
+        pass
+    # #endregion
     
     prompt = build_prompt(workspace, iteration)
+    
+    # #region agent log
+    try:
+        with open(debug_log_path, "a") as f:
+            log_entry = {
+                "id": f"log_{int(time.time() * 1000)}",
+                "timestamp": int(time.time() * 1000),
+                "location": "loop.py:run_single_iteration",
+                "message": "after build_prompt, before creating token tracker",
+                "data": {},
+                "sessionId": "debug-session",
+                "runId": "ralph-loop",
+                "hypothesisId": "D"
+            }
+            f.write(json.dumps(log_entry) + "\n")
+    except Exception:
+        pass
+    # #endregion
     
     # Create token tracker and gutter detector with configurable thresholds
     token_tracker = tokens.TokenTracker(
@@ -273,7 +311,43 @@ def run_single_iteration(
     state.log_progress(workspace, f"**Session {iteration} started** (provider: {provider_display})")
     
     # Build provider command with workspace directory
+    # #region agent log
+    try:
+        with open(debug_log_path, "a") as f:
+            log_entry = {
+                "id": f"log_{int(time.time() * 1000)}",
+                "timestamp": int(time.time() * 1000),
+                "location": "loop.py:run_single_iteration",
+                "message": "before get_command",
+                "data": {},
+                "sessionId": "debug-session",
+                "runId": "ralph-loop",
+                "hypothesisId": "D"
+            }
+            f.write(json.dumps(log_entry) + "\n")
+    except Exception:
+        pass
+    # #endregion
+    
     cmd = provider.get_command(prompt, workspace)
+    
+    # #region agent log
+    try:
+        with open(debug_log_path, "a") as f:
+            log_entry = {
+                "id": f"log_{int(time.time() * 1000)}",
+                "timestamp": int(time.time() * 1000),
+                "location": "loop.py:run_single_iteration",
+                "message": "after get_command, before subprocess.Popen",
+                "data": {"cmd": str(cmd) if isinstance(cmd, list) else cmd},
+                "sessionId": "debug-session",
+                "runId": "ralph-loop",
+                "hypothesisId": "D"
+            }
+            f.write(json.dumps(log_entry) + "\n")
+    except Exception:
+        pass
+    # #endregion
     
     # Start agent process
     agent_process = subprocess.Popen(
@@ -285,9 +359,45 @@ def run_single_iteration(
         text=False,
     )
     
+    # #region agent log
+    try:
+        with open(debug_log_path, "a") as f:
+            log_entry = {
+                "id": f"log_{int(time.time() * 1000)}",
+                "timestamp": int(time.time() * 1000),
+                "location": "loop.py:run_single_iteration",
+                "message": "after subprocess.Popen, before sending prompt",
+                "data": {"pid": agent_process.pid},
+                "sessionId": "debug-session",
+                "runId": "ralph-loop",
+                "hypothesisId": "D"
+            }
+            f.write(json.dumps(log_entry) + "\n")
+    except Exception:
+        pass
+    # #endregion
+    
     # Send prompt
     agent_process.stdin.write(prompt.encode("utf-8"))
     agent_process.stdin.close()
+    
+    # #region agent log
+    try:
+        with open(debug_log_path, "a") as f:
+            log_entry = {
+                "id": f"log_{int(time.time() * 1000)}",
+                "timestamp": int(time.time() * 1000),
+                "location": "loop.py:run_single_iteration",
+                "message": "after sending prompt, before parse_stream",
+                "data": {},
+                "sessionId": "debug-session",
+                "runId": "ralph-loop",
+                "hypothesisId": "D"
+            }
+            f.write(json.dumps(log_entry) + "\n")
+    except Exception:
+        pass
+    # #endregion
     
     # Track start time for timeout
     start_time = time.time()
@@ -571,7 +681,43 @@ def run_ralph_loop(
         criteria = get_criteria_list(task_file)
         live_display.update(token_tracker=tracker, criteria=criteria)
     
+    # #region agent log
+    try:
+        with open(debug_log_path, "a") as f:
+            log_entry = {
+                "id": f"log_{int(time.time() * 1000)}",
+                "timestamp": int(time.time() * 1000),
+                "location": "loop.py:574",
+                "message": "before entering with live_display:",
+                "data": {},
+                "sessionId": "debug-session",
+                "runId": "ralph-loop",
+                "hypothesisId": "A"
+            }
+            f.write(json.dumps(log_entry) + "\n")
+    except Exception:
+        pass
+    # #endregion
+    
     with live_display:
+        # #region agent log
+        try:
+            with open(debug_log_path, "a") as f:
+                log_entry = {
+                    "id": f"log_{int(time.time() * 1000)}",
+                    "timestamp": int(time.time() * 1000),
+                    "location": "loop.py:576",
+                    "message": "after entering with live_display:",
+                    "data": {},
+                    "sessionId": "debug-session",
+                    "runId": "ralph-loop",
+                    "hypothesisId": "A"
+                }
+                f.write(json.dumps(log_entry) + "\n")
+        except Exception:
+            pass
+        # #endregion
+        
         while iteration <= max_iterations:
             # Clean up any leftover question/answer files from previous iteration
             question_file = workspace / ".ralph" / "question.md"
@@ -579,9 +725,45 @@ def run_ralph_loop(
             question_file.unlink(missing_ok=True)
             answer_file.unlink(missing_ok=True)
             
+            # #region agent log
+            try:
+                with open(debug_log_path, "a") as f:
+                    log_entry = {
+                        "id": f"log_{int(time.time() * 1000)}",
+                        "timestamp": int(time.time() * 1000),
+                        "location": "loop.py:590",
+                        "message": "before getting provider",
+                        "data": {"iteration": iteration},
+                        "sessionId": "debug-session",
+                        "runId": "ralph-loop",
+                        "hypothesisId": "C"
+                    }
+                    f.write(json.dumps(log_entry) + "\n")
+            except Exception:
+                pass
+            # #endregion
+            
             # Get current provider
             provider = provider_rotation.get_current()
             provider_name = provider_rotation.get_provider_name()
+            
+            # #region agent log
+            try:
+                with open(debug_log_path, "a") as f:
+                    log_entry = {
+                        "id": f"log_{int(time.time() * 1000)}",
+                        "timestamp": int(time.time() * 1000),
+                        "location": "loop.py:595",
+                        "message": "after getting provider, before first update",
+                        "data": {"provider_name": provider_name, "iteration": iteration},
+                        "sessionId": "debug-session",
+                        "runId": "ralph-loop",
+                        "hypothesisId": "B"
+                    }
+                    f.write(json.dumps(log_entry) + "\n")
+            except Exception:
+                pass
+            # #endregion
             
             # Update live display
             criteria = get_criteria_list(task_file)
@@ -590,6 +772,24 @@ def run_ralph_loop(
                 provider=provider_name,
                 criteria=criteria,
             )
+            
+            # #region agent log
+            try:
+                with open(debug_log_path, "a") as f:
+                    log_entry = {
+                        "id": f"log_{int(time.time() * 1000)}",
+                        "timestamp": int(time.time() * 1000),
+                        "location": "loop.py:603",
+                        "message": "after first update, before run_single_iteration",
+                        "data": {"iteration": iteration},
+                        "sessionId": "debug-session",
+                        "runId": "ralph-loop",
+                        "hypothesisId": "D"
+                    }
+                    f.write(json.dumps(log_entry) + "\n")
+            except Exception:
+                pass
+            # #endregion
             
             debug_log(
                 "loop.py:run_ralph_loop",

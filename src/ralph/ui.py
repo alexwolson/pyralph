@@ -128,6 +128,27 @@ class RalphLiveDisplay:
 
     def start(self) -> "RalphLiveDisplay":
         """Start the live display."""
+        # #region agent log
+        import json
+        import time
+        debug_log_path = Path("/Users/alex/repos/pyralph/.cursor/debug.log")
+        try:
+            with open(debug_log_path, "a") as f:
+                log_entry = {
+                    "id": f"log_{int(time.time() * 1000)}",
+                    "timestamp": int(time.time() * 1000),
+                    "location": "ui.py:start",
+                    "message": "start() entry",
+                    "data": {},
+                    "sessionId": "debug-session",
+                    "runId": "ralph-loop",
+                    "hypothesisId": "A"
+                }
+                f.write(json.dumps(log_entry) + "\n")
+        except Exception:
+            pass
+        # #endregion
+        
         self._task_id = self.progress.add_task(
             "ralph",
             total=None,  # Indeterminate
@@ -137,13 +158,69 @@ class RalphLiveDisplay:
             tokens=self._get_token_display(),
         )
         
+        # #region agent log
+        try:
+            with open(debug_log_path, "a") as f:
+                log_entry = {
+                    "id": f"log_{int(time.time() * 1000)}",
+                    "timestamp": int(time.time() * 1000),
+                    "location": "ui.py:start",
+                    "message": "before creating Live",
+                    "data": {},
+                    "sessionId": "debug-session",
+                    "runId": "ralph-loop",
+                    "hypothesisId": "A"
+                }
+                f.write(json.dumps(log_entry) + "\n")
+        except Exception:
+            pass
+        # #endregion
+        
         self._live = Live(
             self._build_display(),
             console=self.console,
             refresh_per_second=4,
             transient=False,
         )
+        
+        # #region agent log
+        try:
+            with open(debug_log_path, "a") as f:
+                log_entry = {
+                    "id": f"log_{int(time.time() * 1000)}",
+                    "timestamp": int(time.time() * 1000),
+                    "location": "ui.py:start",
+                    "message": "before _live.start()",
+                    "data": {},
+                    "sessionId": "debug-session",
+                    "runId": "ralph-loop",
+                    "hypothesisId": "A"
+                }
+                f.write(json.dumps(log_entry) + "\n")
+        except Exception:
+            pass
+        # #endregion
+        
         self._live.start()
+        
+        # #region agent log
+        try:
+            with open(debug_log_path, "a") as f:
+                log_entry = {
+                    "id": f"log_{int(time.time() * 1000)}",
+                    "timestamp": int(time.time() * 1000),
+                    "location": "ui.py:start",
+                    "message": "after _live.start()",
+                    "data": {},
+                    "sessionId": "debug-session",
+                    "runId": "ralph-loop",
+                    "hypothesisId": "A"
+                }
+                f.write(json.dumps(log_entry) + "\n")
+        except Exception:
+            pass
+        # #endregion
+        
         return self
 
     def stop(self) -> None:
@@ -161,6 +238,27 @@ class RalphLiveDisplay:
         criteria: Optional[List[Tuple[str, bool]]] = None,
     ) -> None:
         """Update the live display with new values."""
+        # #region agent log
+        import json
+        import time
+        debug_log_path = Path("/Users/alex/repos/pyralph/.cursor/debug.log")
+        try:
+            with open(debug_log_path, "a") as f:
+                log_entry = {
+                    "id": f"log_{int(time.time() * 1000)}",
+                    "timestamp": int(time.time() * 1000),
+                    "location": "ui.py:update",
+                    "message": "update() entry",
+                    "data": {"iteration": iteration, "provider": provider, "has_live": self._live is not None},
+                    "sessionId": "debug-session",
+                    "runId": "ralph-loop",
+                    "hypothesisId": "B"
+                }
+                f.write(json.dumps(log_entry) + "\n")
+        except Exception:
+            pass
+        # #endregion
+        
         if iteration is not None:
             self.current_iteration = iteration
         if provider is not None:
@@ -174,6 +272,24 @@ class RalphLiveDisplay:
         
         # Update progress task
         if self._task_id is not None:
+            # #region agent log
+            try:
+                with open(debug_log_path, "a") as f:
+                    log_entry = {
+                        "id": f"log_{int(time.time() * 1000)}",
+                        "timestamp": int(time.time() * 1000),
+                        "location": "ui.py:update",
+                        "message": "before progress.update()",
+                        "data": {},
+                        "sessionId": "debug-session",
+                        "runId": "ralph-loop",
+                        "hypothesisId": "B"
+                    }
+                    f.write(json.dumps(log_entry) + "\n")
+            except Exception:
+                pass
+            # #endregion
+            
             self.progress.update(
                 self._task_id,
                 iteration=self.current_iteration,
@@ -181,10 +297,64 @@ class RalphLiveDisplay:
                 provider=self.provider_name or "unknown",
                 tokens=self._get_token_display(),
             )
+            
+            # #region agent log
+            try:
+                with open(debug_log_path, "a") as f:
+                    log_entry = {
+                        "id": f"log_{int(time.time() * 1000)}",
+                        "timestamp": int(time.time() * 1000),
+                        "location": "ui.py:update",
+                        "message": "after progress.update(), before _build_display()",
+                        "data": {},
+                        "sessionId": "debug-session",
+                        "runId": "ralph-loop",
+                        "hypothesisId": "B"
+                    }
+                    f.write(json.dumps(log_entry) + "\n")
+            except Exception:
+                pass
+            # #endregion
         
         # Refresh live display with updated criteria
         if self._live:
+            # #region agent log
+            try:
+                with open(debug_log_path, "a") as f:
+                    log_entry = {
+                        "id": f"log_{int(time.time() * 1000)}",
+                        "timestamp": int(time.time() * 1000),
+                        "location": "ui.py:update",
+                        "message": "before _live.update()",
+                        "data": {},
+                        "sessionId": "debug-session",
+                        "runId": "ralph-loop",
+                        "hypothesisId": "B"
+                    }
+                    f.write(json.dumps(log_entry) + "\n")
+            except Exception:
+                pass
+            # #endregion
+            
             self._live.update(self._build_display())
+            
+            # #region agent log
+            try:
+                with open(debug_log_path, "a") as f:
+                    log_entry = {
+                        "id": f"log_{int(time.time() * 1000)}",
+                        "timestamp": int(time.time() * 1000),
+                        "location": "ui.py:update",
+                        "message": "after _live.update()",
+                        "data": {},
+                        "sessionId": "debug-session",
+                        "runId": "ralph-loop",
+                        "hypothesisId": "B"
+                    }
+                    f.write(json.dumps(log_entry) + "\n")
+            except Exception:
+                pass
+            # #endregion
 
     def __enter__(self) -> "RalphLiveDisplay":
         return self.start()
