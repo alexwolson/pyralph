@@ -526,3 +526,21 @@ EOF
 [21:56:07] 🟢 TOKENS: 45715 / 80000 (57%) [read:174KB write:0KB assist:1KB shell:0KB]
 [21:56:18] 🟢 SHELL make test → exit 0
 [21:56:37] 🟢 TOKENS: 45768 / 80000 (57%) [read:174KB write:0KB assist:1KB shell:0KB]
+[21:56:50] 🟢 SHELL git add -A && git commit -m "$(cat <<'EOF'
+ralph: implement agent-to-user question mechanism
+
+Add file-based communication for agents to ask users questions:
+- Add QUESTION signal detection in parser.py
+- Add wait_for_user_input_with_timeout() with select-based timeout
+- Add display_question_panel() for Rich panel display
+- Handle QUESTION signal in loop: pause, display question, prompt, write answer
+- Clean up question/answer files at iteration start
+- Add question instructions to build_prompt() emphasizing sparse usage
+- Add comprehensive test suite (13 new tests, 98 total pass)
+
+EOF
+)" → exit 0
+[21:56:57] 🟢 SHELL git push → exit 0
+[21:57:01] 🟢 READ /Users/alex/repos/pyralph/RALPH_TASK.md (86 lines, ~8.4KB)
+[21:57:07] 🟢 TOKENS: 47957 / 80000 (59%) [read:182KB write:0KB assist:1KB shell:0KB]
+[21:57:12] ✅ Agent signaled COMPLETE
