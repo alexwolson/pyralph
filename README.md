@@ -36,19 +36,57 @@ while iteration < max_iterations:
 
 - Python 3.11 or higher
 - Git
+- [uv](https://docs.astral.sh/uv/) package manager (recommended)
 - At least one supported LLM provider CLI tool installed
 
-### Install with uv (recommended)
+### Global Install with uv tool (recommended)
+
+Install `ralph` globally so it's available from any directory:
 
 ```bash
 # Clone the repository
 git clone https://github.com/yourusername/pyralph.git
 cd pyralph
 
-# Install with uv
+# Install globally
+make install
+```
+
+This uses `uv tool install` to create an isolated environment while making the `ralph` command available system-wide in `~/.local/bin/`.
+
+**Note:** Make sure `~/.local/bin` is in your PATH. Add this to your shell config if needed:
+
+```bash
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+To update to the latest version:
+
+```bash
+cd pyralph
+git pull
+make update
+```
+
+To uninstall:
+
+```bash
+make uninstall
+```
+
+### Development Install with uv
+
+For development (editable install):
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/pyralph.git
+cd pyralph
+
+# Install with uv (local development)
 uv sync
 
-# Run ralph
+# Run ralph (requires uv run prefix)
 uv run ralph --help
 ```
 

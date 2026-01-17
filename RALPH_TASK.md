@@ -19,12 +19,12 @@ Make the `ralph` CLI installable system-wide on macOS so it can be run from any 
 
 The task is complete when ALL of the following are true:
 
-- [ ] Makefile exists at project root with `install` target using `uv tool install`
-- [ ] Makefile has `update` target that reinstalls/upgrades the tool
-- [ ] Running `make install` successfully installs `ralph` command globally
-- [ ] Running `make update` updates to the latest version from the repo
-- [ ] `ralph` command is accessible from any directory after installation
-- [ ] README.md documents the global installation method with uv tool
+- [x] Makefile exists at project root with `install` target using `uv tool install`
+- [x] Makefile has `update` target that reinstalls/upgrades the tool
+- [x] Running `make install` successfully installs `ralph` command globally
+- [x] Running `make update` updates to the latest version from the repo
+- [x] `ralph` command is accessible from any directory after installation
+- [x] README.md documents the global installation method with uv tool
 
 ## Technical Context
 

@@ -25,3 +25,19 @@ All 21 success criteria are now complete.
 
 ### 2026-01-16 20:31:10
 **Session 1 ended** - ✅ TASK COMPLETE
+
+### 2026-01-16 20:35:05
+**Session 1 started** (provider: cursor-agent)
+
+### 2026-01-16
+**Global installation task completed**
+
+Completed work:
+- Created Makefile with `install`, `update`, `uninstall`, and `help` targets
+- `make install` uses `uv tool install . --force` for isolated global installation
+- `make update` reinstalls from local repo for updates
+- Verified ralph installs to `~/.local/bin/ralph` and works from any directory
+- Updated README.md with comprehensive global installation documentation
+- All 6 success criteria complete
+
+**Session 1 ended** - TASK COMPLETE
