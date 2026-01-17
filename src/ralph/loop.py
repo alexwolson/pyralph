@@ -1,9 +1,10 @@
 """Main iteration loop for Ralph."""
 
 import subprocess
+import threading
 import time
 from pathlib import Path
-from typing import Callable, Optional, TYPE_CHECKING
+from typing import Callable, Optional, Set, TYPE_CHECKING
 
 from ralph import git_utils, gutter, parser, state, task, tokens
 from ralph.archive import archive_completed_task
@@ -15,6 +16,139 @@ from ralph.ui import RalphLiveDisplay, get_criteria_list, display_question_panel
 
 if TYPE_CHECKING:
     from rich.console import Console
+
+
+def _run_iteration_core(
+    workspace: Path,
+    provider,
+    prompt: str,
+    log_message: str,
+    stop_signals: Set[str],
+    timeout_signal: str,
+    warn_threshold: int,
+    rotate_threshold: int,
+    timeout: int,
+    on_token_update: Optional[Callable[[tokens.TokenTracker], None]] = None,
+    on_task_file_update: Optional[Callable[[Path], None]] = None,
+    console: Optional["Console"] = None,
+    reraise_exceptions: bool = True,
+) -> str:
+    """Core iteration logic shared between regular and verification iterations.
+    
+    Args:
+        workspace: Project directory path
+        provider: LLM provider instance
+        prompt: The prompt to send to the provider
+        log_message: Message to log at start (e.g., "Session 1 started" or "Verification started")
+        stop_signals: Set of signals that should stop the iteration early
+        timeout_signal: Signal to return on timeout
+        warn_threshold: Token count at which to warn about context size
+        rotate_threshold: Token count at which to trigger rotation
+        timeout: Timeout in seconds for provider operations
+        on_token_update: Optional callback for token tracker updates
+        on_task_file_update: Optional callback for task file updates
+        console: Optional Rich Console for output
+        reraise_exceptions: If True, re-raise exceptions; if False, return timeout_signal
+    
+    Returns:
+        Signal string from the iteration
+    """
+    # Create token tracker and gutter detector with configurable thresholds
+    token_tracker = tokens.TokenTracker(
+        warn_threshold=warn_threshold,
+        rotate_threshold=rotate_threshold,
+    )
+    gutter_detector = gutter.GutterDetector()
+    
+    # Log session start - use display name for user-facing output
+    provider_display = provider.get_display_name() if hasattr(provider, 'get_display_name') else provider.cli_tool
+    provider_cli = provider.cli_tool if hasattr(provider, 'cli_tool') else str(type(provider).__name__)
+    state.log_progress(workspace, f"**{log_message}** (provider: {provider_display})")
+    
+    # Build provider command with workspace directory
+    cmd = provider.get_command(prompt, workspace)
+    
+    # Start agent process
+    agent_process = subprocess.Popen(
+        cmd,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        cwd=str(workspace),
+        text=False,
+    )
+    
+    # Send prompt
+    agent_process.stdin.write(prompt.encode("utf-8"))
+    agent_process.stdin.close()
+    
+    # Track start time for timeout
+    start_time = time.time()
+    
+    # Set up timeout thread to terminate process if timeout is exceeded
+    timeout_timer = None
+    if timeout:
+        def timeout_handler():
+            try:
+                agent_process.terminate()
+            except Exception:
+                pass
+        timeout_timer = threading.Timer(timeout, timeout_handler)
+        timeout_timer.start()
+    
+    # Parse stream with timeout checking
+    signal = ""
+    try:
+        for sig in parser.parse_stream(
+            workspace, agent_process, token_tracker, gutter_detector, provider,
+            on_token_update=on_token_update,
+            on_task_file_update=on_task_file_update,
+            console=console,
+        ):
+            signal = sig
+            if signal in stop_signals:
+                # Stop early if critical signal
+                agent_process.terminate()
+                break
+            
+            # Check timeout
+            elapsed = time.time() - start_time
+            if elapsed > timeout:
+                debug_log(
+                    "loop.py:_run_iteration_core",
+                    "Timeout reached",
+                    {"timeout": timeout, "elapsed": elapsed, "provider": provider_cli},
+                )
+                agent_process.terminate()
+                signal = timeout_signal
+                break
+    except Exception as e:
+        debug_log(
+            "loop.py:_run_iteration_core",
+            "Exception during stream parsing",
+            {"error": str(e), "provider": provider_cli},
+        )
+        agent_process.terminate()
+        if reraise_exceptions:
+            raise
+        signal = timeout_signal
+    finally:
+        # Cancel timeout timer if it's still running
+        if timeout_timer:
+            timeout_timer.cancel()
+    
+    # Check if timeout was the reason for termination (no signal received)
+    if not signal and timeout and (time.time() - start_time) >= timeout:
+        signal = timeout_signal
+    
+    # Wait for process to finish with timeout
+    try:
+        agent_process.wait(timeout=10)
+    except subprocess.TimeoutExpired:
+        agent_process.kill()
+        agent_process.wait()
+    
+    return signal
 
 
 def run_single_iteration(
@@ -38,85 +172,26 @@ def run_single_iteration(
         rotate_threshold: Token count at which to trigger rotation
         timeout: Timeout in seconds for provider operations (default 300)
         on_token_update: Optional callback for token tracker updates
+        on_task_file_update: Optional callback for task file updates
         console: Optional Rich Console for output (use Live.console when within Live context)
     """
     prompt = build_prompt(workspace, iteration)
     
-    # Create token tracker and gutter detector with configurable thresholds
-    token_tracker = tokens.TokenTracker(
+    return _run_iteration_core(
+        workspace=workspace,
+        provider=provider,
+        prompt=prompt,
+        log_message=f"Session {iteration} started",
+        stop_signals=CRITICAL_SIGNALS,
+        timeout_signal=Signal.ROTATE,
         warn_threshold=warn_threshold,
         rotate_threshold=rotate_threshold,
+        timeout=timeout,
+        on_token_update=on_token_update,
+        on_task_file_update=on_task_file_update,
+        console=console,
+        reraise_exceptions=True,
     )
-    gutter_detector = gutter.GutterDetector()
-    
-    # Log session start - use display name for user-facing output
-    provider_display = provider.get_display_name() if hasattr(provider, 'get_display_name') else provider.cli_tool
-    provider_cli = provider.cli_tool if hasattr(provider, 'cli_tool') else str(type(provider).__name__)
-    state.log_progress(workspace, f"**Session {iteration} started** (provider: {provider_display})")
-    
-    # Build provider command with workspace directory
-    cmd = provider.get_command(prompt, workspace)
-    
-    # Start agent process
-    agent_process = subprocess.Popen(
-        cmd,
-        stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        cwd=str(workspace),
-        text=False,
-    )
-    
-    # Send prompt
-    agent_process.stdin.write(prompt.encode("utf-8"))
-    agent_process.stdin.close()
-    
-    # Track start time for timeout
-    start_time = time.time()
-    
-    # Parse stream with timeout checking
-    signal = ""
-    try:
-        for sig in parser.parse_stream(
-            workspace, agent_process, token_tracker, gutter_detector, provider,
-            on_token_update=on_token_update,
-            on_task_file_update=on_task_file_update,
-            console=console,
-        ):
-            signal = sig
-            if signal in CRITICAL_SIGNALS:
-                # Stop early if critical signal
-                agent_process.terminate()
-                break
-            
-            # Check timeout
-            elapsed = time.time() - start_time
-            if elapsed > timeout:
-                debug_log(
-                    "loop.py:run_single_iteration",
-                    "Timeout reached - terminating provider",
-                    {"timeout": timeout, "elapsed": elapsed, "provider": provider_cli},
-                )
-                agent_process.terminate()
-                signal = Signal.ROTATE
-                break
-    except Exception as e:
-        debug_log(
-            "loop.py:run_single_iteration",
-            "Exception during stream parsing",
-            {"error": str(e), "provider": provider_cli},
-        )
-        agent_process.terminate()
-        raise
-    
-    # Wait for process to finish with timeout
-    try:
-        agent_process.wait(timeout=10)
-    except subprocess.TimeoutExpired:
-        agent_process.kill()
-        agent_process.wait()
-    
-    return signal
 
 
 def run_verification_iteration(
@@ -143,100 +218,21 @@ def run_verification_iteration(
     """
     prompt = build_verification_prompt(workspace, iteration)
     
-    # Create token tracker and gutter detector with configurable thresholds
-    token_tracker = tokens.TokenTracker(
+    return _run_iteration_core(
+        workspace=workspace,
+        provider=provider,
+        prompt=prompt,
+        log_message="Verification started",
+        stop_signals=VERIFICATION_SIGNALS,
+        timeout_signal=Signal.VERIFY_FAIL,
         warn_threshold=warn_threshold,
         rotate_threshold=rotate_threshold,
+        timeout=timeout,
+        on_token_update=on_token_update,
+        on_task_file_update=None,  # Verification doesn't track task file updates
+        console=console,
+        reraise_exceptions=False,
     )
-    gutter_detector = gutter.GutterDetector()
-    
-    # Log verification start
-    provider_display = provider.get_display_name() if hasattr(provider, 'get_display_name') else provider.cli_tool
-    state.log_progress(workspace, f"**Verification started** (provider: {provider_display})")
-    
-    # Build provider command with workspace directory
-    cmd = provider.get_command(prompt, workspace)
-    
-    # Start agent process
-    agent_process = subprocess.Popen(
-        cmd,
-        stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        cwd=str(workspace),
-        text=False,
-    )
-    
-    # Send prompt
-    agent_process.stdin.write(prompt.encode("utf-8"))
-    agent_process.stdin.close()
-    
-    # Track start time for timeout
-    start_time = time.time()
-    
-    # Set up timeout thread to terminate process if timeout is exceeded
-    # This ensures readline() doesn't block indefinitely
-    import threading
-    timeout_timer = None
-    if timeout:
-        def timeout_handler():
-            try:
-                agent_process.terminate()
-            except Exception:
-                pass
-        timeout_timer = threading.Timer(timeout, timeout_handler)
-        timeout_timer.start()
-    
-    # Parse stream with timeout checking
-    signal = ""
-    try:
-        for sig in parser.parse_stream(
-            workspace, agent_process, token_tracker, gutter_detector, provider,
-            on_token_update=on_token_update,
-            console=console,
-        ):
-            signal = sig
-            if signal in VERIFICATION_SIGNALS:
-                # Stop early if critical signal
-                agent_process.terminate()
-                break
-            
-            # Check timeout
-            elapsed = time.time() - start_time
-            if elapsed > timeout:
-                debug_log(
-                    "loop.py:run_verification_iteration",
-                    "Timeout reached - treating as verification fail",
-                    {"timeout": timeout, "elapsed": elapsed},
-                )
-                agent_process.terminate()
-                signal = Signal.VERIFY_FAIL
-                break
-    except Exception as e:
-        debug_log(
-            "loop.py:run_verification_iteration",
-            "Exception during verification",
-            {"error": str(e), "error_type": type(e).__name__},
-        )
-        agent_process.terminate()
-        signal = Signal.VERIFY_FAIL
-    finally:
-        # Cancel timeout timer if it's still running
-        if timeout_timer:
-            timeout_timer.cancel()
-    
-    # Check if timeout was the reason for termination
-    if not signal and timeout and (time.time() - start_time) >= timeout:
-        signal = Signal.VERIFY_FAIL
-    
-    # Wait for process to finish with timeout
-    try:
-        agent_process.wait(timeout=10)
-    except subprocess.TimeoutExpired:
-        agent_process.kill()
-        agent_process.wait()
-    
-    return signal
 
 
 def run_ralph_loop(
