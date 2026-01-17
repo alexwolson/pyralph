@@ -14,8 +14,13 @@ install:
 	@echo "Test with: ralph --help"
 
 ## update: Update ralph to the latest version from this repo
+## Explicitly uninstalls first to ensure code changes are picked up even if version hasn't changed
 update:
 	@echo "Updating ralph to latest version..."
+	@echo "Syncing dependencies..."
+	uv sync
+	@echo "Reinstalling tool..."
+	uv tool uninstall pyralph 2>/dev/null || true
 	uv tool install . --force
 	@echo ""
 	@echo "Done! ralph has been updated."

@@ -289,3 +289,21 @@ EOF
 [21:01:11] 🟡 READ /Users/alex/repos/pyralph/pyproject.toml (31 lines, ~3.0KB)
 [21:01:23] 🟡 SHELL cd /Users/alex/repos/pyralph && uv sync --extra dev && uv run pytest -v 2>&1 → exit 0
 [21:01:38] 🟡 TOKENS: 54151 / 80000 (67%) [read:207KB write:0KB assist:1KB shell:0KB]
+[21:01:58] 🟡 SHELL cd /Users/alex/repos/pyralph && git add -A && git commit -m "$(cat <<'EOF'
+ralph: fix task archiving and rename cursor-agent to agent CLI
+
+- archive_completed_task() now commits archived files to git
+- Added get_display_name() method to BaseProvider for user-facing names
+- CursorProvider uses "agent" CLI tool, displays as "cursor"
+- Updated PROVIDERS dict key to "agent"
+- User-facing output now uses display names, debug logs use CLI names
+- Error messages reference "agent" for installation
+- Updated README.md with agent command
+
+EOF
+)" → exit 0
+[21:02:02] 🟡 SHELL cd /Users/alex/repos/pyralph && git status → exit 0
+[21:02:06] 🟡 SHELL cd /Users/alex/repos/pyralph && git push → exit 0
+[21:02:08] 🟡 TOKENS: 54239 / 80000 (67%) [read:207KB write:0KB assist:1KB shell:0KB]
+[21:02:11] 🟡 SHELL cd /Users/alex/repos/pyralph && grep -E "^\- \[.\]" RALPH_TASK.md → exit 0
+[21:02:25] ✅ Agent signaled COMPLETE
