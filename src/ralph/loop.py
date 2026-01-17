@@ -1,34 +1,13 @@
 """Main iteration loop for Ralph."""
 
-import json
 import subprocess
 import time
 from pathlib import Path
 from typing import Optional
 
 from ralph import git_utils, gutter, parser, state, task, tokens
+from ralph.debug import debug_log
 from ralph.providers import ProviderRotation
-
-# #region debug log - Rotation tracking
-DEBUG_LOG_PATH = Path("/Users/alex/repos/pyralph/.cursor/debug.log")
-
-def _debug_log(location: str, message: str, data: dict, hypothesis_id: str = "A") -> None:
-    """Helper to write debug logs."""
-    try:
-        log_entry = {
-            "sessionId": "debug-session",
-            "runId": "rotation-check",
-            "hypothesisId": hypothesis_id,
-            "location": location,
-            "message": message,
-            "data": data,
-            "timestamp": int(time.time() * 1000)
-        }
-        with open(DEBUG_LOG_PATH, "a") as f:
-            f.write(json.dumps(log_entry) + "\n")
-    except Exception:
-        pass  # Fail silently
-# #endregion
 
 
 def build_prompt(workspace: Path, iteration: int) -> str:
@@ -202,9 +181,8 @@ def run_ralph_loop(
         provider = provider_rotation.get_current()
         provider_name = provider_rotation.get_provider_name()
         
-        # #region debug log - Loop entry
-        _debug_log(
-            "loop.py:178",
+        debug_log(
+            "loop.py:run_ralph_loop",
             "Loop iteration started",
             {
                 "iteration": iteration,
@@ -215,7 +193,6 @@ def run_ralph_loop(
             },
             "A"
         )
-        # #endregion
         
         console.print(f"\n[bold cyan]🔄 Iteration {iteration}/{max_iterations}[/bold cyan] [dim](provider: {provider_name})[/dim]")
         
@@ -258,9 +235,8 @@ def run_ralph_loop(
                     iteration += 1
                     
             elif signal == "ROTATE":
-                # #region debug log - ROTATE signal received
-                _debug_log(
-                    "loop.py:223",
+                debug_log(
+                    "loop.py:run_ralph_loop",
                     "ROTATE signal received",
                     {
                         "iteration": iteration,
@@ -270,15 +246,13 @@ def run_ralph_loop(
                     },
                     "A"
                 )
-                # #endregion
                 
                 state.log_progress(workspace, f"**Session {iteration} ended** - 🔄 Context rotation (token limit reached)")
                 print(f"\n🔄 Rotating to fresh context...")
                 
-                # #region debug log - After iteration increment
                 iteration += 1
-                _debug_log(
-                    "loop.py:231",
+                debug_log(
+                    "loop.py:run_ralph_loop",
                     "After ROTATE - iteration incremented",
                     {
                         "new_iteration": iteration,
@@ -287,12 +261,10 @@ def run_ralph_loop(
                     },
                     "A"
                 )
-                # #endregion
                 
             elif signal == "GUTTER":
-                # #region debug log - GUTTER signal received
-                _debug_log(
-                    "loop.py:243",
+                debug_log(
+                    "loop.py:run_ralph_loop",
                     "GUTTER signal received",
                     {
                         "iteration": iteration,
@@ -301,7 +273,6 @@ def run_ralph_loop(
                     },
                     "B"
                 )
-                # #endregion
                 
                 state.log_progress(workspace, f"**Session {iteration} ended** - 🚨 GUTTER (agent stuck) - {provider_name}")
                 print(f"\n🚨 Gutter detected with {provider_name}. Rotating to next provider...")
@@ -309,10 +280,9 @@ def run_ralph_loop(
                 # Rotate to next provider
                 next_provider = provider_rotation.rotate()
                 
-                # #region debug log - After rotation
                 next_name = provider_rotation.get_provider_name() if next_provider else None
-                _debug_log(
-                    "loop.py:257",
+                debug_log(
+                    "loop.py:run_ralph_loop",
                     "After GUTTER rotation",
                     {
                         "iteration": iteration,
@@ -324,7 +294,6 @@ def run_ralph_loop(
                     },
                     "B"
                 )
-                # #endregion
                 
                 if next_provider and provider_rotation.has_next():
                     print(f"🔄 Rotating to provider: {next_name}")
@@ -346,9 +315,8 @@ def run_ralph_loop(
                     iteration += 1
                     
         except Exception as e:
-            # #region debug log - Exception caught
-            _debug_log(
-                "loop.py:268",
+            debug_log(
+                "loop.py:run_ralph_loop",
                 "Exception caught - rotating provider",
                 {
                     "iteration": iteration,
@@ -358,7 +326,6 @@ def run_ralph_loop(
                 },
                 "C"
             )
-            # #endregion
             
             # Provider error - rotate to next provider
             state.log_progress(workspace, f"**Session {iteration} failed** - Provider error: {provider_name} - {e}")
@@ -367,10 +334,9 @@ def run_ralph_loop(
             # Rotate to next provider
             next_provider = provider_rotation.rotate()
             
-            # #region debug log - After exception rotation
             next_name = provider_rotation.get_provider_name() if next_provider else None
-            _debug_log(
-                "loop.py:285",
+            debug_log(
+                "loop.py:run_ralph_loop",
                 "After exception rotation",
                 {
                     "iteration": iteration,
@@ -382,7 +348,6 @@ def run_ralph_loop(
                 },
                 "C"
             )
-            # #endregion
             
             if next_provider and provider_rotation.has_next():
                 print(f"🔄 Rotating to provider: {next_name}")
