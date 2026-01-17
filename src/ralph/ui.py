@@ -104,12 +104,15 @@ class RalphLiveDisplay:
                 status = f"[{THEME['muted']}]○[/]"
                 style = ""
             
-            # Use Text class to escape markup in criteria text and apply style
-            # This prevents Rich from parsing brackets in the text as markup tags
+            # Escape brackets in criteria text to prevent Rich from parsing them as markup
+            # Replace [ with \[ and ] with \] to escape Rich markup syntax
+            escaped_text = text.replace("[", "\\[").replace("]", "\\]")
+            
+            # Apply style using Text class to ensure proper rendering
             if style:
-                criterion_text = Text(text, style=style)
+                criterion_text = Text(escaped_text, style=style)
             else:
-                criterion_text = Text(text)
+                criterion_text = Text(escaped_text)
             
             table.add_row(status, criterion_text)
         
