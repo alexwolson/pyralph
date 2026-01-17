@@ -97,10 +97,10 @@ class TestHealthEmoji:
     def test_yellow_emoji_between_60_and_80_percent(self) -> None:
         """Test yellow emoji when between 60-80% of rotate threshold."""
         tracker = TokenTracker()
-        # Need 60-80% of 200_000 = 120_000 to 160_000 tokens
-        # 130_000 tokens = 520_000 bytes
-        # Subtract prompt (3000), need 517_000 more bytes
-        tracker.add_read(517_000)
+        # Need 60-80% of 80_000 = 48_000 to 64_000 tokens
+        # 56_000 tokens (70%) = 224_000 bytes
+        # Subtract prompt (3000), need 221_000 more bytes
+        tracker.add_read(221_000)
 
         emoji = tracker.get_health_emoji()
 
@@ -180,11 +180,11 @@ class TestThresholdConstants:
 
     def test_warn_threshold_is_defined(self) -> None:
         """Test WARN_THRESHOLD is defined and reasonable."""
-        assert WARN_THRESHOLD == 180_000
+        assert WARN_THRESHOLD == 72_000
 
     def test_rotate_threshold_is_defined(self) -> None:
         """Test ROTATE_THRESHOLD is defined and reasonable."""
-        assert ROTATE_THRESHOLD == 200_000
+        assert ROTATE_THRESHOLD == 80_000
 
     def test_warn_is_less_than_rotate(self) -> None:
         """Test WARN_THRESHOLD is less than ROTATE_THRESHOLD."""

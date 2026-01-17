@@ -199,32 +199,35 @@ def run(
         sys.exit(1)
 
     # Show summary
+    from rich.rule import Rule
     from ralph.providers import detect_available_providers
     
     available_providers = detect_available_providers()
     provider_names = [p.get_display_name() if hasattr(p, 'get_display_name') else p.cli_tool for p in available_providers]
     
-    console.print("\n[bold]🐛 Ralph Wiggum: Autonomous Development Loop[/bold]")
-    console.print("")
-    console.print(f"Workspace: {project_dir}")
-    console.print(f"Providers: {', '.join(provider_names) if provider_names else 'None'}")
-    console.print(f"Max iter:  {iterations}")
+    console.print()
+    console.print(Rule(f"[bold {THEME['primary']}]Ralph Wiggum[/]", style=THEME["primary"]))
+    console.print()
+    console.print(f"[{THEME['muted']}]Workspace:[/] {project_dir}")
+    console.print(f"[{THEME['muted']}]Providers:[/] {', '.join(provider_names) if provider_names else 'None'}")
+    console.print(f"[{THEME['muted']}]Max iter:[/]  {iterations}")
     if branch:
-        console.print(f"Branch:    {branch}")
+        console.print(f"[{THEME['muted']}]Branch:[/]    {branch}")
     if pr:
-        console.print("Open PR:   Yes")
+        console.print(f"[{THEME['muted']}]Open PR:[/]   Yes")
     if once:
-        console.print("Mode:      Single iteration")
+        console.print(f"[{THEME['muted']}]Mode:[/]      Single iteration")
     if verbose:
-        console.print("Verbose:   Yes")
-    console.print("")
+        console.print(f"[{THEME['muted']}]Verbose:[/]   Yes")
+    console.print()
 
     # Count criteria
+    console.print(Rule("[bold]Progress[/bold]", style=THEME["muted"]))
     criteria_counts = task.count_criteria(task_file)
     done, total = criteria_counts
     remaining = total - done
-    console.print(f"Progress: {done} / {total} criteria complete ({remaining} remaining)")
-    console.print("")
+    console.print(f"[{THEME['success'] if done == total else THEME['warning']}]{done} / {total}[/] criteria complete ({remaining} remaining)")
+    console.print()
 
     # Run loop
     if once:

@@ -430,3 +430,37 @@ EOF
 [21:19:02] 🔴 TOKENS: 65431 / 80000 (81%) - approaching limit [read:250KB write:0KB assist:2KB shell:0KB]
 [21:19:06] 🔴 SHELL cd /tmp && uv run ralph run /tmp/nonexistent 2>&1 || true → exit 0
 [21:19:11] 🔴 SHELL mkdir -p /tmp/testdir && uv run ralph run /tmp/testdir 2>&1 || true → exit 0
+[21:19:21] 🔴 SHELL git add -A && git commit -m "$(cat <<'EOF'
+ralph: add Rich tracebacks and styled error panels
+
+- Install rich.traceback globally for beautiful error display
+- Create show_error_panel() helper for consistent error styling
+- Update all error messages in CLI to use styled panels with hints
+- Panels show title, message, and contextual hints for resolution
+EOF
+)" → exit 0
+[21:19:33] 🔴 TOKENS: 65489 / 80000 (81%) - approaching limit [read:250KB write:0KB assist:2KB shell:0KB]
+[21:19:35] 🔴 READ /Users/alex/repos/pyralph/src/ralph/interview.py (345 lines, ~33.7KB)
+[21:19:35] WARN: Approaching token limit (74129 >= 72000)
+[21:19:37] ═══════════════════════════════════════════════════════════════
+[21:19:37] Ralph Session Started: 2026-01-16 21:19:37.201799
+[21:19:38] SESSION START: model=Claude 4.5 Opus (Thinking)
+[21:19:43] 🟢 READ /Users/alex/repos/pyralph/RALPH_TASK.md (135 lines, ~13.2KB)
+[21:19:43] 🟢 READ /Users/alex/repos/pyralph/.ralph/guardrails.md (26 lines, ~2.5KB)
+[21:19:44] 🟢 READ /Users/alex/repos/pyralph/.ralph/progress.md (136 lines, ~13.3KB)
+[21:19:44] 🟢 READ /Users/alex/repos/pyralph/.ralph/errors.log (5 lines, ~0.5KB)
+[21:19:52] 🟢 READ /Users/alex/repos/pyralph/src/ralph/ui.py (250 lines, ~24.4KB)
+[21:19:52] 🟢 READ /Users/alex/repos/pyralph/src/ralph/cli.py (701 lines, ~68.5KB)
+[21:19:58] 🟢 SHELL make test 2>&1 → exit 0
+[21:20:08] 🟢 TOKENS: 32245 / 80000 (40%) [read:122KB write:0KB assist:0KB shell:0KB]
+[21:20:08] 🟢 READ /Users/alex/repos/pyralph/tests/test_tokens.py (236 lines, ~23.0KB)
+[21:20:09] 🟢 READ /Users/alex/repos/pyralph/src/ralph/tokens.py (81 lines, ~7.9KB)
+[21:20:38] 🟢 TOKENS: 40225 / 80000 (50%) [read:153KB write:0KB assist:0KB shell:0KB]
+[21:20:46] 🟢 SHELL make test 2>&1 → exit 0
+[21:20:56] 🟡 READ /Users/alex/repos/pyralph/src/ralph/loop.py (509 lines, ~49.7KB)
+[21:20:57] 🟡 READ /Users/alex/repos/pyralph/src/ralph/interview.py (345 lines, ~33.7KB)
+[21:21:06] 🔴 READ /Users/alex/repos/pyralph/src/ralph/interview_turns.py (150 lines, ~14.6KB)
+[21:21:08] 🔴 TOKENS: 65389 / 80000 (81%) - approaching limit [read:251KB write:0KB assist:1KB shell:0KB]
+[21:21:40] 🔴 TOKENS: 65474 / 80000 (81%) - approaching limit [read:251KB write:0KB assist:1KB shell:0KB]
+[21:22:10] 🔴 TOKENS: 65474 / 80000 (81%) - approaching limit [read:251KB write:0KB assist:1KB shell:0KB]
+[21:22:32] 🔴 SHELL make test 2>&1 → exit 0
