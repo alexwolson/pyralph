@@ -49,8 +49,8 @@ The task is complete when ALL of the following are true:
 
 ### Phase 4: Configuration & Flexibility
 
-- [ ] Make token thresholds (WARN_THRESHOLD, ROTATE_THRESHOLD) configurable via `--warn-threshold` and `--rotate-threshold` CLI options
-- [ ] Add `--timeout` CLI option for provider operation timeout (default 300 seconds)
+- [x] Make token thresholds (WARN_THRESHOLD, ROTATE_THRESHOLD) configurable via `--warn-threshold` and `--rotate-threshold` CLI options
+- [x] Add `--timeout` CLI option for provider operation timeout (default 300 seconds)
 - [ ] Document all CLI options in README
 
 ### Phase 5: Robustness

@@ -16,7 +16,8 @@ def init_ralph_dir(workspace: Path) -> Path:
             "# Progress Log\n\n"
             "> Updated by the agent after significant work.\n\n"
             "---\n\n"
-            "## Session History\n\n"
+            "## Session History\n\n",
+            encoding="utf-8",
         )
 
     # Initialize guardrails.md
@@ -39,18 +40,25 @@ def init_ralph_dir(workspace: Path) -> Path:
             "- **Instruction**: Commit current working state first\n"
             "- **Added after**: Core principle\n\n"
             "---\n\n"
-            "## Learned Signs\n\n"
+            "## Learned Signs\n\n",
+            encoding="utf-8",
         )
 
     # Initialize errors.log
     errors_file = ralph_dir / "errors.log"
     if not errors_file.exists():
-        errors_file.write_text("# Error Log\n\n> Failures detected by parser. Use to update guardrails.\n\n")
+        errors_file.write_text(
+            "# Error Log\n\n> Failures detected by parser. Use to update guardrails.\n\n",
+            encoding="utf-8",
+        )
 
     # Initialize activity.log
     activity_file = ralph_dir / "activity.log"
     if not activity_file.exists():
-        activity_file.write_text("# Activity Log\n\n> Real-time tool call logging from parser.\n\n")
+        activity_file.write_text(
+            "# Activity Log\n\n> Real-time tool call logging from parser.\n\n",
+            encoding="utf-8",
+        )
 
     return ralph_dir
 
@@ -60,7 +68,7 @@ def get_iteration(workspace: Path) -> int:
     iteration_file = workspace / ".ralph" / ".iteration"
     if iteration_file.exists():
         try:
-            return int(iteration_file.read_text().strip())
+            return int(iteration_file.read_text(encoding="utf-8").strip())
         except ValueError:
             return 0
     return 0
@@ -70,7 +78,7 @@ def set_iteration(workspace: Path, iteration: int) -> None:
     """Set iteration number."""
     iteration_file = workspace / ".ralph" / ".iteration"
     iteration_file.parent.mkdir(parents=True, exist_ok=True)
-    iteration_file.write_text(str(iteration))
+    iteration_file.write_text(str(iteration), encoding="utf-8")
 
 
 def log_progress(workspace: Path, message: str) -> None:
@@ -79,7 +87,7 @@ def log_progress(workspace: Path, message: str) -> None:
 
     progress_file = workspace / ".ralph" / "progress.md"
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    with progress_file.open("a") as f:
+    with progress_file.open("a", encoding="utf-8") as f:
         f.write(f"\n### {timestamp}\n")
         f.write(f"{message}\n")
 
@@ -90,7 +98,7 @@ def log_error(workspace: Path, message: str) -> None:
 
     errors_file = workspace / ".ralph" / "errors.log"
     timestamp = datetime.now().strftime("%H:%M:%S")
-    with errors_file.open("a") as f:
+    with errors_file.open("a", encoding="utf-8") as f:
         f.write(f"[{timestamp}] {message}\n")
 
 
@@ -100,5 +108,5 @@ def log_activity(workspace: Path, message: str) -> None:
 
     activity_file = workspace / ".ralph" / "activity.log"
     timestamp = datetime.now().strftime("%H:%M:%S")
-    with activity_file.open("a") as f:
+    with activity_file.open("a", encoding="utf-8") as f:
         f.write(f"[{timestamp}] {message}\n")

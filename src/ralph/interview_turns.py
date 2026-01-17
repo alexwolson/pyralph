@@ -20,7 +20,7 @@ def run_single_turn(
     Returns: (task_file_created, last_ai_message)
     """
     # Read current conversation
-    conversation_text = conversation_file.read_text()
+    conversation_text = conversation_file.read_text(encoding="utf-8")
     
     # Build provider command (use conversation as prompt)
     cmd = provider.get_command(conversation_text)
@@ -110,8 +110,8 @@ def run_single_turn(
     # Append AI response to conversation file if we got one
     if ai_response_parts:
         ai_response = "\n\n".join(ai_response_parts)
-        current_conversation = conversation_file.read_text()
-        conversation_file.write_text(current_conversation + "\n\n" + ai_response)
+        current_conversation = conversation_file.read_text(encoding="utf-8")
+        conversation_file.write_text(current_conversation + "\n\n" + ai_response, encoding="utf-8")
     
     return task_file_created, last_ai_message
 
@@ -127,5 +127,5 @@ def wait_for_user_input() -> str:
 
 def append_user_response(conversation_file: Path, user_response: str) -> None:
     """Append user's response to the conversation file."""
-    current = conversation_file.read_text()
-    conversation_file.write_text(current + "\n\n" + f"User: {user_response}")
+    current = conversation_file.read_text(encoding="utf-8")
+    conversation_file.write_text(current + "\n\n" + f"User: {user_response}", encoding="utf-8")

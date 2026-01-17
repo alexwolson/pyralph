@@ -91,3 +91,27 @@ EOF
 [20:25:46] 🟢 TOKENS: 85639 / 200000 (42%) [read:329KB write:0KB assist:2KB shell:0KB]
 [20:26:07] 🟢 SHELL cd /Users/alex/repos/pyralph_fork && uv run pytest -v → exit 0
 [20:26:17] 🟢 TOKENS: 85675 / 200000 (42%) [read:329KB write:0KB assist:2KB shell:0KB]
+[20:26:17] 🟢 SHELL cd /Users/alex/repos/pyralph_fork && git add -A && git commit -m "$(cat <<'EOF'
+ralph: add configurable thresholds and timeout CLI options
+
+- Make WARN_THRESHOLD configurable via --warn-threshold (default 180000)
+- Make ROTATE_THRESHOLD configurable via --rotate-threshold (default 200000)
+- Add --timeout option for provider operations (default 300 seconds)
+- Update TokenTracker to use instance thresholds instead of module constants
+- Update loop.py to pass thresholds through to TokenTracker
+- Add tests for configurable thresholds (85 tests passing)
+EOF
+)" → exit 0
+[20:27:00] 🟢 TOKENS: 85711 / 200000 (42%) [read:329KB write:0KB assist:2KB shell:0KB]
+[20:27:04] 🟢 READ /Users/alex/repos/pyralph_fork/src/ralph/loop.py (404 lines, ~39.5KB)
+[20:27:20] 🟢 READ /Users/alex/repos/pyralph_fork/src/ralph/cli.py (337 lines, ~32.9KB)
+[20:27:30] 🟢 TOKENS: 104304 / 200000 (52%) [read:401KB write:0KB assist:3KB shell:0KB]
+[20:27:48] 🟢 READ /Users/alex/repos/pyralph_fork/src/ralph/state.py (105 lines, ~10.3KB)
+[20:28:03] 🟢 TOKENS: 106943 / 200000 (53%) [read:411KB write:0KB assist:3KB shell:0KB]
+[20:28:06] 🟢 READ /Users/alex/repos/pyralph_fork/src/ralph/interview.py (345 lines, ~33.7KB)
+[20:28:23] 🟢 READ /Users/alex/repos/pyralph_fork/src/ralph/interview_turns.py (132 lines, ~12.9KB)
+[20:28:33] 🟢 TOKENS: 118868 / 200000 (59%) [read:458KB write:0KB assist:3KB shell:0KB]
+[20:28:46] 🟢 SHELL cd /Users/alex/repos/pyralph_fork && uv run pytest -v → exit 0
+[20:29:07] 🟢 SHELL cd /Users/alex/repos/pyralph_fork && uv run pytest -v tests/test_git_utils.py → exit 0
+[20:29:07] 🟢 TOKENS: 118895 / 200000 (59%) [read:458KB write:0KB assist:3KB shell:0KB]
+[20:29:18] 🟢 SHELL cd /Users/alex/repos/pyralph_fork && uv run pytest -v → exit 0

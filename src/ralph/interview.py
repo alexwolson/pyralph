@@ -36,7 +36,7 @@ def analyze_project_context(project_dir: Path) -> str:
     # Read README if available
     readme = project_dir / "README.md"
     if readme.exists():
-        readme_preview = readme.read_text()[:500]  # First 500 chars
+        readme_preview = readme.read_text(encoding="utf-8")[:500]  # First 500 chars
         context_lines.append(f"\nREADME.md preview:\n{readme_preview}")
     
     return "\n".join(context_lines)
@@ -193,7 +193,7 @@ def extract_task_file_from_message(text: str, project_dir: Path) -> Optional[Pat
         
         if content_lines:
             task_file = project_dir / "RALPH_TASK.md"
-            task_file.write_text("\n".join(content_lines))
+            task_file.write_text("\n".join(content_lines), encoding="utf-8")
             return task_file
     
     return None
@@ -239,7 +239,7 @@ def create_task_file(project_dir: Path, initial_instruction: Optional[str] = Non
     if initial_instruction:
         conversation_content = initial_prompt + "\n\n---\n\nUser: " + initial_instruction + "\n\nYou now have the user's task description. Please proceed to create the RALPH_TASK.md file based on this instruction. Ask any clarifying questions if needed, but remember: create the task file even for large tasks - Ralph works iteratively."
     
-    conversation_file.write_text(conversation_content)
+    conversation_file.write_text(conversation_content, encoding="utf-8")
     
     # Try providers until one succeeds
     max_attempts = len(provider_rotation.providers)

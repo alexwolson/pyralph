@@ -66,21 +66,26 @@ class TestCreateBranch:
         assert "feature-branch" in call_args
 
     @patch("subprocess.run")
-    def test_checks_out_existing_branch(self, mock_run: MagicMock) -> None:
-        """Test checks out existing branch if creation fails."""
-        # First call (create) fails, second call (checkout) succeeds
+    @patch("time.sleep")  # Patch sleep to speed up test
+    def test_checks_out_existing_branch(self, mock_sleep: MagicMock, mock_run: MagicMock) -> None:
+        """Test checks out existing branch if creation fails after retries."""
+        # First command (create with -b) fails 3 times (retry exhausted)
+        # Then second command (checkout without -b) succeeds
         mock_run.side_effect = [
-            subprocess.CalledProcessError(1, "git"),
-            MagicMock(returncode=0),
+            subprocess.CalledProcessError(1, "git"),  # Retry 1
+            subprocess.CalledProcessError(1, "git"),  # Retry 2
+            subprocess.CalledProcessError(1, "git"),  # Retry 3 - exhausted
+            MagicMock(returncode=0),  # Checkout without -b succeeds
         ]
 
         create_branch(Path("/repo"), "existing-branch")
 
-        assert mock_run.call_count == 2
-        # Second call should be checkout without -b
-        second_call_args = mock_run.call_args_list[1][0][0]
-        assert "checkout" in second_call_args
-        assert "-b" not in second_call_args
+        # 3 retries for create + 1 for fallback checkout
+        assert mock_run.call_count == 4
+        # Last call should be checkout without -b
+        last_call_args = mock_run.call_args_list[3][0][0]
+        assert "checkout" in last_call_args
+        assert "-b" not in last_call_args
 
 
 class TestCommitChanges:

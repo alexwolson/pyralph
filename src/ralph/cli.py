@@ -231,9 +231,16 @@ def run(
             )
         except KeyboardInterrupt:
             console.print("\n[yellow]⚠️[/yellow] Interrupted by user.")
+            # Commit current progress before exiting
+            if git_utils.has_uncommitted_changes(project_dir):
+                console.print("[dim]Committing current progress...[/dim]")
+                git_utils.commit_changes(project_dir, "ralph: interrupted - saving progress")
+                console.print("[green]✓[/green] Progress saved.")
             sys.exit(1)
         except Exception as e:
             console.print(f"\n[red]❌[/red] Error: {e}")
+            # Log error before exiting
+            state.log_progress(project_dir, f"**Error**: {e}")
             sys.exit(1)
 
 

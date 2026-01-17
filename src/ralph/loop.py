@@ -17,11 +17,11 @@ def build_prompt(workspace: Path, iteration: int) -> str:
     progress_file = workspace / ".ralph" / "progress.md"
     errors_file = workspace / ".ralph" / "errors.log"
 
-    # Read state files
-    task_content = task_file.read_text() if task_file.exists() else ""
-    guardrails_content = guardrails_file.read_text() if guardrails_file.exists() else ""
-    progress_content = progress_file.read_text() if progress_file.exists() else ""
-    errors_content = errors_file.read_text() if errors_file.exists() else ""
+    # Read state files with explicit UTF-8 encoding
+    task_content = task_file.read_text(encoding="utf-8") if task_file.exists() else ""
+    guardrails_content = guardrails_file.read_text(encoding="utf-8") if guardrails_file.exists() else ""
+    progress_content = progress_file.read_text(encoding="utf-8") if progress_file.exists() else ""
+    errors_content = errors_file.read_text(encoding="utf-8") if errors_file.exists() else ""
 
     prompt = f"""# Ralph Iteration {iteration}
 
@@ -146,17 +146,45 @@ def run_single_iteration(
     agent_process.stdin.write(prompt.encode("utf-8"))
     agent_process.stdin.close()
     
-    # Parse stream
-    signal = ""
-    for sig in parser.parse_stream(workspace, agent_process, token_tracker, gutter_detector, provider):
-        signal = sig
-        if signal in ("ROTATE", "GUTTER", "COMPLETE"):
-            # Stop early if critical signal
-            agent_process.terminate()
-            break
+    # Track start time for timeout
+    start_time = time.time()
     
-    # Wait for process to finish
-    agent_process.wait()
+    # Parse stream with timeout checking
+    signal = ""
+    try:
+        for sig in parser.parse_stream(workspace, agent_process, token_tracker, gutter_detector, provider):
+            signal = sig
+            if signal in ("ROTATE", "GUTTER", "COMPLETE"):
+                # Stop early if critical signal
+                agent_process.terminate()
+                break
+            
+            # Check timeout
+            elapsed = time.time() - start_time
+            if elapsed > timeout:
+                debug_log(
+                    "loop.py:run_single_iteration",
+                    "Timeout reached - terminating provider",
+                    {"timeout": timeout, "elapsed": elapsed, "provider": provider_name},
+                )
+                agent_process.terminate()
+                signal = "ROTATE"
+                break
+    except Exception as e:
+        debug_log(
+            "loop.py:run_single_iteration",
+            "Exception during stream parsing",
+            {"error": str(e), "provider": provider_name},
+        )
+        agent_process.terminate()
+        raise
+    
+    # Wait for process to finish with timeout
+    try:
+        agent_process.wait(timeout=10)
+    except subprocess.TimeoutExpired:
+        agent_process.kill()
+        agent_process.wait()
     
     return signal
 

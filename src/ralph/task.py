@@ -9,7 +9,7 @@ import yaml
 
 def parse_task_file(task_file: Path) -> Dict:
     """Parse RALPH_TASK.md file (frontmatter + markdown)."""
-    content = task_file.read_text()
+    content = task_file.read_text(encoding="utf-8")
     
     # Parse frontmatter
     frontmatter_match = re.match(r"^---\n(.*?)\n---\n", content, re.DOTALL)
@@ -30,7 +30,7 @@ def parse_task_file(task_file: Path) -> Dict:
 
 def count_criteria(task_file: Path) -> Tuple[int, int]:
     """Count checkboxes in task file. Returns (done, total)."""
-    content = task_file.read_text()
+    content = task_file.read_text(encoding="utf-8")
     
     # Match checkbox list items: "- [ ]", "* [x]", "1. [ ]", etc.
     # Use \s instead of [[:space:]] to avoid nested character class warning
