@@ -403,5 +403,167 @@ def status(ctx: click.Context, project_dir: Path) -> None:
     console.print()
 
 
+@main.command()
+@click.argument(
+    "project_dir",
+    type=click.Path(exists=True, file_okay=False, dir_okay=True, path_type=Path),
+)
+@click.option(
+    "--errors",
+    is_flag=True,
+    default=False,
+    help="Show errors.log instead of activity.log",
+)
+@click.option(
+    "--lines",
+    "-n",
+    type=int,
+    default=None,
+    help="Show last N lines only (default: all)",
+)
+@click.option(
+    "--no-pager",
+    is_flag=True,
+    default=False,
+    help="Disable pagination (print all at once)",
+)
+@click.pass_context
+def logs(ctx: click.Context, project_dir: Path, errors: bool, lines: int, no_pager: bool) -> None:
+    """View activity or error logs for PROJECT_DIR.
+
+    Shows syntax-highlighted, colorized log output with pagination.
+    Use --errors to view errors.log instead of activity.log.
+    """
+    import re
+    from rich.rule import Rule
+    from rich.syntax import Syntax
+    from rich.text import Text
+    
+    from ralph.ui import THEME
+    
+    ralph_dir = project_dir / ".ralph"
+    
+    if not ralph_dir.exists():
+        console.print(f"[{THEME['warning']}]⚠[/] No .ralph directory found in {project_dir}")
+        console.print(f"Run [bold]ralph run {project_dir}[/bold] first.")
+        sys.exit(1)
+    
+    log_file = ralph_dir / ("errors.log" if errors else "activity.log")
+    log_name = "Errors" if errors else "Activity"
+    
+    if not log_file.exists():
+        console.print(f"[{THEME['warning']}]⚠[/] No {log_file.name} found")
+        sys.exit(1)
+    
+    content = log_file.read_text(encoding="utf-8")
+    log_lines = content.splitlines()
+    
+    # Apply --lines limit if specified
+    if lines is not None and lines > 0:
+        log_lines = log_lines[-lines:]
+    
+    # Color mapping for log levels
+    level_colors = {
+        "🟢": THEME["success"],
+        "🟡": THEME["warning"],
+        "🔴": THEME["error"],
+        "✅": THEME["success"],
+        "❌": THEME["error"],
+        "⚠️": THEME["warning"],
+        "🚨": THEME["error"],
+    }
+    
+    def colorize_line(line: str) -> Text:
+        """Apply colors based on log level indicators."""
+        text = Text()
+        
+        # Check for timestamp pattern [HH:MM:SS]
+        timestamp_match = re.match(r'^(\[[0-9:]+\])\s*(.*)$', line)
+        if timestamp_match:
+            timestamp, rest = timestamp_match.groups()
+            text.append(timestamp, style=THEME["muted"])
+            text.append(" ")
+            line = rest
+        
+        # Check for session markers
+        if line.startswith("═══") or line.startswith("Ralph Session"):
+            text.append(line, style=f"bold {THEME['primary']}")
+            return text
+        
+        if line.startswith("SESSION"):
+            text.append(line, style=f"bold {THEME['accent']}")
+            return text
+        
+        # Check for emojis and color accordingly
+        found_color = None
+        for emoji, color in level_colors.items():
+            if emoji in line:
+                found_color = color
+                break
+        
+        # Check for ROTATE/WARN keywords
+        if "ROTATE" in line:
+            found_color = THEME["error"]
+        elif "WARN" in line:
+            found_color = THEME["warning"]
+        
+        if found_color:
+            text.append(line, style=found_color)
+        else:
+            text.append(line)
+        
+        return text
+    
+    def render_log_output():
+        """Render the log output with colors."""
+        # Print header
+        console.print()
+        console.print(Rule(f"[bold {THEME['primary']}]{log_name} Log[/]", style=THEME["primary"]))
+        console.print(f"[{THEME['muted']}]{log_file}[/]")
+        console.print()
+        
+        # Pattern to detect code blocks or shell commands with multi-line output
+        in_code_block = False
+        code_lines = []
+        
+        for line in log_lines:
+            # Skip markdown headers in the log file
+            if line.startswith("#") or line.startswith(">"):
+                console.print(Text(line, style=THEME["muted"]))
+                continue
+            
+            # Empty lines
+            if not line.strip():
+                console.print()
+                continue
+            
+            # Check for multi-line shell output (heredoc in commit messages)
+            if "<<'EOF'" in line or "<<EOF" in line:
+                in_code_block = True
+                console.print(colorize_line(line))
+                continue
+            
+            if in_code_block:
+                if line.strip() == "EOF" or line.endswith("EOF"):
+                    in_code_block = False
+                    console.print(Text(line, style=THEME["muted"]))
+                else:
+                    # Show code in code block style
+                    console.print(Text(f"  {line}", style="italic"))
+                continue
+            
+            # Regular log line
+            console.print(colorize_line(line))
+        
+        console.print()
+    
+    # Use pager for long output
+    if no_pager or len(log_lines) < 50:
+        render_log_output()
+    else:
+        with console.pager(styles=True):
+            render_log_output()
+
+
 if __name__ == "__main__":
     main()

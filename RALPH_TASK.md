@@ -46,9 +46,9 @@ The task is complete when ALL of the following are true:
 - [x] Interview uses rich.prompt with history support
 
 ### Log Viewing
-- [ ] Log viewing has syntax-highlighted code blocks
-- [ ] Log viewing has colored log levels
-- [ ] Log viewing has paginated output for long logs
+- [x] Log viewing has syntax-highlighted code blocks
+- [x] Log viewing has colored log levels
+- [x] Log viewing has paginated output for long logs
 
 ### Provider Display
 - [ ] Provider display shows table of available providers and status
