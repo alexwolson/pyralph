@@ -1,125 +1,66 @@
 ---
-task: Improve pyralph robustness and functionality
+task: Make pyralph globally installable on macOS via uv tool
 completion_criteria:
-  - Remove hardcoded debug log paths and implement proper configurable logging
-  - Add comprehensive test suite with pytest
-  - Write complete README documentation
-  - Add --version flag to CLI
-  - Add --verbose/--debug flag for detailed output
-  - Add status subcommand to check task progress
-  - Extract duplicated debug logging code into shared module
-  - Make token thresholds configurable via CLI or config
-  - Improve error handling consistency across modules
-  - Add timeout support for provider operations
-  - Add retry logic for git operations
-  - Improve graceful shutdown handling
-  - Add type hints where missing
-max_iterations: 25
-test_command: "uv run pytest -v"
+  - Makefile exists with install target that uses uv tool install
+  - Makefile has update target that reinstalls/upgrades the tool
+  - Running make install installs ralph command globally
+  - Running make update updates to latest version from repo
+  - ralph command works from any directory after installation
+  - README documents the global installation method
+max_iterations: 10
+test_command: "make install && which ralph && ralph --help"
 ---
 
-# Task: Improve pyralph Robustness and Functionality
+# Task: Make pyralph globally installable on macOS
 
-Make pyralph more robust, maintainable, and user-friendly by addressing technical debt, adding missing features, and improving code quality.
+Make the `ralph` CLI installable system-wide on macOS so it can be run from any directory. Use `uv tool install` for isolated global installation. Provide Makefile targets for easy install and update.
 
 ## Success Criteria
 
 The task is complete when ALL of the following are true:
 
-### Phase 1: Critical Cleanup
+- [ ] Makefile exists at project root with `install` target using `uv tool install`
+- [ ] Makefile has `update` target that reinstalls/upgrades the tool
+- [ ] Running `make install` successfully installs `ralph` command globally
+- [ ] Running `make update` updates to the latest version from the repo
+- [ ] `ralph` command is accessible from any directory after installation
+- [ ] README.md documents the global installation method with uv tool
 
-- [x] Remove hardcoded debug log paths from `loop.py` and `rotation.py` - replace with proper configurable logging using Python's logging module or optional file output
-- [x] Extract duplicated `_debug_log` function from `loop.py` and `rotation.py` into a shared `debug.py` module (or remove entirely if replaced with logging)
+## Technical Context
 
-### Phase 2: Testing
-
-- [x] Create `tests/` directory with pytest configuration in `pyproject.toml`
-- [x] Add unit tests for `task.py` (parsing, checkbox counting, completion check)
-- [x] Add unit tests for `tokens.py` (threshold calculations, health emoji)
-- [x] Add unit tests for `gutter.py` (failure tracking, write thrashing detection)
-- [x] Add unit tests for `git_utils.py` (mocked subprocess calls)
-- [x] Add integration test for CLI help and version output
-- [x] All tests pass with `uv run pytest -v`
-
-### Phase 3: CLI Improvements
-
-- [x] Add `--version` flag that displays package version from pyproject.toml
-- [x] Add `--verbose` / `-v` flag that enables detailed debug output
-- [x] Add `ralph status <project_dir>` subcommand that shows task progress without running the loop (displays criteria count, completion percentage, current provider availability)
-
-### Phase 4: Configuration & Flexibility
-
-- [x] Make token thresholds (WARN_THRESHOLD, ROTATE_THRESHOLD) configurable via `--warn-threshold` and `--rotate-threshold` CLI options
-- [x] Add `--timeout` CLI option for provider operation timeout (default 300 seconds)
-- [x] Document all CLI options in README
-
-### Phase 5: Robustness
-
-- [x] Add retry logic (3 attempts with exponential backoff) to git operations in `git_utils.py`
-- [x] Add timeout handling to subprocess calls in `loop.py` (terminate and rotate on timeout)
-- [x] Improve error handling: log errors before re-raising, don't silently swallow important exceptions
-- [x] Handle KeyboardInterrupt gracefully - commit current progress before exiting
-- [x] Add explicit UTF-8 encoding to all file operations
-
-### Phase 6: Documentation
-
-- [x] Write comprehensive README.md with: project description, installation, quick start, CLI usage, how Ralph works, provider requirements, contributing guidelines
+- Package is already properly configured in `pyproject.toml` with entry point `ralph = "ralph.cli:main"`
+- Use `uv tool install` which installs into an isolated environment but makes CLI available globally
+- `uv tool install .` installs from local repo
+- `uv tool install . --force` or `uv tool upgrade` for updates
+- uv tools go to `~/.local/bin` by default (ensure this is in PATH)
 
 ## Constraints
 
-- Maintain Python 3.11+ compatibility
-- Keep existing CLI interface backward-compatible (new flags are additive)
-- Use `pytest` for testing (add to dev dependencies)
-- Don't add heavy dependencies - keep the project lightweight
-- Provider implementations should remain pluggable
-
-## Technical Notes
-
-- The project uses `uv` for package management and `hatchling` for builds
-- Providers: cursor-agent, claude, gemini, codex
-- State files: RALPH_TASK.md, .ralph/guardrails.md, .ralph/progress.md, .ralph/errors.log, .ralph/activity.log
+- Use `uv` tooling (not pipx)
+- Command name should remain `ralph`
+- Keep existing development install methods (pip install -e ., uv sync) working
+- Makefile targets should be simple and self-documenting
 
 ---
-
 ## Ralph Instructions
 
-### Before Each Work Session
+**Before starting work:**
+1. Read `.ralph/guardrails.md` if it exists for project-specific rules
+2. Read `.ralph/progress.md` if it exists for context on previous work
+3. Check which criteria are already marked complete above
 
-1. Read `RALPH_TASK.md` to understand remaining criteria
-2. Read `.ralph/guardrails.md` for lessons from past failures
-3. Read `.ralph/progress.md` to see what's been done
-4. Read `.ralph/errors.log` for recent issues to avoid
+**Working protocol:**
+- Work on ONE unchecked criterion at a time
+- After completing a criterion, check it off: `- [ ]` → `- [x]`
+- Commit changes with descriptive message referencing the criterion
+- Update `.ralph/progress.md` with what was done
 
-### Git Protocol
+**Git protocol:**
+- Commit after each meaningful change
+- Use clear commit messages: "feat: add Makefile with install target"
+- Never force push or rewrite history
 
-Ralph's memory is git. Commit frequently:
-
-1. After completing each criterion: `git add -A && git commit -m "ralph: <what you did>"`
-2. After any significant code change: commit immediately
-3. Before risky changes: commit as checkpoint
-4. Push every 2-3 commits: `git push`
-
-### Working on Criteria
-
-1. Find the next unchecked `- [ ]` criterion
-2. Implement the change
-3. Run tests: `uv run pytest -v`
-4. If tests pass, mark criterion complete: change `[ ]` to `[x]`
-5. Commit with descriptive message
-6. Move to next criterion
-
-### Signals
-
-- When ALL criteria are `[x]`: output `<ralph>COMPLETE</ralph>`
-- If stuck on same issue 3+ times: output `<ralph>GUTTER</ralph>`
-
-### Adding Guardrails
-
-When something fails, add a Sign to `.ralph/guardrails.md`:
-
-```
-### Sign: [Name]
-- **Trigger**: When this happens
-- **Instruction**: Do this instead
-- **Added after**: Iteration N - what went wrong
-```
+**If stuck:**
+- Document the blocker in `.ralph/progress.md`
+- Move to the next criterion if possible
+- The next agent iteration will pick up from your commits
