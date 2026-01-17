@@ -585,3 +585,18 @@ EOF
 [22:04:26] 🟢 TOKENS: 44795 / 80000 (55%) [read:170KB write:0KB assist:1KB shell:0KB]
 [22:04:35] 🟢 SHELL cd /Users/alex/repos/pyralph && make test → exit 0
 [22:04:57] 🟢 TOKENS: 44817 / 80000 (56%) [read:170KB write:0KB assist:1KB shell:0KB]
+[22:05:11] 🟢 SHELL cd /Users/alex/repos/pyralph && git add -A && git commit -m "$(cat <<'EOF'
+ralph: implement verification phase after COMPLETE signal
+
+- Add verification phase in run_ralph_loop() after COMPLETE is detected
+- Rotate to different provider for independent verification
+- run_verification_iteration() handles VERIFY_PASS/VERIFY_FAIL signals
+- On VERIFY_PASS: archive task and exit
+- On VERIFY_FAIL: increment failure count, continue loop
+- After max_verification_failures (default 3): complete with warning
+- Add comprehensive test suite (tests/test_verification.py)
+- All 114 tests pass
+EOF
+)" → exit 0
+[22:05:15] 🟢 SHELL cd /Users/alex/repos/pyralph && git push → exit 0
+[22:05:22] ✅ Agent signaled COMPLETE
