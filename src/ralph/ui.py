@@ -84,16 +84,18 @@ class RalphLiveDisplay:
         components.append(self.progress)
         
         # Add criteria checklist if available
-        # Wrap in try/except to handle MarkupError during measurement
-        if self.criteria:
-            try:
-                criteria_table = self._build_criteria_table()
-                components.append(criteria_table)
-            except Exception:
-                # If there's any error building/measuring the criteria table
-                # (e.g., MarkupError from malformed text), just skip it
-                # This prevents the entire display from crashing
-                pass
+        # TEMPORARILY DISABLED to fix MarkupError issue
+        # The criteria table causes Rich to try to parse Text objects as markup during measurement
+        # TODO: Re-enable once we have a proper fix for the markup parsing issue
+        # if self.criteria:
+        #     try:
+        #         criteria_table = self._build_criteria_table()
+        #         components.append(criteria_table)
+        #     except Exception:
+        #         # If there's any error building/measuring the criteria table
+        #         # (e.g., MarkupError from malformed text), just skip it
+        #         # This prevents the entire display from crashing
+        #         pass
         
         return Group(*components)
 
