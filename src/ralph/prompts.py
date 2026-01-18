@@ -65,7 +65,8 @@ Output: `<ralph>VERIFY_PASS</ralph>`
 1. Edit RALPH_TASK.md to uncheck the incomplete criteria (change `[x]` back to `[ ]`)
 2. Optionally add new criteria if you discovered missing requirements
 3. Write a brief explanation in `.ralph/progress.md` about what failed verification
-4. Output: `<ralph>VERIFY_FAIL</ralph>`
+4. **Add a guardrail**: If you found an issue the agent should have caught, add a Sign to `.ralph/guardrails.md` to help future iterations avoid the same mistake
+5. Output: `<ralph>VERIFY_FAIL</ralph>`
 
 ## Important
 
@@ -152,19 +153,31 @@ If you get rotated, the next agent picks up from your last commit. Your commits 
 5. When ALL criteria show `[x]`: output `<ralph>COMPLETE</ralph>`
 6. If stuck 3+ times on same issue: output `<ralph>GUTTER</ralph>`
 
-## Learning from Failures
+## Guardrails Management
 
-When something fails:
-1. Check `.ralph/errors.log` for failure history
-2. Figure out the root cause
-3. Add a Sign to `.ralph/guardrails.md` using this format:
+`.ralph/guardrails.md` captures lessons learned. Keep it useful by both adding AND maintaining guardrails.
 
+**When to add a guardrail:**
+- Test failure reveals a gotcha
+- You discover an unexpected behavior or edge case
+- An approach change fixes a problem (document what works)
+- You find a successful pattern worth remembering
+
+**When to consolidate guardrails:**
+- Multiple signs address the same underlying issue → merge into one comprehensive sign
+- A sign is too specific → generalize it
+- Signs contradict each other → resolve and keep one
+- File exceeds ~20 signs → review and merge similar ones
+
+**Guardrail format:**
 ```
 ### Sign: [Descriptive Name]
 - **Trigger**: When this situation occurs
 - **Instruction**: What to do instead
 - **Added after**: Iteration {iteration} - what happened
 ```
+
+**Periodic review:** Every few iterations, scan guardrails.md. Remove outdated signs, merge duplicates, and refine vague instructions. Keep the file lean and actionable.
 
 ## Asking Questions (Use Sparingly)
 

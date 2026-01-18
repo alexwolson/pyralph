@@ -19,12 +19,12 @@ Ralph agents should proactively update `.ralph/guardrails.md` with lessons learn
 
 The task is complete when ALL of the following are true:
 
-- [ ] Main prompt (`build_prompt`) includes a dedicated section for guardrails management that encourages proactive updates
-- [ ] Prompt defines clear triggers for guardrail updates: test failures, gotchas discovered, successful patterns worth remembering, approach changes
-- [ ] Prompt encourages agents to consolidate similar guardrails (e.g., merge 3 similar signs into 1 comprehensive one)
-- [ ] Prompt suggests reviewing guardrails.md periodically and removing/merging redundant entries
-- [ ] Verification prompt (`build_verification_prompt`) encourages adding guardrails when verification fails
-- [ ] All existing tests pass (`make test`)
+- [x] Main prompt (`build_prompt`) includes a dedicated section for guardrails management that encourages proactive updates
+- [x] Prompt defines clear triggers for guardrail updates: test failures, gotchas discovered, successful patterns worth remembering, approach changes
+- [x] Prompt encourages agents to consolidate similar guardrails (e.g., merge 3 similar signs into 1 comprehensive one)
+- [x] Prompt suggests reviewing guardrails.md periodically and removing/merging redundant entries
+- [x] Verification prompt (`build_verification_prompt`) encourages adding guardrails when verification fails
+- [x] All existing tests pass (`make test`)
 
 ## Context
 
