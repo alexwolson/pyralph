@@ -16,9 +16,9 @@ This is a test run of Ralph with intentionally simple tasks to verify the loop w
 
 The task is complete when ALL of the following are true:
 
-- [ ] Add a `MASCOT_NAME` constant to `src/ralph/__init__.py` with value `"Ralph the Robot"`
-- [ ] Add a one-line docstring to the top of `src/ralph/signals.py` if it doesn't already have one (e.g., `"""Signal handling for Ralph agents."""`)
-- [ ] Create a file `.ralph/test_marker.txt` containing the text `Ralph test run successful`
+- [x] Add a `MASCOT_NAME` constant to `src/ralph/__init__.py` with value `"Ralph the Robot"`
+- [x] Add a one-line docstring to the top of `src/ralph/signals.py` if it doesn't already have one (e.g., `"""Signal handling for Ralph agents."""`)
+- [x] Create a file `.ralph/test_marker.txt` containing the text `Ralph test run successful`
 
 ## Constraints
 

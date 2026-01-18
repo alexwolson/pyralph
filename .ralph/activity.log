@@ -2,3 +2,15 @@
 
 > Real-time tool call logging from parser.
 
+[08:37:25] ═══════════════════════════════════════════════════════════════
+[08:37:25] Ralph Session Started: 2026-01-18 08:37:25.967489
+[08:37:27] SESSION START: provider=cursor
+[08:37:31] ● READ /Users/alex/repos/pyralph/RALPH_TASK.md (74 lines, ~7.2KB)
+[08:37:32] ● READ /Users/alex/repos/pyralph/.ralph/guardrails.md (26 lines, ~2.5KB)
+[08:37:32] ● READ /Users/alex/repos/pyralph/.ralph/progress.md (15 lines, ~1.5KB)
+[08:37:32] ● READ /Users/alex/repos/pyralph/.ralph/errors.log (5 lines, ~0.5KB)
+[08:37:37] ● READ /Users/alex/repos/pyralph/src/ralph/__init__.py (8 lines, ~0.8KB)
+[08:37:38] ● READ /Users/alex/repos/pyralph/src/ralph/signals.py (96 lines, ~9.4KB)
+[08:37:49] ● SHELL python -c "from ralph import MASCOT_NAME; print(MASCOT_NAME)" → exit 0
+[08:37:52] ● SHELL python3 -c "from ralph import MASCOT_NAME; print(MASCOT_NAME)" → exit 0
+[08:37:55] ● TOKENS: 6493 / 80000 (8%) [read:21KB write:0KB assist:0KB shell:0KB]

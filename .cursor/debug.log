@@ -1,0 +1,1 @@
+{"id": "log_1768743445_entry", "timestamp": 1768743445965, "location": "loop.py:_run_iteration_core:69", "message": "About to start subprocess", "data": {"log_message": "Session 1 started", "provider": "agent", "cmd": ["agent", "-p", "--force", "--output-format", "stream-json"]}, "sessionId": "debug-session", "runId": "run1", "hypothesisId": "A"}
