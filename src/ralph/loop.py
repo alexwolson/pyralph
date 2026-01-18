@@ -70,7 +70,6 @@ def _run_iteration_core(
     
     # #region agent log
     import json
-    import time
     import os
     try:
         log_dir = "/Users/alex/repos/pyralph/.cursor"
@@ -107,7 +106,6 @@ def _run_iteration_core(
     except Exception as e:
         # #region agent log
         import json
-        import time
         import os
         try:
             log_dir = "/Users/alex/repos/pyralph/.cursor"
@@ -180,7 +178,6 @@ def _run_iteration_core(
     except Exception as e:
         # #region agent log
         import json
-        import time
         import os
         import traceback
         try:
@@ -281,10 +278,25 @@ def _run_iteration_core(
         }
         with open(log_path, "a") as f:
             f.write(json.dumps(log_entry) + "\n")
+
+        # Also persist exact stderr to a user-facing file (even if empty)
+        try:
+            ralph_dir = workspace / ".ralph"
+            ralph_dir.mkdir(exist_ok=True)
+            cli_output_file = ralph_dir / "cli_output.log"
+            with cli_output_file.open("a", encoding="utf-8") as f_out:
+                f_out.write("\n" + "=" * 80 + "\n")
+                f_out.write(
+                    f"[{time.strftime('%H:%M:%S')}] provider={provider_cli} stream=stderr returncode={returncode} signal={signal}\n"
+                )
+                f_out.write("=" * 80 + "\n")
+                f_out.write(stderr_text)
+                f_out.write("\n")
+        except Exception:
+            pass
     except Exception as e:
         # #region agent log
         import json
-        import time
         import os
         try:
             log_dir = "/Users/alex/repos/pyralph/.cursor"

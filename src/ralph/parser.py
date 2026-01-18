@@ -191,6 +191,18 @@ def parse_stream(
         }
         with open(log_path, "a") as f:
             f.write(json.dumps(log_entry) + "\n")
+
+        # Also persist exact stdout to a user-facing file
+        provider_name = provider.get_cli_tool_name() if hasattr(provider, "get_cli_tool_name") else "unknown"
+        ralph_dir = workspace / ".ralph"
+        ralph_dir.mkdir(exist_ok=True)
+        cli_output_file = ralph_dir / "cli_output.log"
+        with cli_output_file.open("a", encoding="utf-8") as f_out:
+            f_out.write("\n" + "=" * 80 + "\n")
+            f_out.write(f"[{time.strftime('%H:%M:%S')}] provider={provider_name} stream=stdout\n")
+            f_out.write("=" * 80 + "\n")
+            f_out.write(stdout_full)
+            f_out.write("\n")
     except Exception:
         pass
     # #endregion
